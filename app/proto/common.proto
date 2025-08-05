@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package cardverdict.v1;
+
+// ===================================================================
+// 1. 枚举定义 (Enums)
+// ===================================================================
+
+// 定义信用卡发卡机构
+enum Issuer {
+  ISSUER_UNSPECIFIED = 0;
+  AMEX = 1;
+  CHASE = 2;
+  CAPITAL_ONE = 3;
+  CITI = 4;
+  BANK_OF_AMERICA = 5;
+  US_BANK = 6;
+  HSBC = 7;
+  CITY_NATIONAL_BANK = 8;
+  JPMORGAN = 9; // e.g., for JPMorgan Ritz-Carlton
+}
+
+// 定义信用/报销福利的频率
+enum CreditFrequency {
+  FREQUENCY_UNSPECIFIED = 0;
+  ANNUAL = 1;         // 每年一次
+  SEMI_ANNUAL = 2;    // 每半年一次
+  QUARTERLY = 3;      // 每季度一次
+  MONTHLY = 4;        // 每月一次
+}
+
+// 定义一个标准的、语义化的报销类别枚举
+// 这个枚举定义“是什么”，而具体“在哪里用”由其他字段决定
+enum CreditType {
+  CREDIT_TYPE_UNSPECIFIED = 0;
+  TRAVEL = 1;                           // 通用旅行报销 (e.g., Chase Sapphire Reserve)
+  TRAVEL_PORTAL = 2;                    // 旅行门户网站报销 (e.g., Capital One Venture X, Delta Stays)
+  AIRLINE_FEE = 3;                      // 航空杂费 (行李、选座等)
+  AIRLINE_CREDIT = 4;                   // 航司通用消费金/现金券 (e.g., United TravelBank, JSX Credit)
+  HOTEL_STAY = 5;                       // 通用酒店住宿报销 (e.g., Citi Strata's hotel credit)
+  HOTEL_PROPERTY_CREDIT = 6;            // 特定酒店内的消费报销 (e.g., a $100 F&B credit during a stay)
+  DINING = 7;                           // 餐饮 (通用或特定商户, e.g., Amex Gold, Resy)
+  RIDESHARE = 8;                        // 网约车 (e.g., Uber, Lyft)
+  FOOD_DELIVERY = 9;                    // 外卖服务 (e.g., DoorDash, Instacart, Grubhub)
+  DIGITAL_ENTERTAINMENT = 10;           // 流媒体/新闻订阅 (e.g., Amex Platinum's Digital credit)
+  RETAIL = 11;                          // 零售商户 (e.g., Saks, Dunkin')
+  FITNESS = 12;                         // 健身会员 (e.g., Equinox, Peloton)
+  GROUND_TRANSPORTATION = 13;           // 地面交通 (租车, 专车 e.g., Avis, Budget, Blacklane)
+  TICKETING_SERVICE = 14;               // 票务服务 (e.g., StubHub)
+  LIFESTYLE = 15;                       // 综合生活方式报销 (e.g., BoA Premium Elite, Citi Splurge Credit)
+  MEMBERSHIP_REIMBURSEMENT = 16;        // 会员费报销 (e.g., Walmart+, CLEAR, DashPass, Lounge Membership Fee)
+
+  // 非现金等价物福利 (Non-cash-equivalent benefits)
+  COMPANION_TICKET = 50;                // 同行机票
+  FREE_NIGHT_AWARD = 51;                // 年度免费房券 (FN)
+  POINTS_OR_MILES_BONUS = 52;           // 年度积分/里程奖励 (e.g., Venture X 10k miles)
+  LOUNGE_MEMBERSHIP = 53;               // 完整的休息室会籍 (e.g., United Club, Admirals Club)
+}
+
+
+// ===================================================================
+// 2. 核心消息体 (Core Messages)
+// ===================================================================
+
+// 为不规则的报销周期定义一个例外结构
+message PeriodOverride {
+  // 定义此例外适用的周期。索引从 1 开始，以符合人类的直观理解。
+  // - 对于 MONTHLY, 此值为 1-12 (1 = 一月, 12 = 十二月)。
+  // - 对于 QUARTERLY, 此值为 1-4。
+  // - 对于 SEMI_ANNUAL, 此值为 1-2。
+  int32 period = 1;
+
+  // 在该特定周期的报销金额 (以美分为单位)。
+  int32 value_cents = 2;
+}
+
+// 定义一个具体的信用/报销项目
+message Credit {
+  // 报销类型
+  CreditType type = 1;
+
+  // 报销频率
+  CreditFrequency frequency = 2;
+
+  // 每个周期的“标准”报销金额 (以美分为单位)。
+  // 如果福利完全不规则 (例如，只在特定月份提供)，可将此设为 0。
+  int32 default_period_value_cents = 3;
+
+  // 一个列表，包含所有金额不符合标准的周期。
+  // 用于处理 "1-11月每月$15, 12月$35" 这样的例外情况。
+  repeated PeriodOverride overrides = 4;
+
+  // 限定商户列表。
+  // 如果此列表非空，则表示福利仅适用于列表中的商户。
+  // 如果列表为空，则表示福利是通用的 (适用于该类别下的任何商户)。
+  repeated string qualifying_merchants = 5;
+
+  // 额外备注，用于说明人类易读的、无法结构化的使用条件。
+  // e.g., "需预定至少两晚", "每年最多使用两次"
+  string details = 6;
+
+  // 评估的等效价值 (Represents the user-perceived value)
+  oneof effective_value {
+    // 价值比例 (e.g., 0.8 represents 80% of face value)
+    float effective_value_proportion = 7;
+    // 绝对价值 (以美分为单位)
+    int32 effective_value_cents = 8;
+  }
+
+  // 对等效价值的解释 (Explanation for the assigned effective value)
+  string effective_value_explanation = 9;
+
+  // 主要的，和️benefit相关的brand，用于决定显示时的主题色
+  // 如果有多个，选择第一个相关的
+  string primary_associated_brand = 10;
+}
+
+// (已重构) 定义其他福利项目，现在是一个包含多种具体福利的容器
+message OtherBenefit {
+  // 使用 oneof 确保一个福利条目只有一个具体的、结构化的类型。
+  oneof benefit_type {
+    LoungeAccessBenefit lounge_access = 1;
+    TravelStatusBenefit travel_status = 2;
+    FeeReimbursementBenefit fee_reimbursement = 3;
+    BaggageBenefit baggage = 4;
+    PointPerkBenefit point_perk = 5;
+    // 对于无法结构化的其他福利（如保险），保留一个通用描述
+    string generic_benefit_description = 6;
+  }
+
+  // 评估的等效价值 (Represents the user-perceived value)
+  oneof effective_value {
+    // 价值比例 (e.g., 0.8 represents 80% of face value)
+    float effective_value_proportion = 7;
+    // 绝对价值 (以美分为单位)
+    int32 effective_value_cents = 8;
+  }
+
+  // 对等效价值的解释 (Explanation for the assigned effective value)
+  string effective_value_explanation = 9;
+
+  // 主要的，和️benefit相关的brand，用于决定显示时的主题色
+  // 如果有多个，选择第一个相关的
+  string primary_associated_brand = 10;
+}
+
+
+// ===================================================================
+// 3. "OtherBenefit" 的具体结构化消息
+// ===================================================================
+
+// 用于描述休息室权益
+message LoungeAccessBenefit {
+  enum LoungeNetwork {
+    NETWORK_UNSPECIFIED = 0;
+    PRIORITY_PASS_SELECT = 1;
+    AMEX_CENTURION = 2;
+    DELTA_SKY_CLUB = 3;
+    UNITED_CLUB = 4;
+    AA_ADMIRALS_CLUB = 5;
+    CHASE_SAPPHIRE_LOUNGE = 6;
+  }
+  LoungeNetwork network = 1;
+  string guest_policy = 2; // e.g., "可带2人", "不可带人", "同行按人头扣次"
+  string restrictions = 3; // e.g., "不可用于餐厅", "每年15次准入", "仅限搭乘DL航班时"
+}
+
+// 用于描述旅行相关的身份/状态
+message TravelStatusBenefit {
+  enum StatusType {
+    STATUS_UNSPECIFIED = 0;
+    HOTEL_ELITE_STATUS = 1;
+    AIRLINE_PRIORITY_ACCESS = 2; // e.g., 优先登机, Premier Access
+    AIRLINE_UPGRADE_ELIGIBILITY = 3;
+  }
+  StatusType type = 1;
+  string description = 2; // e.g., "IHG Platinum 会籍", "DL航班Zone 5优先登机权", "免费排上 Delta Upgrade List"
+}
+
+// 用于描述申请费报销 (Global Entry等)
+message FeeReimbursementBenefit {
+  enum Program {
+    PROGRAM_UNSPECIFIED = 0;
+    GLOBAL_ENTRY = 1;
+    TSA_PRECHECK = 2;
+    NEXUS = 3;
+  }
+  // 允许多个项目，因为有些卡是三选一报销
+  repeated Program programs = 1;
+  string details = 2; // e.g., "每4年报销一次"
+}
+
+// 用于描述行李额度
+message BaggageBenefit {
+  // e.g., 1 for "1件免费托运行李", 2 for "2件免费托运行李"
+  int32 free_checked_bags_count = 1;
+  string details = 2; // e.g., "仅限本人及同一预订下的至多8位同行者"
+}
+
+// 用于描述积分/里程相关的特权
+message PointPerkBenefit {
+  // 这里的描述很关键，因为许多特权难以进一步结构化
+  // e.g., "兑换DL里程票可获得15% off", "可以看到额外的经济舱XN舱余票", "住三送一", "在Expedia和Agoda订酒店可获得10% off"
+  string description = 1;
+}
+
+
+// ===================================================================
+// 4. 顶层消息体 (Top-Level Messages)
+// ===================================================================
+
+// 主消息体，代表一张信用卡
+message CreditCard {
+  string name = 1;
+  Issuer issuer = 2;
+  int32 annual_fee_cents = 3;
+
+  // 这张卡提供的所有基于“返还”的福利
+  repeated Credit credits = 4;
+
+  // 这张卡提供的所有其他类型的福利
+  repeated OtherBenefit other_benefits = 5;
+}
+
+// 用于存储一个信用卡列表
+message CreditCardDatabase {
+  repeated CreditCard cards = 1;
+}
