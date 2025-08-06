@@ -17,7 +17,6 @@ enum Issuer {
   US_BANK = 6;
   HSBC = 7;
   CITY_NATIONAL_BANK = 8;
-  JPMORGAN = 9; // e.g., for JPMorgan Ritz-Carlton
 }
 
 // 定义信用/报销福利的频率
@@ -109,10 +108,6 @@ message Credit {
 
   // 对等效价值的解释 (Explanation for the assigned effective value)
   string effective_value_explanation = 9;
-
-  // 主要的，和️benefit相关的brand，用于决定显示时的主题色
-  // 如果有多个，选择第一个相关的
-  string primary_associated_brand = 10;
 }
 
 // (已重构) 定义其他福利项目，现在是一个包含多种具体福利的容器
@@ -138,10 +133,6 @@ message OtherBenefit {
 
   // 对等效价值的解释 (Explanation for the assigned effective value)
   string effective_value_explanation = 9;
-
-  // 主要的，和️benefit相关的brand，用于决定显示时的主题色
-  // 如果有多个，选择第一个相关的
-  string primary_associated_brand = 10;
 }
 
 
@@ -212,14 +203,18 @@ message PointPerkBenefit {
 // 主消息体，代表一张信用卡
 message CreditCard {
   string name = 1;
-  Issuer issuer = 2;
-  int32 annual_fee_cents = 3;
+
+//  卡片图名字
+  string image_name = 2;
+
+  Issuer issuer = 3;
+  int32 annual_fee_cents = 4;
 
   // 这张卡提供的所有基于“返还”的福利
-  repeated Credit credits = 4;
+  repeated Credit credits = 5;
 
   // 这张卡提供的所有其他类型的福利
-  repeated OtherBenefit other_benefits = 5;
+  repeated OtherBenefit other_benefits = 6;
 }
 
 // 用于存储一个信用卡列表
