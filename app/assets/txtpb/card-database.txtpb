@@ -44,8 +44,108 @@ cards {
     default_period_value_cents: 5000
     qualifying_merchants: "Resy"
     details: "$50*2 Resy credit"
-    effective_value_proportion: 0.4
+    effective_value_proportion: 0.5
     effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
+  }
+}
+cards {
+  name: "AMEX Platinum Card"
+  image_name: "amex_platinum.png"
+  issuer: AMEX
+  annual_fee_cents: 69500
+  credits {
+    type: AIRLINE_FEE
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    details: "$200 airline fee credit"
+    effective_value_proportion: 1.0
+    effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
+  }
+  credits {
+    type: TRAVEL_PORTAL
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "AmexTravel.com"
+    details: "$200 hotel credit for prepaid Fine Hotels + Resorts® or The Hotel Collection bookings."
+    effective_value_proportion: 1
+    effective_value_explanation: "FHR谭友评价好，按100%估值算"
+  }
+  credits {
+    type: DIGITAL_ENTERTAINMENT
+    frequency: MONTHLY
+    default_period_value_cents: 2000
+    details: "$20*12 credit for specified digital services."
+    effective_value_proportion: 0.0
+    effective_value_explanation: "数字娱乐报销范围狭窄，非刚需，估值为0。列表：Disney+, ESPN+, Hulu, The New York Times, Peacock, and The Wall Street Journal"
+  }
+  credits {
+    type: RETAIL
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 5000
+    qualifying_merchants: "Saks Fifth Avenue"
+    details: "$50*2 Saks credit"
+    effective_value_proportion: 0.3
+    effective_value_explanation: "难用，免运费门槛高，按30%估值。"
+  }
+  credits {
+    type: RIDESHARE
+    frequency: MONTHLY
+    default_period_value_cents: 1500
+    overrides {
+      period: 12
+      value_cents: 3500
+    }
+    qualifying_merchants: "Uber"
+    details: "$200 Uber Credit, $15 for Jan-Nov, $35 for Dec."
+    effective_value_proportion: 0.8
+    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+  }
+  credits {
+    type: FITNESS
+    frequency: ANNUAL
+    default_period_value_cents: 30000
+    qualifying_merchants: "Equinox"
+    details: "$300 Equinox credit"
+    effective_value_proportion: 0.0
+    effective_value_explanation: "特定健身房会员，非刚需，估值为0。"
+  }
+  credits {
+    type: MEMBERSHIP_REIMBURSEMENT
+    frequency: MONTHLY
+    default_period_value_cents: 1295
+    qualifying_merchants: "Walmart+"
+    details: "$12.95/month Walmart+ credit"
+    effective_value_proportion: 0.0
+    effective_value_explanation: "会员报销非刚需，Walmart+为新兴服务，假设持卡人已有其他类似服务会籍，估值为0。"
+  }
+  credits {
+    type: MEMBERSHIP_REIMBURSEMENT
+    frequency: ANNUAL
+    default_period_value_cents: 18900 # Standard CLEAR Me cost
+    qualifying_merchants: "CLEAR"
+    details: "Annual CLEAR credit"
+    effective_value_proportion: 0.0
+    effective_value_explanation: "会员报销非刚需，估值为0。"
+  }
+  other_benefits {
+    lounge_access {
+      network: AMEX_CENTURION
+      guest_count: 0
+      notes: "除非年消费满$75,000，否则不可免费带人。"
+    }
+  }
+  other_benefits {
+    lounge_access {
+      network: PRIORITY_PASS_SELECT
+      guest_count: 0
+      notes: "不可用于餐厅。"
+    }
+  }
+  other_benefits {
+    fee_reimbursement {
+      programs: GLOBAL_ENTRY
+      programs: TSA_PRECHECK
+    }
   }
 }
 cards {
@@ -57,8 +157,8 @@ cards {
     type: COMPANION_TICKET
     frequency: ANNUAL
     details: "每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱机票。"
-    effective_value_cents: 25000
-    effective_value_explanation: "美卡博客：'用得好价值超过$500，远远超出年费。'，按$250算"
+    effective_value_cents: 16700
+    effective_value_explanation: "美卡博客：'用得好价值超过$500，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，折价1/3"
   }
   credits {
     type: DINING
@@ -66,8 +166,8 @@ cards {
     default_period_value_cents: 1000
     qualifying_merchants: "Resy"
     details: "$10*12 Resy credit"
-    effective_value_proportion: 0.4
-    effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
+    effective_value_proportion: 0.2
+    effective_value_explanation: "Resy平台使用场景受限，按40%估值。每个月要报销一次麻烦，再打折50%。"
   }
   credits {
     type: RIDESHARE
@@ -125,8 +225,8 @@ cards {
     type: COMPANION_TICKET
     frequency: ANNUAL
     details: "每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱/头等舱机票。"
-    effective_value_cents: 50000
-    effective_value_explanation: "美卡博客:'用的好价值高达上千刀，远远超出年费。'，按$500算"
+    effective_value_cents: 33300
+    effective_value_explanation: "美卡博客:'用的好价值高达上千刀，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，按$333算"
   }
   credits {
     type: DINING
@@ -134,8 +234,8 @@ cards {
     default_period_value_cents: 2000
     qualifying_merchants: "Resy"
     details: "$20*12 Resy credit"
-    effective_value_proportion: 0.4
-    effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
+    effective_value_proportion: 0.2
+    effective_value_explanation: "Resy平台使用场景受限，按40%估值。每个月要报销一次麻烦，再打折50%"
   }
   credits {
     type: RIDESHARE
@@ -244,106 +344,6 @@ cards {
   }
 }
 cards {
-  name: "AMEX Platinum Card"
-  image_name: "amex_platinum.png"
-  issuer: AMEX
-  annual_fee_cents: 69500
-  credits {
-    type: AIRLINE_FEE
-    frequency: ANNUAL
-    default_period_value_cents: 20000
-    details: "$200 airline fee credit"
-    effective_value_proportion: 1.0
-    effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
-  }
-  credits {
-    type: TRAVEL_PORTAL
-    frequency: ANNUAL
-    default_period_value_cents: 20000
-    qualifying_merchants: "AmexTravel.com"
-    details: "$200 hotel credit for prepaid Fine Hotels + Resorts® or The Hotel Collection bookings."
-    effective_value_proportion: 1
-    effective_value_explanation: "FHR谭友评价好，按100%估值算"
-  }
-  credits {
-    type: DIGITAL_ENTERTAINMENT
-    frequency: MONTHLY
-    default_period_value_cents: 2000
-    details: "$20*12 credit for specified digital services."
-    effective_value_proportion: 0.0
-    effective_value_explanation: "数字娱乐报销范围狭窄，非刚需，估值为0。列表：Disney+, ESPN+, Hulu, The New York Times, Peacock, and The Wall Street Journal"
-  }
-  credits {
-    type: RETAIL
-    frequency: SEMI_ANNUAL
-    default_period_value_cents: 5000
-    qualifying_merchants: "Saks Fifth Avenue"
-    details: "$50*2 Saks credit"
-    effective_value_proportion: 0.3
-    effective_value_explanation: "难用，免运费门槛高，按30%估值。"
-  }
-  credits {
-    type: RIDESHARE
-    frequency: MONTHLY
-    default_period_value_cents: 1500
-    overrides {
-      period: 12
-      value_cents: 3500
-    }
-    qualifying_merchants: "Uber"
-    details: "$200 Uber Credit, $15 for Jan-Nov, $35 for Dec."
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
-  }
-  credits {
-    type: FITNESS
-    frequency: ANNUAL
-    default_period_value_cents: 30000
-    qualifying_merchants: "Equinox"
-    details: "$300 Equinox credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "特定健身房会员，非刚需，估值为0。"
-  }
-  credits {
-    type: MEMBERSHIP_REIMBURSEMENT
-    frequency: MONTHLY
-    default_period_value_cents: 1295
-    qualifying_merchants: "Walmart+"
-    details: "$12.95/month Walmart+ credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需，Walmart+为新兴服务，假设持卡人已有其他类似服务会籍，估值为0。"
-  }
-  credits {
-    type: MEMBERSHIP_REIMBURSEMENT
-    frequency: ANNUAL
-    default_period_value_cents: 18900 # Standard CLEAR Me cost
-    qualifying_merchants: "CLEAR"
-    details: "Annual CLEAR credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需，估值为0。"
-  }
-  other_benefits {
-    lounge_access {
-      network: AMEX_CENTURION
-      guest_count: 0
-      notes: "除非年消费满$75,000，否则不可免费带人。"
-    }
-  }
-  other_benefits {
-    lounge_access {
-      network: PRIORITY_PASS_SELECT
-      guest_count: 0
-      notes: "不可用于餐厅。"
-    }
-  }
-  other_benefits {
-    fee_reimbursement {
-      programs: GLOBAL_ENTRY
-      programs: TSA_PRECHECK
-    }
-  }
-}
-cards {
   name: "AMEX Hilton Honors Surpass"
   image_name: "amex_hilton_surpass.png"
   issuer: AMEX
@@ -389,8 +389,8 @@ cards {
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年持卡赠送一张FN，消费达$60,000再送一张。"
-    effective_value_cents: 30000
-    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，只是愿意多出点钱住好点的酒店，保守估计为$300。"
+    effective_value_cents: 35000
+    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，只是愿意多出点钱住好点的酒店，保守估计为$350。"
   }
   credits {
     type: MEMBERSHIP_REIMBURSEMENT
@@ -562,8 +562,8 @@ cards {
     default_period_value_cents: 20000
     qualifying_merchants: "United TravelBank"
     details: "$200 United TravelBank cash, including first year."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费"
+    effective_value_proportion: 0.9
+    effective_value_explanation: "gc算90%，美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费"
   }
   credits {
     type: POINTS_OR_MILES_BONUS
@@ -571,7 +571,7 @@ cards {
     details: "第二年开始每年都送 10,000-mile award flight discount"
     default_period_value_cents: 15000
     effective_value_proportion: 0.5
-    effective_value_explanation: "美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费。假设每2年会兑换一张UA里程票，算50%。"
+    effective_value_explanation: "假设每2年会兑换一张UA里程票，算50%。美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费。"
   }
   credits {
     type: HOTEL_STAY
@@ -1039,8 +1039,8 @@ cards {
     default_period_value_cents: 10000
     qualifying_merchants: "Blacklane"
     details: "$100*2 Blacklane Credit"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "非亚洲难用，按在亚洲打车一次算，2折。"
+    effective_value_proportion: 0.1
+    effective_value_explanation: "非亚洲难用，按1折算。"
   }
   other_benefits {
     lounge_access {
