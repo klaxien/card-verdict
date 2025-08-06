@@ -217,7 +217,7 @@ cards {
     frequency: ANNUAL
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
     effective_value_cents: 30000
-    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，价值保守估计为$300。"
+    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
   }
   credits {
     type: HOTEL_PROPERTY_CREDIT
@@ -390,7 +390,7 @@ cards {
     frequency: ANNUAL
     details: "每年持卡赠送一张FN，消费达$60,000再送一张。"
     effective_value_cents: 30000
-    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，保守估计为$300。"
+    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，只是愿意多出点钱住好点的酒店，保守估计为$300。"
   }
   credits {
     type: MEMBERSHIP_REIMBURSEMENT
@@ -771,7 +771,7 @@ cards {
     frequency: ANNUAL
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
     effective_value_cents: 30000
-    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，价值保守估计为$300。"
+    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
   }
   credits {
     type: HOTEL_PROPERTY_CREDIT
