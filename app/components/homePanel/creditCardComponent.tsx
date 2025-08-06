@@ -6,12 +6,15 @@ import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
 
-const getCreditChipColor = (credit: cardverdict.v1.ICredit): string => {
-    const effectiveValue = calculateAnnualCreditValue(credit, { useEffectiveValue: true });
-    const rawValue = calculateAnnualCreditValue(credit, { useEffectiveValue: false });
+const getCreditChipColor = (credit: cardverdict.v1.ICredit): "success" | "warning" | "error" | "primary" => {
+    const effectiveValue = calculateAnnualCreditValue(credit, {useEffectiveValue: true});
 
-    // Case where there's a positive effective value but no (or zero) raw value defined.
-    // This corresponds to the user's condition: "cents>0 and default_period_value_cents=0/undefined"
+    if (effectiveValue === 0) {
+        return 'error';
+    }
+
+    const rawValue = calculateAnnualCreditValue(credit, {useEffectiveValue: false});
+
     if (rawValue === 0) {
         return effectiveValue > 0 ? 'success' : 'error';
     }
@@ -96,10 +99,6 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
     return (
         <Card>
             <CardContent>
-                {/*<Typography variant="h6" component="div"*/}
-                {/*            sx={{fontWeight: 'bold', display: {xs: 'none', md: 'initial'}}}>*/}
-                {/*    {card.name}*/}
-                {/*</Typography>*/}
                 <Grid
                     container
                     spacing={2}
@@ -117,11 +116,11 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
                             flexGrow: 1,
                             flexBasis: {md: '33.33%'},
                             flexDirection: 'column',
-                            alignItems: {xs: 'center', md: 'initial',},
+                            alignItems: {xs: 'center', md: 'center',},
                             paddingRight: {md: '6em'},
                         }}
                     >
-                        <Typography variant="h6" component="div" sx={{fontWeight: 'bold'}}>
+                        <Typography variant="h6" component="div" sx={{fontWeight: 'bold', textAlign: 'center'}}>
                             {card.name}
                         </Typography>
 
@@ -137,9 +136,11 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
                                 }}
                             />
                             {card.annualFeeCents != null && (
-                                <Typography variant="body2">
-                                    Annual Fee: ${(card.annualFeeCents / 100).toFixed(0)}
-                                </Typography>
+                                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                    <Chip label={`$${(card.annualFeeCents / 100).toFixed(0)}`} size="small"
+                                          color="primary"/>
+                                    <Typography variant="body2">年费</Typography>
+                                </div>
                             )}
                         </Grid>
                     </Grid>

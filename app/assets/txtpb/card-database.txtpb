@@ -2,7 +2,7 @@
 # proto-message: cardverdict.v1.CreditCardDatabase
 
 cards {
-  name: "AMEX Gold Card"
+  name: "AMEX Gold"
   image_name: "amex_gold.png"
   issuer: AMEX
   annual_fee_cents: 32500
@@ -49,7 +49,7 @@ cards {
   }
 }
 cards {
-  name: "AMEX Platinum Card"
+  name: "AMEX Platinum"
   image_name: "amex_platinum.png"
   issuer: AMEX
   annual_fee_cents: 69500
@@ -157,6 +157,7 @@ cards {
     type: COMPANION_TICKET
     frequency: ANNUAL
     details: "每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱机票。"
+    default_period_value_cents: 50000
     effective_value_cents: 16700
     effective_value_explanation: "美卡博客：'用得好价值超过$500，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，折价1/3"
   }
@@ -225,8 +226,9 @@ cards {
     type: COMPANION_TICKET
     frequency: ANNUAL
     details: "每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱/头等舱机票。"
-    effective_value_cents: 33300
-    effective_value_explanation: "美卡博客:'用的好价值高达上千刀，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，按$333算"
+    default_period_value_cents: 50000
+    effective_value_cents: 16700
+    effective_value_explanation: "美卡博客:'用的好价值高达上千刀，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，只用来定经济舱，按$167算"
   }
   credits {
     type: DINING
@@ -352,7 +354,7 @@ cards {
     type: HOTEL_STAY
     frequency: QUARTERLY
     default_period_value_cents: 5000
-    details: "每年$200 Hilton酒店报销，按季度发放，每次$50，适用于任意希尔顿旗下酒店。"
+    details: "$50*4 Hilton酒店报销，适用于任意希尔顿旗下酒店。"
     effective_value_proportion: 0.45
     effective_value_explanation: "假设一年只能用掉2次，按50%*90%估值。"
   }
@@ -552,7 +554,7 @@ cards {
   }
 }
 cards {
-  name: "Chase United Quest Card"
+  name: "Chase United Quest"
   image_name: "chase_united_quest.png"
   issuer: CHASE
   annual_fee_cents: 35000 # Using fee from table
@@ -620,7 +622,7 @@ cards {
     qualifying_merchants: "JSX"
     details: "$150 JSX credit"
     effective_value_proportion: 0
-    effective_value_explanation: "不知道能干啥"
+    effective_value_explanation: "应该不好用吧"
   }
   other_benefits {
     point_perk {
@@ -652,7 +654,7 @@ cards {
   }
 }
 cards {
-  name: "Chase United Club Infinite Card"
+  name: "Chase United Club Infinite"
   image_name: "chase_united_club_infinite.png"
   issuer: CHASE
   annual_fee_cents: 69500 # Using fee from table
@@ -711,7 +713,7 @@ cards {
     qualifying_merchants: "JSX"
     details: "$200 JSX credit"
     effective_value_proportion: 0
-    effective_value_explanation: "不知道能干啥"
+    effective_value_explanation: "应该不好用吧"
   }
   other_benefits {
     travel_status {
@@ -869,7 +871,7 @@ cards {
   }
 }
 cards {
-  name: "City National Bank (CNB) Crystal"
+  name: "City National Bank Crystal"
   image_name: "cnb_crystal.png"
   issuer: CITY_NATIONAL_BANK
   annual_fee_cents: 40000
@@ -953,6 +955,58 @@ cards {
   }
 }
 cards {
+  name: "Citi Strata Elite"
+  image_name: "citi_strata_elite.png"
+  issuer: CITI
+  annual_fee_cents: 59500 # Using fee from table
+  credits {
+    type: HOTEL_STAY
+    frequency: ANNUAL
+    default_period_value_cents: 30000
+    qualifying_merchants: "cititravel.com"
+    details: "$300 hotel credit for a single stay of 2+ nights booked via cititravel.com"
+    effective_value_proportion: 0.9
+    effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+  }
+  credits {
+    type: LIFESTYLE
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    details: "$200 Splurge Credit."
+    effective_value_proportion: 1.0
+    effective_value_explanation: "生活方式报销灵活(American Airlines, Best Buy etc)，可视为现金等价。"
+  }
+  credits {
+    type: GROUND_TRANSPORTATION
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 10000
+    qualifying_merchants: "Blacklane"
+    details: "$100*2 Blacklane Credit"
+    effective_value_proportion: 0.1
+    effective_value_explanation: "非亚洲难用，按1折算。"
+  }
+  other_benefits {
+    lounge_access {
+      network: PRIORITY_PASS_SELECT
+      guest_count: 2
+      notes: "不可用于餐厅。"
+    }
+  }
+  other_benefits {
+    lounge_access {
+      network: AA_ADMIRALS_CLUB
+      guest_count: 0
+      notes: "每年4次准入。"
+    }
+  }
+  other_benefits {
+    fee_reimbursement {
+      programs: GLOBAL_ENTRY
+      programs: TSA_PRECHECK
+    }
+  }
+}
+cards {
   name: "Citi AAdvantage Executive"
   image_name: "citi_aadvantage_executive.png"
   issuer: CITI
@@ -1012,58 +1066,6 @@ cards {
   }
 }
 cards {
-  name: "Citi Strata Elite"
-  image_name: "citi_strata_elite.png"
-  issuer: CITI
-  annual_fee_cents: 59500 # Using fee from table
-  credits {
-    type: HOTEL_STAY
-    frequency: ANNUAL
-    default_period_value_cents: 30000
-    qualifying_merchants: "cititravel.com"
-    details: "$300 hotel credit for a single stay of 2+ nights booked via cititravel.com"
-    effective_value_proportion: 0.9
-    effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
-  }
-  credits {
-    type: LIFESTYLE
-    frequency: ANNUAL
-    default_period_value_cents: 20000
-    details: "$200 Splurge Credit."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "生活方式报销灵活(American Airlines, Best Buy etc)，可视为现金等价。"
-  }
-  credits {
-    type: GROUND_TRANSPORTATION
-    frequency: SEMI_ANNUAL
-    default_period_value_cents: 10000
-    qualifying_merchants: "Blacklane"
-    details: "$100*2 Blacklane Credit"
-    effective_value_proportion: 0.1
-    effective_value_explanation: "非亚洲难用，按1折算。"
-  }
-  other_benefits {
-    lounge_access {
-      network: PRIORITY_PASS_SELECT
-      guest_count: 2
-      notes: "不可用于餐厅。"
-    }
-  }
-  other_benefits {
-    lounge_access {
-      network: AA_ADMIRALS_CLUB
-      guest_count: 0
-      notes: "每年4次准入。"
-    }
-  }
-  other_benefits {
-    fee_reimbursement {
-      programs: GLOBAL_ENTRY
-      programs: TSA_PRECHECK
-    }
-  }
-}
-cards {
   name: "Bank of America Premium Rewards Elite"
   image_name: "bofa_premium_elite.png"
   issuer: BANK_OF_AMERICA
@@ -1099,7 +1101,7 @@ cards {
   }
 }
 cards {
-  name: "HSBC Elite World Elite Mastercard"
+  name: "HSBC Elite"
   image_name: "hsbc_elite.png"
   issuer: HSBC
   annual_fee_cents: 49500 # Using fee from table
@@ -1107,9 +1109,9 @@ cards {
     type: TRAVEL
     frequency: ANNUAL
     default_period_value_cents: 40000
-    details: "$400 annual travel credit for airfare, hotels, car rentals, and cruises."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "假设都能'报销'掉。"
+    details: "$400 annual travel credit，Priceline消费每满$2,000给$100"
+    effective_value_proportion: 0
+    effective_value_explanation: "原则上不使用奇技淫巧。通过合作平台 (Priceline) 支付机票/酒店/租车费用，每累计消费满$2,000给$100，每个calendar year 上限$400"
   }
   credits {
     type: RIDESHARE
