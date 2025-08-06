@@ -74,8 +74,8 @@ cards {
     frequency: MONTHLY
     default_period_value_cents: 1000
     details: "$10*12 Rideshare credit"
-    effective_value_proportion: 0.5
-    effective_value_explanation: "网约车礼品卡常有折扣，按90%估值。"
+    effective_value_proportion: 0.8
+    effective_value_explanation: "网约车礼品卡常有折扣，按80%估值。"
   }
   credits {
     type: TRAVEL_PORTAL
