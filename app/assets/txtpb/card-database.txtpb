@@ -476,7 +476,7 @@ cards {
     frequency: MONTHLY
     default_period_value_cents: 2500 # Simplified total value
     qualifying_merchants: "DoorDash"
-    details: "$300 DoorDash Credit, complex monthly structure: $10 Non-Restaurant x2 + $5 Restaurant x1."
+    details: "$300 DoorDash Credit: $10*2*12 Non-Restaurant  + $5*1"
     effective_value_cents: 15600
     effective_value_explanation: "grocery按5折算，Restaurant按7折算，加起来$162"
   }
