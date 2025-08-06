@@ -638,8 +638,8 @@ cards {
     frequency: ANNUAL
     qualifying_merchants: "United Club"
     details: "United Club Membership"
-    effective_value_cents: 10000
-    effective_value_explanation: "假设你开这张卡就是为了United Club，一年可用5次，一次相当于省一次机场餐厅$20，休息室会籍估值为$100。"
+    effective_value_cents: 12000
+    effective_value_explanation: "假设你开这张卡就是为了United Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
   }
   credits {
     type: HOTEL_STAY
@@ -920,8 +920,8 @@ cards {
     frequency: ANNUAL
     qualifying_merchants: "Admirals Club"
     details: "Admirals Club会籍"
-    effective_value_cents: 2000
-    effective_value_explanation: "假设你开这张卡就是为了Admirals Club，一年可用5次，一次相当于省一次机场餐厅$20，休息室会籍估值为$100。"
+    effective_value_cents: 12000
+    effective_value_explanation: "假设你开这张卡就是为了Admirals Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
   }
   credits {
     type: GROUND_TRANSPORTATION
