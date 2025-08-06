@@ -216,8 +216,8 @@ cards {
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
-    effective_value_cents: 25000
-    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，价值保守估计为$250。"
+    effective_value_cents: 30000
+    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，价值保守估计为$300。"
   }
   credits {
     type: HOTEL_PROPERTY_CREDIT
@@ -271,7 +271,7 @@ cards {
     default_period_value_cents: 2000
     details: "$20*12 credit for specified digital services."
     effective_value_proportion: 0.0
-    effective_value_explanation: "数字娱乐报销范围狭窄，非刚需，估值为0。"
+    effective_value_explanation: "数字娱乐报销范围狭窄，非刚需，估值为0。列表：Disney+, ESPN+, Hulu, The New York Times, Peacock, and The Wall Street Journal"
   }
   credits {
     type: RETAIL
@@ -389,8 +389,8 @@ cards {
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年持卡赠送一张FN，消费达$60,000再送一张。"
-    effective_value_cents: 35000
-    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，保守估计为$350。"
+    effective_value_cents: 30000
+    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，保守估计为$300。"
   }
   credits {
     type: MEMBERSHIP_REIMBURSEMENT
@@ -770,8 +770,8 @@ cards {
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
-    effective_value_cents: 25000
-    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，价值保守估计为$250。"
+    effective_value_cents: 30000
+    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，价值保守估计为$300。"
   }
   credits {
     type: HOTEL_PROPERTY_CREDIT
