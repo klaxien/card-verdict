@@ -174,13 +174,15 @@ cards {
   other_benefits {
     lounge_access {
       network: DELTA_SKY_CLUB
-      restrictions: "每年15次准入Skyclub"
+      guest_count: 0
+      notes: "每年15次准入。guest需付费进入。"
     }
   }
   other_benefits {
     lounge_access {
       network: AMEX_CENTURION
-      restrictions: "飞 Delta 时用本卡购票，可免费进入 Centurion 休息室"
+      guest_count: 0
+      notes: "仅限搭乘用此卡购买的Delta航班时进入。guest需付费进入。"
     }
   }
   other_benefits {
@@ -230,8 +232,8 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "能带人"
-      restrictions: "不能用于餐厅"
+      guest_count: 2
+      notes: "不可用于餐厅。"
     }
   }
   other_benefits {
@@ -323,20 +325,41 @@ cards {
   other_benefits {
     lounge_access {
       network: AMEX_CENTURION
-      guest_policy: "不能带人"
+      guest_count: 0
+      notes: "除非年消费满$75,000，否则不可免费带人。"
     }
   }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "不能带人"
-      restrictions: "不能用于餐厅"
+      guest_count: 0
+      notes: "不可用于餐厅。"
     }
   }
   other_benefits {
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
+    }
+  }
+}
+cards {
+  name: "AMEX Hilton Honors Surpass"
+  image_name: "amex_hilton_surpass.png"
+  issuer: AMEX
+  annual_fee_cents: 15000
+  credits {
+    type: HOTEL_STAY
+    frequency: QUARTERLY
+    default_period_value_cents: 5000
+    details: "每年$200 Hilton酒店报销，按季度发放，每次$50，适用于任意希尔顿旗下酒店。"
+    effective_value_proportion: 0.45
+    effective_value_explanation: "假设一年只能用掉2次，按50%*90%估值。"
+  }
+  other_benefits {
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "赠送 Hilton Honors Gold 会员"
     }
   }
 }
@@ -366,8 +389,8 @@ cards {
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年持卡赠送一张FN，消费达$60,000再送一张。"
-    effective_value_cents: 25000
-    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，保守估计为$250。"
+    effective_value_cents: 35000
+    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，保守估计为$350。"
   }
   credits {
     type: MEMBERSHIP_REIMBURSEMENT
@@ -510,14 +533,14 @@ cards {
   other_benefits {
     lounge_access {
       network: CHASE_SAPPHIRE_LOUNGE
-      guest_policy: "不能带人"
+      guest_count: 2
     }
   }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "不能带人"
-      restrictions: "不能用于餐厅"
+      guest_count: 2
+      included_services: RESTAURANT
     }
   }
   other_benefits {
@@ -639,7 +662,7 @@ cards {
     qualifying_merchants: "United Club"
     details: "United Club Membership"
     effective_value_cents: 12000
-    effective_value_explanation: "假设你开这张卡就是为了United Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
+    effective_value_explanation: "假设你常持这张卡就是为了United Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
   }
   credits {
     type: HOTEL_STAY
@@ -763,14 +786,15 @@ cards {
   other_benefits {
     lounge_access {
       network: CHASE_SAPPHIRE_LOUNGE
-      guest_policy: "不能带人"
+      guest_count: 2
     }
   }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "能带人"
-      restrictions: "不能用于餐厅"
+      guest_count: 2
+      included_services: RESTAURANT
+      notes: "可携带无限宾客。"
     }
   }
   other_benefits {
@@ -804,8 +828,8 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "不能带人"
-      restrictions: "不能用于餐厅"
+      guest_count: 2
+      included_services: RESTAURANT
     }
   }
   other_benefits {
@@ -832,8 +856,9 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "带人按人头扣次数"
-      restrictions: "每年8次准入，可用于餐厅"
+      guest_count: 8
+      included_services: RESTAURANT
+      notes: "每年总共8次免费准入，一次带7人就全用光"
     }
   }
   other_benefits {
@@ -867,8 +892,9 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "不能带人"
-      restrictions: "能用于餐厅"
+      guest_count: 0
+      included_services: RESTAURANT
+      notes: "同行宾客需付费进入。"
     }
   }
   other_benefits {
@@ -899,8 +925,9 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "能带人"
-      restrictions: "能用于餐厅"
+      guest_count: 2
+      included_services: RESTAURANT
+      notes: "或可携带直系亲属。"
     }
   }
   other_benefits {
@@ -908,6 +935,21 @@ cards {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
+  }
+}
+cards {
+  name: "Citi Strata Premier"
+  image_name: "citi_strata_premier.png"
+  issuer: CITI
+  annual_fee_cents: 9500
+  credits {
+    type: HOTEL_STAY
+    frequency: ANNUAL
+    default_period_value_cents: 10000
+    qualifying_merchants: "thankyou.com"
+    details: "每年在 thankyou.com 上预订单次超过$500的酒店住宿可获得$100报销。"
+    effective_value_proportion: 0.2
+    effective_value_explanation: "需要在指定门户网站预订且单次消费需满$500，使用条件苛刻，按20%估值。"
   }
 }
 cards {
@@ -921,7 +963,7 @@ cards {
     qualifying_merchants: "Admirals Club"
     details: "Admirals Club会籍"
     effective_value_cents: 12000
-    effective_value_explanation: "假设你开这张卡就是为了Admirals Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
+    effective_value_explanation: "假设你常持这张卡就是为了Admirals Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
   }
   credits {
     type: GROUND_TRANSPORTATION
@@ -1003,14 +1045,15 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "能带人"
-      restrictions: "不能用于餐厅"
+      guest_count: 2
+      notes: "不可用于餐厅。"
     }
   }
   other_benefits {
     lounge_access {
       network: AA_ADMIRALS_CLUB
-      restrictions: "每年4次AA Admirals Club准入."
+      guest_count: 0
+      notes: "每年4次准入。"
     }
   }
   other_benefits {
@@ -1044,8 +1087,8 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "能带人"
-      restrictions: "能用于餐厅"
+      guest_count: 2
+      included_services: RESTAURANT
     }
   }
   other_benefits {
@@ -1079,8 +1122,8 @@ cards {
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_policy: "能带人"
-      restrictions: "能用于餐厅"
+      guest_count: 2
+      included_services: RESTAURANT
     }
   }
   other_benefits {

@@ -140,8 +140,9 @@ message OtherBenefit {
 // 3. "OtherBenefit" 的具体结构化消息
 // ===================================================================
 
-// 用于描述休息室权益
+// (已重构) 用于描述休息室权益
 message LoungeAccessBenefit {
+  // 定义可用的休息室网络
   enum LoungeNetwork {
     NETWORK_UNSPECIFIED = 0;
     PRIORITY_PASS_SELECT = 1;
@@ -151,9 +152,25 @@ message LoungeAccessBenefit {
     AA_ADMIRALS_CLUB = 5;
     CHASE_SAPPHIRE_LOUNGE = 6;
   }
+
+  // 定义权益中包含的额外服务
+  enum AdditionalService {
+    SERVICE_UNSPECIFIED = 0;
+    RESTAURANT = 2; // e.g., Priority Pass 餐厅
+  }
+
   LoungeNetwork network = 1;
-  string guest_policy = 2; // e.g., "可带2人", "不可带人", "同行按人头扣次"
-  string restrictions = 3; // e.g., "不可用于餐厅", "每年15次准入", "仅限搭乘DL航班时"
+
+  // 可免费携带的同行宾客数量。
+  // 对于更复杂的政策（例如“按人头扣费”），此值可为0，具体细节在 restrictions 字段中说明。
+  int32 guest_count = 2;
+
+  // 权益中明确包含的额外服务列表。
+  repeated AdditionalService included_services = 3;
+
+  // 其他限制条件。
+  // e.g., "每年10次准入", "仅限搭乘DL航班时", "同行者按$29/人收费"
+  repeated string notes = 4;
 }
 
 // 用于描述旅行相关的身份/状态
@@ -204,7 +221,7 @@ message PointPerkBenefit {
 message CreditCard {
   string name = 1;
 
-//  卡片图名字
+  // 卡片图名字
   string image_name = 2;
 
   Issuer issuer = 3;
