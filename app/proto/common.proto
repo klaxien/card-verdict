@@ -112,27 +112,29 @@ message Credit {
 
 // (已重构) 定义其他福利项目，现在是一个包含多种具体福利的容器
 message OtherBenefit {
-  // 使用 oneof 确保一个福利条目只有一个具体的、结构化的类型。
-  oneof benefit_type {
-    LoungeAccessBenefit lounge_access = 1;
-    TravelStatusBenefit travel_status = 2;
-    FeeReimbursementBenefit fee_reimbursement = 3;
-    BaggageBenefit baggage = 4;
-    PointPerkBenefit point_perk = 5;
-    // 对于无法结构化的其他福利（如保险），保留一个通用描述
-    string generic_benefit_description = 6;
-  }
-
   // 评估的等效价值 (Represents the user-perceived value)
   oneof effective_value {
     // 价值比例 (e.g., 0.8 represents 80% of face value)
-    float effective_value_proportion = 7;
+    float effective_value_proportion = 1;
     // 绝对价值 (以美分为单位)
-    int32 effective_value_cents = 8;
+    int32 effective_value_cents = 2;
   }
 
   // 对等效价值的解释 (Explanation for the assigned effective value)
-  string effective_value_explanation = 9;
+  string effective_value_explanation = 3;
+
+  // 使用 oneof 确保一个福利条目只有一个具体的、结构化的类型。
+  oneof benefit_type {
+    // 对于无法结构化的其他福利（如保险），保留一个通用描述
+    string generic_benefit_description = 4;
+
+    LoungeAccessBenefit lounge_access = 5;
+    TravelStatusBenefit travel_status = 6;
+    FeeReimbursementBenefit fee_reimbursement = 7;
+    BaggageBenefit baggage = 8;
+    PointPerkBenefit point_perk = 9;
+    CarRentalInsuranceBenefit car_rental_insurance = 10;
+  }
 }
 
 
@@ -212,9 +214,84 @@ message PointPerkBenefit {
   string description = 1;
 }
 
+message CarRentalInsuranceBenefit {
+  enum CoverageType {
+    COVERAGE_TYPE_UNSPECIFIED = 0;
+    PRIMARY = 1;
+    SECONDARY = 2;
+  }
+  CoverageType coverage_type = 1;
+  string notes = 2;
+}
+
+
+
+message EarningRate {
+  // (新增) 定义标准的消费类别 (Spending Category)
+  // 这个枚举定义消费的“本质”，不关心渠道。
+  enum SpendingCategory {
+    CATEGORY_UNSPECIFIED = 0;
+    TRAVEL = 1;                   // 综合旅行 (可作为默认，或用于涵盖子项未覆盖的旅行消费)
+    FLIGHT = 2;                   // 机票
+    HOTEL = 3;                    // 酒店
+    CAR_RENTAL = 4;               // 租车
+    CRUISE = 5;                   // 邮轮
+
+    DINING = 10;                  // 餐饮
+    GROCERY_STORES = 11;          // 超市
+
+    STREAMING_SERVICES = 20;      // 流媒体服务
+    TRANSIT = 21;                 // 日常通勤/交通 (公交, 地铁, 打车)
+    GAS_STATIONS = 22;            // 加油站
+
+    PHARMACIES = 30;              // 药店
+
+    ALL_OTHER = 100;              // 所有其他消费 (通常是1x返现的基础类别)
+  }
+
+  // (新增) 定义消费返现的渠道或限制条件 (Channel)
+  enum Channel {
+    CHANNEL_UNSPECIFIED = 0;
+    GENERAL = 1;                  // 通用渠道 (无特殊限制，适用于该类别下的所有商户)
+    DIRECT = 2;                   // 直接通过服务商预定 (e.g., 在航空公司官网、酒店官网)
+    TRAVEL_PORTAL = 3;            // 通过发卡行的旅行门户 (e.g., Chase Travel, AmexTravel.com)
+    SPECIFIC_MERCHANTS = 4;       // 仅限特定商户 (需配合 qualifying_merchants 字段使用)
+  }
+
+
+  // 累积乘数 (例如, 5.0 代表 5x 或 5% 返现)
+  float multiplier = 1;
+
+  // 消费类别
+  SpendingCategory category = 3;
+
+  // 消费渠道/限制
+  Channel channel = 4;
+
+  // 限定商户列表。
+  // 仅当 channel 为 SPECIFIC_MERCHANTS 时有效。
+  // e.g., ["Starbucks", "The Cheesecake Factory"]
+  repeated string qualifying_merchants = 5;
+
+  // 额外注解，用于说明人类易读的、无法结构化的使用条件。
+  // e.g., "每年仅限前$25,000消费", "仅限美国境内消费"
+  string notes = 6;
+}
+
+
+// (新增) 用于描述卡片关联的积分/里程价值
+message PointValue {
+  // 每一点/里程的估值 (以美分为单位)。
+  // 例如, 1.6 代表 1.6 cents/point.
+  float cents_per_point = 1;
+
+  // 对该估值的解释或说明。
+  // e.g., "Amex Membership Rewards (MR) 综合估值", "通过 Real-Time Rewards 兑换旅行时"
+  string notes = 2;
+}
 
 // ===================================================================
-// 4. 顶层消息体 (Top-Level Messages)
+// 5. 顶层消息体 (Top-Level Messages)
 // ===================================================================
 
 // 主消息体，代表一张信用卡
@@ -232,6 +309,12 @@ message CreditCard {
 
   // 这张卡提供的所有其他类型的福利
   repeated OtherBenefit other_benefits = 6;
+
+  // (已更新) 这张卡的所有消费返现/积分累积规则
+  repeated EarningRate earning_rates = 7;
+
+  // (新增) 卡片关联的积分/里程价值
+  PointValue point_value = 8;
 }
 
 // 用于存储一个信用卡列表

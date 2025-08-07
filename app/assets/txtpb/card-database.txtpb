@@ -47,6 +47,36 @@ cards {
     effective_value_proportion: 0.5
     effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
   }
+  earning_rates {
+    multiplier: 4.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 4.0
+    category: GROCERY_STORES
+    channel: GENERAL
+    notes: "范围为美国境内"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: DIRECT
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Amex Membership Rewards (MR) 综合估值"
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: SECONDARY
+    }
+  }
 }
 cards {
   name: "AMEX Platinum"
@@ -127,6 +157,32 @@ cards {
     effective_value_proportion: 0.0
     effective_value_explanation: "会员报销非刚需，估值为0。"
   }
+  earning_rates {
+    multiplier: 5.0
+    category: FLIGHT
+    channel: DIRECT
+    notes: "每年消费上限$500k。"
+  }
+  earning_rates {
+    multiplier: 5.0
+    category: FLIGHT
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 5.0
+    category: HOTEL
+    channel: TRAVEL_PORTAL
+    notes: "仅限prepaid酒店"
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Amex Membership Rewards (MR) 综合估值"
+  }
   other_benefits {
     lounge_access {
       network: AMEX_CENTURION
@@ -145,6 +201,11 @@ cards {
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: SECONDARY
     }
   }
 }
@@ -186,6 +247,36 @@ cards {
     details: "$150 Delta Stays credit, for prepaid bookings."
     effective_value_proportion: 0.9
     effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: HOTEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: DIRECT
+    qualifying_merchants: "Delta Air Lines"
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: GROCERY_STORES
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.1
+    notes: "Delta SkyMiles 估值"
   }
   other_benefits {
     point_perk {
@@ -255,6 +346,21 @@ cards {
     details: "$200 Delta Stays credit, for prepaid bookings."
     effective_value_proportion: 0.9
     effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: DIRECT
+    qualifying_merchants: "Delta Air Lines"
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.1
+    notes: "Delta SkyMiles 估值"
   }
   other_benefits {
     point_perk {
@@ -331,6 +437,31 @@ cards {
     effective_value_proportion: 0.0
     effective_value_explanation: "特定rate限制较多，使用不灵活，估值为0。"
   }
+  earning_rates {
+    multiplier: 6.0
+    category: HOTEL
+    channel: SPECIFIC_MERCHANTS
+    qualifying_merchants: "Marriott"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 0.7
+    notes: "Marriott Bonvoy Point 估值"
+  }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
@@ -357,6 +488,36 @@ cards {
     details: "$50*4 Hilton酒店报销，适用于任意希尔顿旗下酒店。"
     effective_value_proportion: 0.45
     effective_value_explanation: "假设一年只能用掉2次，按50%*90%估值。"
+  }
+  earning_rates {
+    multiplier: 14.0
+    category: HOTEL
+    channel: SPECIFIC_MERCHANTS
+    qualifying_merchants: "Hilton"
+  }
+  earning_rates {
+    multiplier: 7.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 7.0
+    category: CAR_RENTAL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 7.0
+    category: FLIGHT
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 0.4
+    notes: "Hilton Honors Point 估值"
   }
   other_benefits {
     travel_status {
@@ -403,6 +564,36 @@ cards {
     effective_value_proportion: 0.0
     effective_value_explanation: "会员报销非刚需，估值为0。"
   }
+  earning_rates {
+    multiplier: 14.0
+    category: HOTEL
+    channel: SPECIFIC_MERCHANTS
+    qualifying_merchants: "Hilton"
+  }
+  earning_rates {
+    multiplier: 7.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 7.0
+    category: CAR_RENTAL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 7.0
+    category: FLIGHT
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 0.4
+    notes: "Hilton Honors Point 估值"
+  }
   other_benefits { # Assumed benefit, this card provides top-tier status
     travel_status {
       type: HOTEL_ELITE_STATUS
@@ -441,9 +632,49 @@ cards {
     effective_value_proportion: 0.5
     effective_value_explanation: "grocery按5折算"
   }
+  earning_rates {
+    multiplier: 5.0
+    category: TRAVEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: STREAMING_SERVICES
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: GROCERY_STORES
+    channel: GENERAL
+    notes: "网上买菜 (Online Grocery)，不包括 Target, Walmart, Wholesale Clubs"
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: TRAVEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Chase Ultimate Rewards (UR) 综合估值"
+  }
   other_benefits {
     point_perk {
-      description: "每年可获得上一年总消费UR点数的10%作为年度Bonus。 [1]"
+      description: "每年可获得上一年总消费UR点数的10%作为年度Bonus。"
+    }
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
     }
   }
 }
@@ -510,7 +741,7 @@ cards {
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "Lyft"
-    details: "$10*12 Lyft Credit"
+    details: "$10*12 Lyft credit"
     effective_value_proportion: 0.45
     effective_value_explanation: "网约车礼品卡常有80%-90%折扣，假设1年只用得上6次，按45%估值。"
   }
@@ -532,6 +763,35 @@ cards {
     effective_value_proportion: 0.0
     effective_value_explanation: "假设平时不用，估值为0。"
   }
+  earning_rates {
+    multiplier: 8.0
+    category: TRAVEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 4.0
+    category: FLIGHT
+    channel: DIRECT
+  }
+  earning_rates {
+    multiplier: 4.0
+    category: HOTEL
+    channel: DIRECT
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Chase Ultimate Rewards (UR) 综合估值"
+  }
   other_benefits {
     lounge_access {
       network: CHASE_SAPPHIRE_LOUNGE
@@ -552,12 +812,17 @@ cards {
       programs: NEXUS
     }
   }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
+    }
+  }
 }
 cards {
   name: "Chase United Quest"
   image_name: "chase_united_quest.png"
   issuer: CHASE
-  annual_fee_cents: 35000 # Using fee from table
+  annual_fee_cents: 35000
   credits {
     type: AIRLINE_CREDIT
     frequency: ANNUAL
@@ -624,6 +889,36 @@ cards {
     effective_value_proportion: 0
     effective_value_explanation: "应该不好用吧"
   }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: SPECIFIC_MERCHANTS
+    qualifying_merchants: "United Airlines"
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: TRAVEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: STREAMING_SERVICES
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.5
+    notes: "United MileagePlus Miles 估值"
+  }
   other_benefits {
     point_perk {
       description: "可以看到额外的经济舱XN舱余票"
@@ -652,19 +947,24 @@ cards {
       programs: NEXUS
     }
   }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
+    }
+  }
 }
 cards {
   name: "Chase United Club Infinite"
   image_name: "chase_united_club_infinite.png"
   issuer: CHASE
-  annual_fee_cents: 69500 # Using fee from table
+  annual_fee_cents: 69500
   credits {
     type: LOUNGE_MEMBERSHIP
     frequency: ANNUAL
     qualifying_merchants: "United Club"
     details: "United Club Membership"
-    effective_value_cents: 12000
-    effective_value_explanation: "假设常持这张卡就是为了United Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
+    effective_value_cents: 16000
+    effective_value_explanation: "可带1人，假设长持这张卡就是为了United Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
   }
   credits {
     type: HOTEL_STAY
@@ -715,6 +1015,36 @@ cards {
     effective_value_proportion: 0
     effective_value_explanation: "应该不好用吧"
   }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: SPECIFIC_MERCHANTS
+    qualifying_merchants: "United Airlines"
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: TRAVEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: STREAMING_SERVICES
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.5
+    notes: "United MileagePlus Miles 估值"
+  }
   other_benefits {
     travel_status {
       type: AIRLINE_PRIORITY_ACCESS
@@ -754,6 +1084,11 @@ cards {
       programs: NEXUS
     }
   }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
+    }
+  }
 }
 cards {
   name: "Chase Ritz-Carlton"
@@ -785,6 +1120,36 @@ cards {
     effective_value_proportion: 0.0
     effective_value_explanation: "酒店内消费限制较多，使用不灵活，估值为0。"
   }
+  earning_rates {
+    multiplier: 6.0
+    category: HOTEL
+    channel: SPECIFIC_MERCHANTS
+    qualifying_merchants: "Marriott"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: CAR_RENTAL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 0.7
+    notes: "Marriott Bonvoy Point 估值"
+  }
   other_benefits {
     lounge_access {
       network: CHASE_SAPPHIRE_LOUNGE
@@ -803,6 +1168,11 @@ cards {
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
     }
   }
 }
@@ -827,6 +1197,30 @@ cards {
     effective_value_cents: 16000
     effective_value_explanation: "美卡博客估值1.6 cpp"
   }
+  earning_rates {
+    multiplier: 10.0
+    category: HOTEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 10.0
+    category: CAR_RENTAL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 5.0
+    category: FLIGHT
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Capital One Miles 综合估值"
+  }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
@@ -838,6 +1232,11 @@ cards {
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
     }
   }
 }
@@ -855,6 +1254,31 @@ cards {
     effective_value_proportion: 0.9
     effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。注意：这$325本身也算10x point，实际价值略高。"
   }
+  earning_rates {
+    multiplier: 3.0
+    category: ALL_OTHER
+    channel: GENERAL
+    notes: "仅限移动支付"
+  }
+  earning_rates {
+    multiplier: 10.0
+    category: HOTEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 10.0
+    category: CAR_RENTAL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 5.0
+    category: FLIGHT
+    channel: TRAVEL_PORTAL
+  }
+  point_value {
+    cents_per_point: 1.5
+    notes: "通过 Real-Time Rewards 兑换旅行消费时价值为 1.5 cents/point"
+  }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
@@ -867,6 +1291,11 @@ cards {
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
     }
   }
 }
@@ -890,6 +1319,27 @@ cards {
     details: "$550 airline lounge membership credit after $50k annual spend."
     effective_value_proportion: 0.0
     effective_value_explanation: "会员报销非刚需且有高消费要求，估值为0。"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: TRAVEL
+    channel: GENERAL
+    notes: "包括机票、酒店、租车、火车、大巴、出租车等。"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: DINING
+    channel: GENERAL
+    notes: "包括餐厅、快餐、外卖等。"
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.2
+    notes: "点数综合估值"
   }
   other_benefits {
     lounge_access {
@@ -918,6 +1368,35 @@ cards {
     details: "$250 annual travel credit."
     effective_value_proportion: 1.0
     effective_value_explanation: "通用旅行报销极其灵活，视为现金。"
+  }
+  earning_rates {
+    multiplier: 5.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 5.0
+    category: FLIGHT
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: HOTEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: CRUISE
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Citi ThankYou Points (TYP) 估值"
   }
   other_benefits {
     point_perk {
@@ -953,12 +1432,63 @@ cards {
     effective_value_proportion: 0.2
     effective_value_explanation: "需要在指定门户网站预订且单次消费需满$500，使用条件苛刻，按20%估值。"
   }
+  earning_rates {
+    multiplier: 10.0
+    category: HOTEL
+    channel: TRAVEL_PORTAL
+    notes: "适用于酒店、租车、景点。"
+  }
+  earning_rates {
+    multiplier: 10.0
+    category: CAR_RENTAL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: GROCERY_STORES
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: GAS_STATIONS
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: FLIGHT
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: HOTEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Citi ThankYou Points (TYP) 估值"
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: SECONDARY
+      notes: "在美国境外是Primary"
+    }
+  }
 }
 cards {
   name: "Citi Strata Elite"
   image_name: "citi_strata_elite.png"
   issuer: CITI
-  annual_fee_cents: 59500 # Using fee from table
+  annual_fee_cents: 59500
   credits {
     type: HOTEL_STAY
     frequency: ANNUAL
@@ -985,6 +1515,43 @@ cards {
     effective_value_proportion: 0.1
     effective_value_explanation: "非亚洲难用，按1折算。"
   }
+  earning_rates {
+    multiplier: 12.0
+    category: HOTEL
+    channel: TRAVEL_PORTAL
+    notes: "适用于酒店、租车、景点。"
+  }
+  earning_rates {
+    multiplier: 12.0
+    category: CAR_RENTAL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 6.0
+    category: FLIGHT
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    multiplier: 6.0
+    category: DINING
+    channel: SPECIFIC_MERCHANTS
+    notes: "仅限周五/周六 6PM-6AM ET"
+  }
+  earning_rates {
+    multiplier: 3.0
+    category: DINING
+    channel: GENERAL
+    notes: "其他时间"
+  }
+  earning_rates {
+    multiplier: 1.5
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.6
+    notes: "Citi ThankYou Points (TYP) 估值"
+  }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
@@ -1005,6 +1572,12 @@ cards {
       programs: TSA_PRECHECK
     }
   }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: SECONDARY
+      notes: "在美国境外是Primary"
+    }
+  }
 }
 cards {
   name: "Citi AAdvantage Executive"
@@ -1016,8 +1589,8 @@ cards {
     frequency: ANNUAL
     qualifying_merchants: "Admirals Club"
     details: "Admirals Club会籍"
-    effective_value_cents: 12000
-    effective_value_explanation: "假设常持这张卡就是为了Admirals Club，一年可用6次，一次相当于省一次机场餐厅$20，休息室会籍估值为$120。"
+    effective_value_cents: 16000
+    effective_value_explanation: "可带2人，假设长持这张卡就是为了Admirals Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
   }
   credits {
     type: GROUND_TRANSPORTATION
@@ -1046,6 +1619,34 @@ cards {
     details: "$10*12 Lyft credit"
     effective_value_proportion: 0.45
     effective_value_explanation: "网约车礼品卡常有80%-90%折扣，假设1年只用得上6次，按45%估值。"
+  }
+  earning_rates {
+    multiplier: 4.0
+    category: FLIGHT
+    channel: SPECIFIC_MERCHANTS
+    qualifying_merchants: "American Airlines"
+    notes: "每年消费满$150k后，此项消费可得 5x 里程。"
+  }
+  earning_rates {
+    multiplier: 10.0
+    category: HOTEL
+    channel: TRAVEL_PORTAL
+    qualifying_merchants: "AA portal Hotels"
+  }
+  earning_rates {
+    multiplier: 10.0
+    category: CAR_RENTAL
+    channel: TRAVEL_PORTAL
+    qualifying_merchants: "AA portal Cars"
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.5
+    notes: "American Airlines AAdvantage Mile 估值"
   }
   other_benefits {
     baggage {
@@ -1086,6 +1687,25 @@ cards {
     effective_value_proportion: 0.9
     effective_value_explanation: "同其他打车系，外卖系credit，按9折算。"
   }
+  earning_rates {
+    multiplier: 2.0
+    category: TRAVEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.5
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.25
+    notes: "BoA 点数估值，持有 Preferred Rewards 等级可获更高返现"
+  }
   other_benefits {
     lounge_access {
       network: PRIORITY_PASS_SELECT
@@ -1099,12 +1719,17 @@ cards {
       programs: TSA_PRECHECK
     }
   }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: PRIMARY
+    }
+  }
 }
 cards {
   name: "HSBC Elite"
   image_name: "hsbc_elite.png"
   issuer: HSBC
-  annual_fee_cents: 49500 # Using fee from table
+  annual_fee_cents: 49500
   credits {
     type: TRAVEL
     frequency: ANNUAL
@@ -1120,6 +1745,25 @@ cards {
     details: "$10*12 Rideshare credit"
     effective_value_proportion: 0.8
     effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+  }
+  earning_rates {
+    multiplier: 5.0
+    category: TRAVEL
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 2.0
+    category: DINING
+    channel: GENERAL
+  }
+  earning_rates {
+    multiplier: 1.0
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_value {
+    cents_per_point: 1.5
+    notes: "HSBC 点数估值"
   }
   other_benefits {
     lounge_access {
@@ -1137,6 +1781,12 @@ cards {
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    car_rental_insurance {
+      coverage_type: SECONDARY
+      notes: "在美国境外是Primary"
     }
   }
 }
