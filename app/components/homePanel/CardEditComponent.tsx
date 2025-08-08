@@ -16,7 +16,7 @@ import {
     Tooltip,
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
-import {cardverdict, uservaluation} from '~/generated/bundle';
+import { cardverdict, uservaluation } from '~/generated/bundle';
 
 type CustomValue = uservaluation.v1.ICustomValue;
 type UserCardValuation = uservaluation.v1.IUserCardValuation;
@@ -112,7 +112,7 @@ const syncLinkedFieldBySource = (
     lastEditedSource: LastEdited,
     annualFaceValueDollars: number,
 ): RowState => {
-    const updated = {...draftRow};
+    const updated = { ...draftRow };
 
     if (lastEditedSource === 'dollars') {
         const dollarsNumber = Number(updated.dollarsInput);
@@ -146,7 +146,7 @@ const normalizeRowOnBlur = (
     field: 'dollars' | 'proportion',
     annualFaceValueDollars: number,
 ): RowState => {
-    const updated = {...draftRow};
+    const updated = { ...draftRow };
 
     if (field === 'dollars') {
         const normalizedDollars = normalizeDollarString(updated.dollarsInput);
@@ -178,7 +178,7 @@ type CreditRowProps = {
     row: RowState;
     faceDollars: number;
     hasProportionDefault: boolean;
-    isLastRow: boolean; // 新增：用于控制分割线显示
+    isLastRow: boolean; // 用于控制分割线显示
     onChange: (patch: Partial<RowState>, source?: LastEdited) => void;
     onBlur: (field: 'dollars' | 'proportion') => void;
     onClear: () => void;
@@ -200,8 +200,8 @@ const CreditRow: React.FC<CreditRowProps> = ({
     return (
         <Box key={creditId}>
             <Grid container alignItems="center" spacing={1}>
-                <Grid size={{xs: 12, md: 6}}>
-                    <Typography variant="subtitle2" sx={{wordBreak: 'break-word'}}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="subtitle2" sx={{ wordBreak: 'break-word' }}>
                         {credit.details || creditId || '未命名报销'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -211,36 +211,34 @@ const CreditRow: React.FC<CreditRowProps> = ({
                     </Typography>
                 </Grid>
 
-                <Grid size={{xs: 12, md: 6}}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Grid container spacing={1} alignItems="center">
-                        <Grid size={{xs: 12, sm: 6}}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <TextField
                                 size="small"
                                 fullWidth
                                 label="美元（年）"
                                 placeholder="例如：123.45"
                                 value={row.dollarsInput}
-                                onChange={(e) => onChange({dollarsInput: e.target.value}, 'dollars')}
+                                onChange={(e) => onChange({ dollarsInput: e.target.value }, 'dollars')}
                                 onBlur={() => onBlur('dollars')}
                                 slotProps={{
                                     input: {
-                                        startAdornment: (
-                                            <InputAdornment position="start">$</InputAdornment>
-                                        ),
+                                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
                                         inputMode: 'decimal',
                                     },
                                 }}
                             />
                         </Grid>
 
-                        <Grid size={{xs: 12, sm: 6}}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <TextField
                                 size="small"
                                 fullWidth
                                 label="等效比例 (0-1)"
                                 placeholder="例如：0.75"
                                 value={row.proportionInput}
-                                onChange={(e) => onChange({proportionInput: e.target.value}, 'proportion')}
+                                onChange={(e) => onChange({ proportionInput: e.target.value }, 'proportion')}
                                 onBlur={() => onBlur('proportion')}
                                 slotProps={{
                                     input: {
@@ -250,23 +248,22 @@ const CreditRow: React.FC<CreditRowProps> = ({
                             />
                         </Grid>
 
-                        <Grid size={{xs: 12}}>
+                        <Grid size={{ xs: 12 }}>
                             <TextField
                                 size="small"
                                 fullWidth
                                 label="说明（可选）"
-                                placeholder="例如：仅每月部分可用，难度较大"
+                                placeholder={`如${credit.defaultEffectiveValueExplanation ?? ''}`}
                                 value={row.explanation}
-                                onChange={(e) => onChange({explanation: e.target.value})}
+                                onChange={(e) => onChange({ explanation: e.target.value })}
                                 slotProps={{
                                     input: showClear
                                         ? {
                                             endAdornment: (
                                                 <InputAdornment position="end">
                                                     <Tooltip title="清空此行">
-                                                        <IconButton aria-label="clear row" size="small"
-                                                                    onClick={onClear}>
-                                                            <ClearIcon fontSize="small"/>
+                                                        <IconButton aria-label="clear row" size="small" onClick={onClear}>
+                                                            <ClearIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
                                                 </InputAdornment>
@@ -279,7 +276,7 @@ const CreditRow: React.FC<CreditRowProps> = ({
                     </Grid>
                 </Grid>
             </Grid>
-            {!isLastRow && <Divider sx={{my: 1}}/>}
+            {!isLastRow && <Divider sx={{ my: 1 }} />}
         </Box>
     );
 };
@@ -296,12 +293,9 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                                                         onClose,
                                                         onSave,
                                                     }) => {
-    // 用于渲染的顺序，与UI一致
+    // 用于渲染的顺序（由父组件传入），对话框会基于该顺序进行“置顶”，但在一次打开会话中不再实时变动
     const credits: Credit[] = React.useMemo(
-        () =>
-            displayCredits && displayCredits.length
-                ? displayCredits
-                : (card.credits ?? []),
+        () => (displayCredits && displayCredits.length ? displayCredits : card.credits ?? []),
         [displayCredits, card.credits],
     );
 
@@ -319,10 +313,14 @@ const CardEditComponent: React.FC<CardEditProps> = ({
     // 行状态：按 creditId 保存
     const [rowStateByCreditId, setRowStateByCreditId] = React.useState<Record<string, RowState>>({});
 
-    // 初始化/重置表单
+    // 本次打开会话的渲染顺序（只在打开时计算一次；编辑过程中不变）
+    const [sessionCredits, setSessionCredits] = React.useState<Credit[]>(credits);
+
+    // 初始化/重置表单 + 会话内排序（基于 initialValuation 是否有编辑痕迹来置顶）
     React.useEffect(() => {
         if (!open) return;
 
+        // 1) 先构建表单初始值
         const initialUserValuation = initialValuation ?? emptyValuation();
         const nextStateByCreditId: Record<string, RowState> = {};
 
@@ -369,6 +367,31 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         }
 
         setRowStateByCreditId(nextStateByCreditId);
+
+        // 2) 计算“已编辑”置顶：仅基于 initialValuation 判定，保证在本次打开期间顺序不随实时输入改变
+        const originalIndexById = new Map<string, number>();
+        credits.forEach((c, i) => originalIndexById.set(c.creditId ?? `__idx_${i}`, i));
+
+        const hasInitialEdited = (creditId: string): boolean => {
+            const v = initialUserValuation.creditValuations?.[creditId];
+            if (!v) return false;
+            if (v.cents != null || v.proportion != null) return true;
+            return (v.explanation?.trim()?.length ?? 0) > 0;
+        };
+
+        const sortedOnce = [...credits].sort((a, b) => {
+            const idA = a.creditId ?? `__idx_${originalIndexById.get(a.creditId ?? '') ?? 0}`;
+            const idB = b.creditId ?? `__idx_${originalIndexById.get(b.creditId ?? '') ?? 0}`;
+            const editedA = hasInitialEdited(idA) ? 1 : 0;
+            const editedB = hasInitialEdited(idB) ? 1 : 0;
+            if (editedB !== editedA) return editedB - editedA; // 已编辑优先
+            // 次级：保持原顺序
+            const idxA = originalIndexById.get(a.creditId ?? '') ?? 0;
+            const idxB = originalIndexById.get(b.creditId ?? '') ?? 0;
+            return idxA - idxB;
+        });
+
+        setSessionCredits(sortedOnce);
     }, [open, credits, rawAnnualFaceCentsByCreditId, initialValuation]);
 
     // 行级操作封装
@@ -384,12 +407,8 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                     };
 
                 const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
-                const merged = syncLinkedFieldBySource(
-                    {...currentRowState, ...patch},
-                    source,
-                    annualFaceValueDollars,
-                );
-                return {...previousState, [creditId]: merged};
+                const merged = syncLinkedFieldBySource({ ...currentRowState, ...patch }, source, annualFaceValueDollars);
+                return { ...previousState, [creditId]: merged };
             });
         },
         [rawAnnualFaceCentsByCreditId],
@@ -403,7 +422,7 @@ const CardEditComponent: React.FC<CardEditProps> = ({
 
                 const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
                 const normalized = normalizeRowOnBlur(currentRowState, field, annualFaceValueDollars);
-                return {...previousState, [creditId]: normalized};
+                return { ...previousState, [creditId]: normalized };
             });
         },
         [rawAnnualFaceCentsByCreditId],
@@ -442,22 +461,18 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                     outputValuation.creditValuations![creditId] = {
                         cents: Math.round(dollarsNumber * 100),
                         explanation: rowState.explanation,
-                    };
+                    } as CustomValue;
                 }
                 continue;
             }
 
             if (rowState.lastEdited === 'proportion') {
                 const proportionNumber = Number(normalizeProportionString(rowState.proportionInput));
-                if (
-                    rowState.proportionInput !== '' &&
-                    Number.isFinite(proportionNumber) &&
-                    !Number.isNaN(proportionNumber)
-                ) {
+                if (rowState.proportionInput !== '' && Number.isFinite(proportionNumber) && !Number.isNaN(proportionNumber)) {
                     outputValuation.creditValuations![creditId] = {
                         proportion: proportionNumber,
                         explanation: rowState.explanation,
-                    };
+                    } as CustomValue;
                 }
             }
 
@@ -468,12 +483,15 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         onClose();
     }, [credits, rowStateByCreditId, onClose, onSave]);
 
+    // ------------------------------
+    // Render
+    // ------------------------------
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
             <DialogTitle>编辑报销估值 — {card.name}</DialogTitle>
             <DialogContent dividers>
                 <Stack spacing={2}>
-                    {credits.map((credit, index) => {
+                    {sessionCredits.map((credit, index) => {
                         const creditId = credit.creditId ?? '';
                         const rowState =
                             rowStateByCreditId[creditId] ?? {
@@ -483,10 +501,9 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                                 lastEdited: undefined,
                             };
 
-                        const annualFaceValueDollars =
-                            (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
+                        const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
                         const hasProportionDefault = credit.defaultEffectiveValueProportion != null;
-                        const isLastRow = index === credits.length - 1;
+                        const isLastRow = index === sessionCredits.length - 1;
 
                         return (
                             <CreditRow

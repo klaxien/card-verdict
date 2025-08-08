@@ -186,6 +186,15 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                                 const valueCents = getDisplayEffectiveCents(credit, userValuation);
                                 const value = valueCents / 100;
                                 const isLast = index === sortedCredits.length - 1;
+                                const getTooltipForCredit = (
+                                    credit: cardverdict.v1.ICredit,
+                                    userVal?: uservaluation.v1.IUserCardValuation,
+                                ): string | undefined => {
+                                    const creditId = credit.creditId ?? '';
+                                    const userNote = userVal?.creditValuations?.[creditId]?.explanation?.trim();
+                                    return userNote && userNote.length > 0 ? userNote : credit.defaultEffectiveValueExplanation ?? '';
+                                };
+
 
                                 return (
                                     <Box key={credit.creditId ?? index}>
@@ -196,14 +205,15 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                                                 </Typography>
                                             </Grid>
                                             <Grid flexShrink={0} flexGrow={1}>
-                                                <Tooltip title={credit.defaultEffectiveValueExplanation}>
+                                                <Tooltip title={getTooltipForCredit(credit, userValuation)}>
                                                     <Chip
                                                         label={`$${value.toFixed(0)}`}
                                                         size="small"
                                                         color={getCreditChipColor(credit, userValuation)}
-                                                        sx={{width: '4em', textAlign: 'center'}}
+                                                        sx={{ width: '4em', textAlign: 'center' }}
                                                     />
                                                 </Tooltip>
+
                                             </Grid>
                                         </Grid>
 
