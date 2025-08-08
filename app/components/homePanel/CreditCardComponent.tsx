@@ -65,21 +65,21 @@ const getDisplayEffectiveCents = (
 
 
 const getCreditChipColor = (
-  credit: cardverdict.v1.ICredit,
-  userVal?: uservaluation.v1.IUserCardValuation,
+    credit: cardverdict.v1.ICredit,
+    userVal?: uservaluation.v1.IUserCardValuation,
 ): 'success' | 'warning' | 'error' | 'primary' => {
-  const effective = getDisplayEffectiveCents(credit, userVal);
-  if (effective === 0) return 'error';
+    const effective = getDisplayEffectiveCents(credit, userVal);
+    if (effective === 0) return 'error';
 
-  const raw = calcRawAnnualCents(credit);
-  if (raw === 0) {
-    return effective > 0 ? 'success' : 'error';
-  }
+    const raw = calcRawAnnualCents(credit);
+    if (raw === 0) {
+        return effective > 0 ? 'success' : 'error';
+    }
 
-  const proportion = effective / raw;
-  if (proportion >= 0.8) return 'success';
-  if (proportion >= 0.2) return 'warning';
-  return 'error';
+    const proportion = effective / raw;
+    if (proportion >= 0.8) return 'success';
+    if (proportion >= 0.2) return 'warning';
+    return 'error';
 };
 
 const colorRank = (credit: cardverdict.v1.ICredit, userVal?: uservaluation.v1.IUserCardValuation): number => {
@@ -112,6 +112,18 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
             const bVal = getDisplayEffectiveCents(b, userValuation);
             return bVal - aVal; // higher value first
         });
+    }, [card.credits, userValuation]);
+
+    // 如果列表里任意一个 credit 的整数金额（四舍五入到美元）为4位数及以上，则所有 Chip 用 5em，否则 4em
+    const hasAnyFourPlusDigits = useMemo(() => {
+        const credits = card.credits ?? [];
+        for (const c of credits) {
+            const cents = getDisplayEffectiveCents(c, userValuation);
+            const dollarsRounded = Math.round(cents / 100);
+            const digits = Math.abs(dollarsRounded).toString().length; // 负值也能正确计算位数
+            if (digits >= 4) return true; // 提前返回，提升性能
+        }
+        return false;
     }, [card.credits, userValuation]);
 
     return (
@@ -210,7 +222,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                                                         label={`$${value.toFixed(0)}`}
                                                         size="small"
                                                         color={getCreditChipColor(credit, userValuation)}
-                                                        sx={{ width: '4em', textAlign: 'center' }}
+                                                        sx={{ width: hasAnyFourPlusDigits ? '5em' : '4em', textAlign: 'center' }}
                                                     />
                                                 </Tooltip>
 
