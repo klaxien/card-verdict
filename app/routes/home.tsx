@@ -1,5 +1,5 @@
 import type {Route} from "./+types/home";
-import HomePanel from "~/components/homePanel/homePanel";
+import HomePanel from "~/components/homePanel/HomePanel";
 
 export function meta({}: Route.MetaArgs) {
     return [

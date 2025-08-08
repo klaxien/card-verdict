@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Grid, CircularProgress, Alert } from '@mui/material';
 import { getCardDatabase } from "~/client/CardDetailsFetcher";
 import { cardverdict } from "~/generated/bundle";
-import CreditCardComponent from "~/components/homePanel/creditCardComponent";
+import CreditCardComponent from "~/components/homePanel/CreditCardComponent";
 
 const HomePanel: React.FC = () => {
     const [cardData, setCardData] = useState<cardverdict.v1.CreditCardDatabase | null>(null);

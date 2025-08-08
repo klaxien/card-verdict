@@ -1,7 +1,8 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useState} from 'react';
 import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import {cardverdict} from "~/generated/bundle";
+import {cardverdict, uservaluation} from "~/generated/bundle";
+import CardEditComponent from './CardEditComponent';
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
@@ -10,7 +11,8 @@ type CreditValueOptions = { useEffectiveValue: boolean };
 
 type CreditCardComponentProps = {
     card: cardverdict.v1.ICreditCard;
-    onEdit?: (card: cardverdict.v1.ICreditCard) => void;
+    onSaveValuation?: (valuation: uservaluation.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
+    initialValuation?: uservaluation.v1.IUserCardValuation;
 };
 
 const PERIODS_PER_YEAR: Record<CreditFrequency, number> = {
@@ -98,7 +100,9 @@ const colorRank = (credit: cardverdict.v1.ICredit): number => {
     return color === 'success' ? 3 : color === 'warning' ? 2 : color === 'error' ? 1 : 0;
 };
 
-const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit}) => {
+const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
+    const [editOpen, setEditOpen] = useState(false);
+
     const totalCreditsValue = useMemo(
         () => calculateTotalAnnualCredits(card, {useEffectiveValue: true}),
         [card],
@@ -107,6 +111,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
     const annualFee = card.annualFeeCents || 0;
     const roi = totalCreditsValue - annualFee;
 
+    // 卡片UI展示顺序（用于编辑对话框保持一致）
     const sortedCredits = useMemo(() => {
         const credits = card.credits ?? [];
         return [...credits].sort((a, b) => {
@@ -122,21 +127,21 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
     return (
         <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4, position: 'relative'}}>
             <CardContent sx={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
-                {/* Edit button: top-right corner */}
+                {/* 顶部右侧仅保留一个“编辑”按钮 */}
                 <Box sx={{position: 'absolute', top: 8, right: 8, zIndex: 1}}>
-                    <Tooltip title="Edit">
+                    <Tooltip title="编辑">
                         <IconButton
                             aria-label="edit card"
                             size="small"
                             color="primary"
-                            onClick={() => onEdit?.(card)}
+                            onClick={() => setEditOpen(true)}
                         >
                             <EditIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 </Box>
 
-                {/* Section 1: Image & Name */}
+                {/* 卡片头部 */}
                 <Grid container spacing={2} alignItems="center" flexWrap="nowrap">
                     <Grid size={4} flexShrink={0}>
                         <CardMedia
@@ -146,7 +151,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
                             sx={{
                                 width: 125,
                                 objectFit: 'fill',
-                                aspectRatio: '1.586/1', // Standard credit card aspect ratio
+                                aspectRatio: '1.586/1',
                                 borderRadius: '4px',
                                 boxShadow: 3,
                             }}
@@ -160,7 +165,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
                     </Grid>
                 </Grid>
 
-                {/* Section 2: Fees */}
+                {/* 费用与净值 */}
                 <Grid container spacing={2} sx={{my: 2, textAlign: 'center'}}>
                     <Grid size={{xs: 6}}>
                         <Typography variant="body2" color="text.secondary">
@@ -183,9 +188,9 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
 
                 <Divider sx={{mb: 2}}/>
 
-                {/* Section 3: Credits */}
+                {/* Credits 列表 */}
                 <Box sx={{flexGrow: 1, overflowY: 'auto', minHeight: 0}}>
-                    <Typography variant="h6" component="div" gutterBottom   sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
+                    <Typography variant="h6" component="div" gutterBottom sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
                         Credits
                     </Typography>
 
@@ -194,13 +199,11 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
                             {sortedCredits.map((credit, index) => {
                                 const creditValueCents = calculateAnnualCreditValue(credit, {useEffectiveValue: true});
                                 const creditValue = creditValueCents / 100;
-                                const chipColor = getCreditChipColor(credit);
                                 const isLast = index === sortedCredits.length - 1;
 
                                 return (
-                                    <Box key={index}>
-                                        <Grid alignItems="baseline" justifyContent="space-between" display="flex"
-                                              gap={1}>
+                                    <Box key={credit.creditId ?? index}>
+                                        <Grid alignItems="baseline" justifyContent="space-between" display="flex" gap={1}>
                                             <Grid flexGrow={1} size={{xs: 10}}>
                                                 <Typography variant="body2" sx={{wordBreak: 'break-word'}}>
                                                     {credit.details}
@@ -211,7 +214,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
                                                     <Chip
                                                         label={`$${creditValue.toFixed(0)}`}
                                                         size="small"
-                                                        color={chipColor}
+                                                        color={getCreditChipColor(credit)}
                                                         sx={{width: '4em', textAlign: 'center'}}
                                                     />
                                                 </Tooltip>
@@ -228,6 +231,16 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit})
                     )}
                 </Box>
             </CardContent>
+
+            {/* 打开单一“巨型表单”对话框，按 UI 顺序编辑所有 credits */}
+            <CardEditComponent
+                open={editOpen}
+                card={card}
+                displayCredits={sortedCredits}
+                initialValuation={initialValuation}
+                onClose={() => setEditOpen(false)}
+                onSave={(v) => onSaveValuation?.(v, card)}
+            />
         </Card>
     );
 };
