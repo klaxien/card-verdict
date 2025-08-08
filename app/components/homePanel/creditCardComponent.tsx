@@ -48,9 +48,9 @@ const calculateAnnualCreditValue = (
     };
 
     if (options?.useEffectiveValue) {
-        if (credit.effectiveValueCents != null) return credit.effectiveValueCents;
-        if (credit.effectiveValueProportion != null) {
-            return calcRawAnnual() * credit.effectiveValueProportion;
+        if (credit.defaultEffectiveValueCents != null) return credit.defaultEffectiveValueCents;
+        if (credit.defaultEffectiveValueProportion != null) {
+            return calcRawAnnual() * credit.defaultEffectiveValueProportion;
         }
         return 0;
     }
@@ -170,7 +170,7 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
                     </Typography>
 
                     {sortedCredits.length > 0 ? (
-                        <Stack spacing={1.5}>
+                        <Stack>
                             {sortedCredits.map((credit, index) => {
                                 const creditValueCents = calculateAnnualCreditValue(credit, {useEffectiveValue: true});
                                 const creditValue = creditValueCents / 100;
@@ -187,7 +187,7 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
                                                 </Typography>
                                             </Grid>
                                             <Grid flexShrink={0} flexGrow={1}>
-                                                <Tooltip title={credit.effectiveValueExplanation}>
+                                                <Tooltip title={credit.defaultEffectiveValueExplanation}>
                                                     <Chip
                                                         label={`$${creditValue.toFixed(0)}`}
                                                         size="small"

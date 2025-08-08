@@ -1,21 +1,24 @@
-# proto-file: app/proto/common.proto
+# proto-file: cards.proto
 # proto-message: cardverdict.v1.CreditCardDatabase
 
 cards {
+  card_id: "amex-gold"
   name: "AMEX Gold"
   image_name: "amex_gold.png"
   issuer: AMEX
   annual_fee_cents: 32500
   credits {
+    credit_id: "uber-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "Uber"
     details: "$10*12 Uber credit"
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   credits {
+    credit_id: "dining-credit"
     type: DINING
     frequency: MONTHLY
     default_period_value_cents: 1000
@@ -26,98 +29,109 @@ cards {
     qualifying_merchants: "Goldbelly"
     qualifying_merchants: "Five Guys"
     details: "$10*12 Grubhub/Cheesecake Factory/etc credit"
-    effective_value_proportion: 0.8
-    effective_value_explanation: "礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   credits {
-    type: DINING # Categorized as Dining
+    credit_id: "dunkin-credit"
+    type: DINING
     frequency: MONTHLY
     default_period_value_cents: 700
     qualifying_merchants: "Dunkin\'"
     details: "$7*12 Dunkin’ credit"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "不健康，卖的贵，保守按2折算"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "不健康，卖的贵，保守按2折算"
   }
   credits {
+    credit_id: "resy-credit"
     type: DINING
     frequency: SEMI_ANNUAL
     default_period_value_cents: 5000
     qualifying_merchants: "Resy"
     details: "$50*2 Resy credit"
-    effective_value_proportion: 0.5
-    effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
   }
   earning_rates {
-    multiplier: 4.0
+    multiplier: 4
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 4.0
+    multiplier: 4
     category: GROCERY_STORES
     channel: GENERAL
     notes: "范围为美国境内"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: DIRECT
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Amex Membership Rewards (MR) 综合估值"
+  point_system_info {
+    system_id: "mr-transferable"
+    system_type: AMEX_MEMBERSHIP_REWARDS
+    default_cents_per_point: 1.6
+    notes: "Amex Membership Rewards (MR) 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: SECONDARY
     }
   }
 }
 cards {
+  card_id: "amex-platinum"
   name: "AMEX Platinum"
   image_name: "amex_platinum.png"
   issuer: AMEX
   annual_fee_cents: 69500
   credits {
+    credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
     frequency: ANNUAL
     default_period_value_cents: 20000
     details: "$200 airline fee credit"
-    effective_value_proportion: 1.0
-    effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
   }
   credits {
+    credit_id: "hotel-credit"
     type: TRAVEL_PORTAL
     frequency: ANNUAL
     default_period_value_cents: 20000
     qualifying_merchants: "AmexTravel.com"
     details: "$200 hotel credit for prepaid Fine Hotels + Resorts® or The Hotel Collection bookings."
-    effective_value_proportion: 1
-    effective_value_explanation: "FHR评价好，按100%估值算"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "FHR评价好，按100%估值算"
   }
   credits {
+    credit_id: "digital-entertainment-credit"
     type: DIGITAL_ENTERTAINMENT
     frequency: MONTHLY
     default_period_value_cents: 2000
     details: "$20*12 credit for specified digital services."
-    effective_value_proportion: 0.0
-    effective_value_explanation: "数字娱乐报销范围狭窄，非刚需，估值为0。列表：Disney+, ESPN+, Hulu, The New York Times, Peacock, and The Wall Street Journal"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "数字娱乐报销范围狭窄，非刚需，估值为0。列表：Disney+, ESPN+, Hulu, The New York Times, Peacock, and The Wall Street Journal"
   }
   credits {
+    credit_id: "saks-credit"
     type: RETAIL
     frequency: SEMI_ANNUAL
     default_period_value_cents: 5000
     qualifying_merchants: "Saks Fifth Avenue"
     details: "$50*2 Saks credit"
-    effective_value_proportion: 0.3
-    effective_value_explanation: "难用，免运费门槛高，按30%估值。"
+    default_effective_value_proportion: 0.3
+    default_effective_value_explanation: "难用，免运费门槛高，按30%估值。"
   }
   credits {
+    credit_id: "uber-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1500
@@ -127,63 +141,69 @@ cards {
     }
     qualifying_merchants: "Uber"
     details: "$200 Uber Credit, $15 for Jan-Nov, $35 for Dec."
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   credits {
+    credit_id: "equinox-credit"
     type: FITNESS
     frequency: ANNUAL
     default_period_value_cents: 30000
     qualifying_merchants: "Equinox"
     details: "$300 Equinox credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "特定健身房会员，非刚需，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "特定健身房会员，非刚需，估值为0。"
   }
   credits {
+    credit_id: "walmart-plus-credit"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: MONTHLY
     default_period_value_cents: 1295
     qualifying_merchants: "Walmart+"
     details: "$12.95/month Walmart+ credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需，Walmart+为新兴服务，假设持卡人已有其他类似服务会籍，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，Walmart+为新兴服务，假设持卡人已有其他类似服务会籍，估值为0。"
   }
   credits {
+    credit_id: "clear-credit"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
-    default_period_value_cents: 18900 # Standard CLEAR Me cost
+    default_period_value_cents: 18900
     qualifying_merchants: "CLEAR"
     details: "Annual CLEAR credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: FLIGHT
     channel: DIRECT
     notes: "每年消费上限$500k。"
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: FLIGHT
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: HOTEL
     channel: TRAVEL_PORTAL
     notes: "仅限prepaid酒店"
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Amex Membership Rewards (MR) 综合估值"
+  point_system_info {
+    system_id: "mr-transferable"
+    system_type: AMEX_MEMBERSHIP_REWARDS
+    default_cents_per_point: 1.6
+    notes: "Amex Membership Rewards (MR) 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "lounge-access-amex-centurion"
     lounge_access {
       network: AMEX_CENTURION
       guest_count: 0
@@ -191,6 +211,7 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 0
@@ -198,110 +219,124 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: SECONDARY
     }
   }
 }
 cards {
+  card_id: "amex-delta-platinum"
   name: "AMEX Delta Platinum"
   image_name: "amex_delta_platinum.png"
   issuer: AMEX
   annual_fee_cents: 35000
   credits {
+    credit_id: "companion-ticket"
     type: COMPANION_TICKET
     frequency: ANNUAL
     details: "每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱机票。"
     default_period_value_cents: 50000
-    effective_value_cents: 16700
-    effective_value_explanation: "美卡博客：'用得好价值超过$500，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，折价1/3"
+    default_effective_value_cents: 16700
+    default_effective_value_explanation: "美卡博客：'用得好价值超过$500，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，折价1/3"
   }
   credits {
+    credit_id: "resy-credit"
     type: DINING
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "Resy"
     details: "$10*12 Resy credit"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "Resy平台使用场景受限，按40%估值。每个月要报销一次麻烦，再打折50%。"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "Resy平台使用场景受限，按40%估值。每个月要报销一次麻烦，再打折50%。"
   }
   credits {
+    credit_id: "rideshare-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1000
     details: "$10*12 Rideshare credit"
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，按80%估值。"
   }
   credits {
+    credit_id: "delta-stays-credit"
     type: TRAVEL_PORTAL
     frequency: ANNUAL
     default_period_value_cents: 15000
     qualifying_merchants: "delta.com/stays"
     details: "$150 Delta Stays credit, for prepaid bookings."
-    effective_value_proportion: 0.9
-    effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: HOTEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: DIRECT
     qualifying_merchants: "Delta Air Lines"
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: GROCERY_STORES
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.1
+  point_system_info {
+    system_id: "delta-skymiles"
+    system_type: DELTA_SKYMILES
+    default_cents_per_point: 1.1
     notes: "Delta SkyMiles 估值"
   }
   other_benefits {
+    benefit_id: "point-perk-delta-take15"
     point_perk {
       description: "持有此卡时,兑换DL里程票可获得15% off"
     }
   }
   other_benefits {
+    benefit_id: "baggage-benefit"
     baggage {
       free_checked_bags_count: 1
       details: "Delta执飞的飞机，第一件托运行李免费。"
     }
   }
   other_benefits {
+    benefit_id: "travel-status-priority-boarding"
     travel_status {
       type: AIRLINE_PRIORITY_ACCESS
       description: "DL航班Zone 5优先登机权"
     }
   }
   other_benefits {
+    benefit_id: "travel-status-upgrade-list"
     travel_status {
       type: AIRLINE_UPGRADE_ELIGIBILITY
       description: "免费排上 Delta Upgrade List，但是优先级排在 Delta高级会员及 Delta Reserve 持卡人之后."
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -309,77 +344,88 @@ cards {
   }
 }
 cards {
+  card_id: "amex-delta-reserve"
   name: "AMEX Delta Reserve"
   image_name: "amex_delta_reserve.png"
   issuer: AMEX
   annual_fee_cents: 65000
   credits {
+    credit_id: "companion-ticket"
     type: COMPANION_TICKET
     frequency: ANNUAL
     details: "每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱/头等舱机票。"
     default_period_value_cents: 50000
-    effective_value_cents: 16700
-    effective_value_explanation: "美卡博客:'用的好价值高达上千刀，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，只用来定经济舱，按$167算"
+    default_effective_value_cents: 16700
+    default_effective_value_explanation: "美卡博客:'用的好价值高达上千刀，远远超出年费。'，但是非常不好用，假设每持卡3年可以用一次，只用来定经济舱，按$167算"
   }
   credits {
+    credit_id: "resy-credit"
     type: DINING
     frequency: MONTHLY
     default_period_value_cents: 2000
     qualifying_merchants: "Resy"
     details: "$20*12 Resy credit"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "Resy平台使用场景受限，按40%估值。每个月要报销一次麻烦，再打折50%"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "Resy平台使用场景受限，按40%估值。每个月要报销一次麻烦，再打折50%"
   }
   credits {
+    credit_id: "rideshare-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1000
     details: "$10*12 Rideshare credit"
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   credits {
+    credit_id: "delta-stays-credit"
     type: TRAVEL_PORTAL
     frequency: ANNUAL
     default_period_value_cents: 20000
     qualifying_merchants: "delta.com/stays"
     details: "$200 Delta Stays credit, for prepaid bookings."
-    effective_value_proportion: 0.9
-    effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: DIRECT
     qualifying_merchants: "Delta Air Lines"
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.1
+  point_system_info {
+    system_id: "delta-skymiles"
+    system_type: DELTA_SKYMILES
+    default_cents_per_point: 1.1
     notes: "Delta SkyMiles 估值"
   }
   other_benefits {
+    benefit_id: "point-perk-delta-take15"
     point_perk {
       description: "持有此卡时,兑换DL里程票可获得15% off"
     }
   }
   other_benefits {
+    benefit_id: "baggage-benefit"
     baggage {
       free_checked_bags_count: 1
       details: "Delta执飞的飞机，第一件托运行李免费。"
     }
   }
   other_benefits {
+    benefit_id: "travel-status-priority-boarding"
     travel_status {
       type: AIRLINE_PRIORITY_ACCESS
       description: "DL航班Zone 5优先登机权"
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-delta-sky-club"
     lounge_access {
       network: DELTA_SKY_CLUB
       guest_count: 0
@@ -387,6 +433,7 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-amex-centurion"
     lounge_access {
       network: AMEX_CENTURION
       guest_count: 0
@@ -394,12 +441,14 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "travel-status-upgrade-list"
     travel_status {
       type: AIRLINE_UPGRADE_ELIGIBILITY
       description: "免费排上 Delta Upgrade List，但是优先级排在 Delta高级会员之后"
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -408,61 +457,68 @@ cards {
   }
 }
 cards {
+  card_id: "amex-marriott-bonvoy-brilliant"
   name: "AMEX Marriott Bonvoy Brilliant"
   image_name: "amex_marriott_monvoy_brilliant.png"
   issuer: AMEX
   annual_fee_cents: 65000
   credits {
+    credit_id: "dining-credit"
     type: DINING
     frequency: MONTHLY
     default_period_value_cents: 2500
     details: "$25*12 Dining credit, for global restaurant purchases."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "通用餐饮报销灵活度高，可视为现金等价。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "通用餐饮报销灵活度高，可视为现金等价。"
   }
   credits {
+    credit_id: "free-night-award-85k"
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
-    effective_value_cents: 30000
-    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
+    default_effective_value_cents: 30000
+    default_effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
   }
   credits {
+    credit_id: "ritz-stregis-property-credit"
     type: HOTEL_PROPERTY_CREDIT
     frequency: ANNUAL
     default_period_value_cents: 10000
     qualifying_merchants: "The Ritz-Carlton"
     qualifying_merchants: "St. Regis"
     details: " $100 Ritz-Carlton或者St. Regis特定rate credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "特定rate限制较多，使用不灵活，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "特定rate限制较多，使用不灵活，估值为0。"
   }
   earning_rates {
-    multiplier: 6.0
+    multiplier: 6
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Marriott"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 0.7
+  point_system_info {
+    system_id: "marriott-bonvoy"
+    system_type: MARRIOTT_BONVOY
+    default_cents_per_point: 0.7
     notes: "Marriott Bonvoy Point 估值"
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -470,6 +526,7 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -477,49 +534,54 @@ cards {
   }
 }
 cards {
+  card_id: "amex-hilton-honors-surpass"
   name: "AMEX Hilton Honors Surpass"
   image_name: "amex_hilton_surpass.png"
   issuer: AMEX
   annual_fee_cents: 15000
   credits {
+    credit_id: "hilton-hotel-credit"
     type: HOTEL_STAY
     frequency: QUARTERLY
     default_period_value_cents: 5000
     details: "$50*4 Hilton酒店报销，适用于任意希尔顿旗下酒店。"
-    effective_value_proportion: 0.45
-    effective_value_explanation: "假设一年只能用掉2次，按50%*90%估值。"
+    default_effective_value_proportion: 0.45
+    default_effective_value_explanation: "假设一年只能用掉2次，按50%*90%估值。"
   }
   earning_rates {
-    multiplier: 14.0
+    multiplier: 14
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Hilton"
   }
   earning_rates {
-    multiplier: 7.0
+    multiplier: 7
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 7.0
+    multiplier: 7
     category: CAR_RENTAL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 7.0
+    multiplier: 7
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 0.4
+  point_system_info {
+    system_id: "hilton-honors"
+    system_type: HILTON_HONORS
+    default_cents_per_point: 0.4
     notes: "Hilton Honors Point 估值"
   }
   other_benefits {
+    benefit_id: "travel-status-hilton-gold"
     travel_status {
       type: HOTEL_ELITE_STATUS
       description: "赠送 Hilton Honors Gold 会员"
@@ -527,74 +589,82 @@ cards {
   }
 }
 cards {
+  card_id: "amex-hilton-honors-aspire"
   name: "AMEX Hilton Honors Aspire"
   image_name: "amex_hilton_honors_aspire.png"
   issuer: AMEX
   annual_fee_cents: 55000
   credits {
+    credit_id: "hilton-resort-credit"
     type: HOTEL_PROPERTY_CREDIT
     frequency: SEMI_ANNUAL
     default_period_value_cents: 20000
     qualifying_merchants: "Hilton Resorts"
     details: "$200*2 Hilton resort credit"
-    effective_value_proportion: 0.8
-    effective_value_explanation: "假设本来就要出行，但是酒店列表极度受限，按8折算"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "假设本来就要出行，但是酒店列表极度受限，按8折算"
   }
   credits {
+    credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
     frequency: QUARTERLY
     default_period_value_cents: 5000
     details: "$50*4 airline fee credit"
-    effective_value_proportion: 0.9
-    effective_value_explanation: "改版后可报销机票，但一季度一次难报销，默认充值成gc，按0.9算"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "改版后可报销机票，但一季度一次难报销，默认充值成gc，按0.9算"
   }
   credits {
+    credit_id: "free-night-award"
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年持卡赠送一张FN，消费达$60,000再送一张。"
-    effective_value_cents: 35000
-    effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，只是愿意多出点钱住好点的酒店，保守估计为$350。"
+    default_effective_value_cents: 35000
+    default_effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，只是愿意多出点钱住好点的酒店，保守估计为$350。"
   }
   credits {
+    credit_id: "clear-credit"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
-    default_period_value_cents: 18900 # Standard CLEAR Me cost
+    default_period_value_cents: 18900
     qualifying_merchants: "CLEAR"
     details: "Annual CLEAR credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
   }
   earning_rates {
-    multiplier: 14.0
+    multiplier: 14
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Hilton"
   }
   earning_rates {
-    multiplier: 7.0
+    multiplier: 7
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 7.0
+    multiplier: 7
     category: CAR_RENTAL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 7.0
+    multiplier: 7
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 0.4
+  point_system_info {
+    system_id: "hilton-honors"
+    system_type: HILTON_HONORS
+    default_cents_per_point: 0.4
     notes: "Hilton Honors Point 估值"
   }
-  other_benefits { # Assumed benefit, this card provides top-tier status
+  other_benefits {
+    benefit_id: "travel-status-hilton-diamond"
     travel_status {
       type: HOTEL_ELITE_STATUS
       description: "Hilton Honors Diamond Status"
@@ -602,203 +672,237 @@ cards {
   }
 }
 cards {
+  card_id: "chase-sapphire-preferred"
   name: "Chase Sapphire Preferred"
   image_name: "chase_sapphire_preferred.png"
   issuer: CHASE
   annual_fee_cents: 9500
   credits {
+    credit_id: "hotel-portal-credit"
     type: TRAVEL_PORTAL
     frequency: ANNUAL
     default_period_value_cents: 5000
     qualifying_merchants: "Chase Travel"
     details: "每年从 Chase Travel 预订酒店可获得 $50 报销"
-    effective_value_proportion: 0.9
-    effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
   }
   credits {
+    credit_id: "dashpass-membership"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
     qualifying_merchants: "DashPass"
     details: "免费的DashPass会员，需在2027年12月31日前激活。"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
   }
   credits {
+    credit_id: "doordash-grocery-credit"
     type: FOOD_DELIVERY
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "DoorDash"
     details: "$10*12 DoorDash Grocery"
-    effective_value_proportion: 0.5
-    effective_value_explanation: "grocery按5折算"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "grocery按5折算"
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: TRAVEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: STREAMING_SERVICES
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: GROCERY_STORES
     channel: GENERAL
     notes: "网上买菜 (Online Grocery)，不包括 Target, Walmart, Wholesale Clubs"
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Chase Ultimate Rewards (UR) 综合估值"
+  point_system_info {
+    system_id: "ur-transferable"
+    system_type: CHASE_ULTIMATE_REWARDS
+    default_cents_per_point: 1.6
+    notes: "Chase Ultimate Rewards (UR) 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "point-perk-annual-bonus"
     point_perk {
       description: "每年可获得上一年总消费UR点数的10%作为年度Bonus。"
     }
   }
   other_benefits {
+    benefit_id: "point-perk-portal-redemption-125"
+    point_perk {
+      description: "通过 Chase Travel 门户预订旅行时，点数价值提升至 1.25 美分/点。"
+    }
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "chase-sapphire-reserve"
   name: "Chase Sapphire Reserve"
   image_name: "chase_sapphire_reserve.png"
   issuer: CHASE
   annual_fee_cents: 79500
   credits {
+    credit_id: "travel-credit"
     type: TRAVEL
     frequency: ANNUAL
     default_period_value_cents: 30000
     details: "$300 annual travel credit"
-    effective_value_proportion: 1.0
-    effective_value_explanation: "通用旅行报销极其灵活，视为现金。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "通用旅行报销极其灵活，视为现金。"
   }
   credits {
+    credit_id: "the-edit-credit"
     type: TRAVEL_PORTAL
     frequency: SEMI_ANNUAL
     default_period_value_cents: 25000
     qualifying_merchants: "The Edit"
     details: "$250*2 The Edit credit"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "非常难用，假设一年只用一次，再扣除溢价，按$100算"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "非常难用，假设一年只用一次，再扣除溢价，按$100算"
   }
   credits {
+    credit_id: "dining-credit"
     type: DINING
     frequency: SEMI_ANNUAL
     default_period_value_cents: 15000
     qualifying_merchants: "Sapphire Reserve Tables"
     details: "$150*2 Dining Credit"
-    effective_value_cents: 5000
-    effective_value_explanation: "非常难用，按$50算顶天了"
+    default_effective_value_cents: 5000
+    default_effective_value_explanation: "非常难用，按$50算顶天了"
   }
   credits {
+    credit_id: "ticketing-credit"
     type: TICKETING_SERVICE
     frequency: SEMI_ANNUAL
     default_period_value_cents: 15000
     qualifying_merchants: "StubHub"
     qualifying_merchants: "viagogo"
     details: "$150*2 StubHub credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "假设平时就不买票，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "假设平时就不买票，估值为0。"
   }
   credits {
+    credit_id: "dashpass-membership"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
     qualifying_merchants: "DashPass"
     details: "Complimentary DashPass Membership"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
   }
   credits {
+    credit_id: "doordash-credit"
     type: FOOD_DELIVERY
     frequency: MONTHLY
-    default_period_value_cents: 2500 # Simplified total value
+    default_period_value_cents: 2500
     qualifying_merchants: "DoorDash"
     details: "$300 DoorDash Credit: $10*2*12 Non-Restaurant  + $5*12"
-    effective_value_cents: 15600
-    effective_value_explanation: "grocery按5折算，Restaurant按7折算，加起来$162"
+    default_effective_value_cents: 15600
+    default_effective_value_explanation: "grocery按5折算，Restaurant按7折算，加起来$162"
   }
   credits {
+    credit_id: "lyft-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "Lyft"
     details: "$10*12 Lyft credit"
-    effective_value_proportion: 0.45
-    effective_value_explanation: "网约车礼品卡常有80%-90%折扣，假设1年只用得上6次，按45%估值。"
+    default_effective_value_proportion: 0.45
+    default_effective_value_explanation: "网约车礼品卡常有80%-90%折扣，假设1年只用得上6次，按45%估值。"
   }
   credits {
+    credit_id: "peloton-credit"
     type: FITNESS
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "Peloton"
     details: "$10*12 Peloton credit"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "特定健身服务，非刚需，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "特定健身服务，非刚需，估值为0。"
   }
   credits {
+    credit_id: "apple-credit"
     type: DIGITAL_ENTERTAINMENT
     frequency: ANNUAL
     default_period_value_cents: 25000
     qualifying_merchants: "Apple"
     details: "$250 Apple TV+ and Apple Music"
-    effective_value_proportion: 0.0
-    effective_value_explanation: "假设平时不用，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "假设平时不用，估值为0。"
   }
   earning_rates {
-    multiplier: 8.0
+    multiplier: 8
     category: TRAVEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 4.0
+    multiplier: 4
     category: FLIGHT
     channel: DIRECT
   }
   earning_rates {
-    multiplier: 4.0
+    multiplier: 4
     category: HOTEL
     channel: DIRECT
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Chase Ultimate Rewards (UR) 综合估值"
+  point_system_info {
+    system_id: "ur-transferable"
+    system_type: CHASE_ULTIMATE_REWARDS
+    default_cents_per_point: 1.6
+    notes: "Chase Ultimate Rewards (UR) 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "point-perk-portal-redemption-150"
+    point_perk {
+      description: "通过 Chase Travel 门户预订旅行时，点数价值提升至 1.5 美分/点。"
+    }
+  }
+  other_benefits {
+    benefit_id: "lounge-access-chase-sapphire"
     lounge_access {
       network: CHASE_SAPPHIRE_LOUNGE
       guest_count: 2
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -806,6 +910,7 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -813,53 +918,60 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "chase-united-quest"
   name: "Chase United Quest"
   image_name: "chase_united_quest.png"
   issuer: CHASE
   annual_fee_cents: 35000
   credits {
+    credit_id: "united-travelbank-credit"
     type: AIRLINE_CREDIT
     frequency: ANNUAL
     default_period_value_cents: 20000
     qualifying_merchants: "United TravelBank"
     details: "$200 United TravelBank cash, including first year."
-    effective_value_proportion: 0.9
-    effective_value_explanation: "gc算90%，美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "gc算90%，美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费"
   }
   credits {
+    credit_id: "points-bonus"
     type: POINTS_OR_MILES_BONUS
     frequency: ANNUAL
     details: "第二年开始每年都送 10,000-mile award flight discount"
     default_period_value_cents: 15000
-    effective_value_proportion: 0.5
-    effective_value_explanation: "假设每2年会兑换一张UA里程票，算50%。美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费。"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "假设每2年会兑换一张UA里程票，算50%。美卡博客： $200 United TravelBank cash + 10,000-mile award flight discount（可以算作值 $150）就相当于 $350 年费。"
   }
   credits {
+    credit_id: "renowned-hotels-credit"
     type: HOTEL_STAY
     frequency: ANNUAL
     default_period_value_cents: 15000
     qualifying_merchants: "Renowned Hotels and Resorts"
     details: "$150 Renowned Hotels and Resorts credit"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "The Edit换皮？20%"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "The Edit换皮？20%"
   }
   credits {
+    credit_id: "avis-budget-credit"
     type: GROUND_TRANSPORTATION
     frequency: ANNUAL
     default_period_value_cents: 8000
     qualifying_merchants: "Avis"
     qualifying_merchants: "Budget"
     details: "First two bookings on cars.united.com result in $40 United TravelBank cash each."
-    effective_value_proportion: 0.2
-    effective_value_explanation: "特定租车平台报销，且返还的是TravelBank，听说只要用非United code就翻车？按20%估值。"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "特定租车平台报销，且返还的是TravelBank，听说只要用非United code就翻车？按20%估值。"
   }
   credits {
+    credit_id: "rideshare-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 800
@@ -868,79 +980,88 @@ cards {
       value_cents: 1200
     }
     details: "$100 Rideshare Credit, $8 for Jan-Nov, $12 for Dec."
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   credits {
+    credit_id: "instacart-credit"
     type: FOOD_DELIVERY
     frequency: MONTHLY
     default_period_value_cents: 1500
     qualifying_merchants: "Instacart"
     details: "$15*12 Instacart credit ($10+$5)."
-    effective_value_proportion: 0.5
-    effective_value_explanation: "平台溢价，按50%估值。"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "平台溢价，按50%估值。"
   }
   credits {
+    credit_id: "jsx-credit"
     type: AIRLINE_CREDIT
     frequency: ANNUAL
     default_period_value_cents: 15000
     qualifying_merchants: "JSX"
     details: "$150 JSX credit"
-    effective_value_proportion: 0
-    effective_value_explanation: "应该不好用吧"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "应该不好用吧"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "United Airlines"
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: STREAMING_SERVICES
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.5
+  point_system_info {
+    system_id: "ua-mileageplus"
+    system_type: UNITED_MILEAGEPLUS
+    default_cents_per_point: 1.5
     notes: "United MileagePlus Miles 估值"
   }
   other_benefits {
+    benefit_id: "point-perk-xn-availability"
     point_perk {
       description: "可以看到额外的经济舱XN舱余票"
     }
   }
   other_benefits {
+    benefit_id: "baggage-benefit"
     baggage {
       free_checked_bags_count: 2
     }
   }
   other_benefits {
+    benefit_id: "travel-status-priority-boarding"
     travel_status {
       type: AIRLINE_PRIORITY_ACCESS
       description: "享受UA执飞航班的 Group 2 优先登机权"
     }
   }
   other_benefits {
+    benefit_id: "point-perk-pay-fee-with-points"
     point_perk {
       description: "持有此卡可以以 1.6 cents/point 的比例用UA里程抵消年费."
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -948,44 +1069,50 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "chase-united-club-infinite"
   name: "Chase United Club Infinite"
   image_name: "chase_united_club_infinite.png"
   issuer: CHASE
   annual_fee_cents: 69500
   credits {
+    credit_id: "united-club-membership"
     type: LOUNGE_MEMBERSHIP
     frequency: ANNUAL
     qualifying_merchants: "United Club"
     details: "United Club Membership"
-    effective_value_cents: 16000
-    effective_value_explanation: "可带1人，假设长持这张卡就是为了United Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
+    default_effective_value_cents: 16000
+    default_effective_value_explanation: "可带1人，假设长持这张卡就是为了United Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
   }
   credits {
+    credit_id: "renowned-hotels-credit"
     type: HOTEL_STAY
     frequency: ANNUAL
     default_period_value_cents: 20000
     qualifying_merchants: "Renowned Hotels and Resorts"
     details: "$200 Renowned Hotels and Resorts credit"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "The Edit换皮？20%"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "The Edit换皮？20%"
   }
   credits {
+    credit_id: "avis-budget-credit"
     type: GROUND_TRANSPORTATION
     frequency: ANNUAL
     default_period_value_cents: 10000
     qualifying_merchants: "Avis"
     qualifying_merchants: "Budget"
     details: "First two bookings on cars.united.com result in $50 United TravelBank cash each."
-    effective_value_proportion: 0.2
-    effective_value_explanation: "特定租车平台报销，且返还的是TravelBank，听说只要用非United code就翻车？按20%估值。"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "特定租车平台报销，且返还的是TravelBank，听说只要用非United code就翻车？按20%估值。"
   }
   credits {
+    credit_id: "rideshare-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1200
@@ -994,90 +1121,101 @@ cards {
       value_cents: 1800
     }
     details: "$150 Rideshare Credit, $12 for Jan-Nov, $18 for Dec."
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   credits {
+    credit_id: "instacart-credit"
     type: FOOD_DELIVERY
     frequency: MONTHLY
     default_period_value_cents: 2000
     qualifying_merchants: "Instacart"
     details: "$20*12 Instacart credit ($10x2)."
-    effective_value_proportion: 0.5
-    effective_value_explanation: "平台溢价，按50%估值。"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "平台溢价，按50%估值。"
   }
   credits {
+    credit_id: "jsx-credit"
     type: AIRLINE_CREDIT
     frequency: ANNUAL
     default_period_value_cents: 20000
     qualifying_merchants: "JSX"
     details: "$200 JSX credit"
-    effective_value_proportion: 0
-    effective_value_explanation: "应该不好用吧"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "应该不好用吧"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "United Airlines"
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: STREAMING_SERVICES
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.5
+  point_system_info {
+    system_id: "ua-mileageplus"
+    system_type: UNITED_MILEAGEPLUS
+    default_cents_per_point: 1.5
     notes: "United MileagePlus Miles 估值"
   }
   other_benefits {
+    benefit_id: "travel-status-premier-access"
     travel_status {
       type: AIRLINE_PRIORITY_ACCESS
       description: "享受UA执飞航班的 Premier Access"
     }
   }
   other_benefits {
+    benefit_id: "point-perk-economy-saver-10-off"
     point_perk {
       description: "UA Economy Saver 里程票10% off"
     }
   }
   other_benefits {
+    benefit_id: "point-perk-xn-availability"
     point_perk {
       description: "可以看到额外的经济舱XN舱余票"
     }
   }
   other_benefits {
+    benefit_id: "baggage-benefit"
     baggage {
       free_checked_bags_count: 2
     }
   }
   other_benefits {
+    benefit_id: "travel-status-ihg-platinum"
     travel_status {
       type: HOTEL_ELITE_STATUS
       description: "赠送IHG Platinum 会籍"
     }
   }
   other_benefits {
+    benefit_id: "point-perk-pay-fee-with-points"
     point_perk {
       description: "持有此卡可以以 1.75 cents/point 的比例用UA里程抵消年费."
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -1085,78 +1223,87 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "chase-ritz-carlton"
   name: "Chase Ritz-Carlton"
   image_name: "chase_ritz_carlton.png"
   issuer: CHASE
   annual_fee_cents: 45000
   credits {
+    credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
     frequency: ANNUAL
     default_period_value_cents: 30000
     details: "$300 annual airline incidental fee credit, reimbursement required."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
   }
   credits {
+    credit_id: "free-night-award-85k"
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
-    effective_value_cents: 30000
-    effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
+    default_effective_value_cents: 30000
+    default_effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
   }
   credits {
+    credit_id: "property-credit"
     type: HOTEL_PROPERTY_CREDIT
     frequency: ANNUAL
     default_period_value_cents: 10000
     qualifying_merchants: "The Ritz-Carlton"
     qualifying_merchants: "St. Regis"
     details: "$100 property credit on stays of 2 nights or more."
-    effective_value_proportion: 0.0
-    effective_value_explanation: "酒店内消费限制较多，使用不灵活，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "酒店内消费限制较多，使用不灵活，估值为0。"
   }
   earning_rates {
-    multiplier: 6.0
+    multiplier: 6
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Marriott"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: CAR_RENTAL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 0.7
+  point_system_info {
+    system_id: "marriott-bonvoy"
+    system_type: MARRIOTT_BONVOY
+    default_cents_per_point: 0.7
     notes: "Marriott Bonvoy Point 估值"
   }
   other_benefits {
+    benefit_id: "lounge-access-chase-sapphire"
     lounge_access {
       network: CHASE_SAPPHIRE_LOUNGE
       guest_count: 2
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -1165,63 +1312,71 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "capital-one-venture-x"
   name: "Capital One Venture X"
   image_name: "capital_one_venture_x.png"
   issuer: CAPITAL_ONE
   annual_fee_cents: 39500
   credits {
+    credit_id: "travel-portal-credit"
     type: TRAVEL_PORTAL
     frequency: ANNUAL
     default_period_value_cents: 30000
     qualifying_merchants: "Capital One Travel"
     details: "$300 annual Capital One Travel credit."
-    effective_value_proportion: 1
-    effective_value_explanation: "C1平台可BRG，有降价保护，按100%算"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "C1平台可BRG，有降价保护，按100%算"
   }
   credits {
+    credit_id: "points-bonus"
     type: POINTS_OR_MILES_BONUS
     frequency: ANNUAL
     details: "10,000 anniversary bonus miles."
-    effective_value_cents: 16000
-    effective_value_explanation: "美卡博客估值1.6 cpp"
+    default_effective_value_cents: 16000
+    default_effective_value_explanation: "美卡博客估值1.6 cpp"
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: FLIGHT
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Capital One Miles 综合估值"
+  point_system_info {
+    system_id: "c1-transferable"
+    system_type: CAPITAL_ONE_MILES
+    default_cents_per_point: 1.6
+    notes: "Capital One Miles 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -1229,57 +1384,64 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "us-bank-altitude-reserve"
   name: "U.S. Bank Altitude Reserve"
   image_name: "us_bank_altitude_reserve.png"
   issuer: US_BANK
   annual_fee_cents: 40000
   credits {
+    credit_id: "travel-portal-credit"
     type: TRAVEL_PORTAL
     frequency: ANNUAL
     default_period_value_cents: 32500
     qualifying_merchants: "US Bank Altitude Rewards Center"
     details: "$325 annual credit for travel booked through the portal."
-    effective_value_proportion: 0.9
-    effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。注意：这$325本身也算10x point，实际价值略高。"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。注意：这$325本身也算10x point，实际价值略高。"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: ALL_OTHER
     channel: GENERAL
     notes: "仅限移动支付"
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: FLIGHT
     channel: TRAVEL_PORTAL
   }
-  point_value {
-    cents_per_point: 1.5
+  point_system_info {
+    system_id: "usbank-altitude-reserve"
+    system_type: US_BANK_ALTITUDE
+    default_cents_per_point: 1.5
     notes: "通过 Real-Time Rewards 兑换旅行消费时价值为 1.5 cents/point"
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 8
@@ -1288,60 +1450,68 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "city-national-bank-crystal"
   name: "City National Bank Crystal"
   image_name: "cnb_crystal.png"
   issuer: CITY_NATIONAL_BANK
   annual_fee_cents: 40000
   credits {
+    credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
     frequency: ANNUAL
     default_period_value_cents: 35000
     details: "$350 annual airline incidental fee credit."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
   }
   credits {
+    credit_id: "lounge-membership-credit"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
     default_period_value_cents: 55000
     details: "$550 airline lounge membership credit after $50k annual spend."
-    effective_value_proportion: 0.0
-    effective_value_explanation: "会员报销非刚需且有高消费要求，估值为0。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需且有高消费要求，估值为0。"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: TRAVEL
     channel: GENERAL
     notes: "包括机票、酒店、租车、火车、大巴、出租车等。"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: DINING
     channel: GENERAL
     notes: "包括餐厅、快餐、外卖等。"
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.2
+  point_system_info {
+    system_id: "cnb-crystal"
+    system_type: SYSTEM_UNSPECIFIED # No specific family
+    default_cents_per_point: 1.2
     notes: "点数综合估值"
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 0
@@ -1350,6 +1520,7 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -1357,53 +1528,59 @@ cards {
   }
 }
 cards {
+  card_id: "citi-prestige"
   name: "Citi Prestige"
   image_name: "citi_prestige.png"
   issuer: CITI
   annual_fee_cents: 49500
   credits {
+    credit_id: "travel-credit"
     type: TRAVEL
     frequency: ANNUAL
     default_period_value_cents: 25000
     details: "$250 annual travel credit."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "通用旅行报销极其灵活，视为现金。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "通用旅行报销极其灵活，视为现金。"
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: HOTEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: CRUISE
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Citi ThankYou Points (TYP) 估值"
+  point_system_info {
+    system_id: "typ-transferable"
+    system_type: CITI_THANKYOU_POINTS
+    default_cents_per_point: 1.6
+    notes: "Citi ThankYou Points (TYP) 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "point-perk-4th-night-free"
     point_perk {
       description: "住三送一福利 (4th Night Free): 每年可通过 Citi ThankYou 旅游门户网站预订连续四晚的酒店，获得第四晚的房费减免（不含税费），每年最多使用两次。"
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -1412,6 +1589,7 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -1419,65 +1597,70 @@ cards {
   }
 }
 cards {
+  card_id: "citi-strata-premier"
   name: "Citi Strata Premier"
   image_name: "citi_strata_premier.png"
   issuer: CITI
   annual_fee_cents: 9500
   credits {
+    credit_id: "hotel-credit"
     type: HOTEL_STAY
     frequency: ANNUAL
     default_period_value_cents: 10000
     qualifying_merchants: "thankyou.com"
     details: "每年在 thankyou.com 上预订单次超过$500的酒店住宿可获得$100报销。"
-    effective_value_proportion: 0.2
-    effective_value_explanation: "需要在指定门户网站预订且单次消费需满$500，使用条件苛刻，按20%估值。"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "需要在指定门户网站预订且单次消费需满$500，使用条件苛刻，按20%估值。"
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
     notes: "适用于酒店、租车、景点。"
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: GROCERY_STORES
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: GAS_STATIONS
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: HOTEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Citi ThankYou Points (TYP) 估值"
+  point_system_info {
+    system_id: "typ-transferable"
+    system_type: CITI_THANKYOU_POINTS
+    default_cents_per_point: 1.6
+    notes: "Citi ThankYou Points (TYP) 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: SECONDARY
       notes: "在美国境外是Primary"
@@ -1485,60 +1668,64 @@ cards {
   }
 }
 cards {
+  card_id: "citi-strata-elite"
   name: "Citi Strata Elite"
   image_name: "citi_strata_elite.png"
   issuer: CITI
   annual_fee_cents: 59500
   credits {
+    credit_id: "hotel-credit"
     type: HOTEL_STAY
     frequency: ANNUAL
     default_period_value_cents: 30000
     qualifying_merchants: "cititravel.com"
     details: "$300 hotel credit for a single stay of 2+ nights booked via cititravel.com"
-    effective_value_proportion: 0.9
-    effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
   }
   credits {
+    credit_id: "splurge-credit"
     type: LIFESTYLE
     frequency: ANNUAL
     default_period_value_cents: 20000
     details: "$200 Splurge Credit."
-    effective_value_proportion: 1.0
-    effective_value_explanation: "生活方式报销灵活(American Airlines, Best Buy etc)，可视为现金等价。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "生活方式报销灵活(American Airlines, Best Buy etc)，可视为现金等价。"
   }
   credits {
+    credit_id: "blacklane-credit"
     type: GROUND_TRANSPORTATION
     frequency: SEMI_ANNUAL
     default_period_value_cents: 10000
     qualifying_merchants: "Blacklane"
     details: "$100*2 Blacklane Credit"
-    effective_value_proportion: 0.1
-    effective_value_explanation: "非亚洲难用，按1折算。"
+    default_effective_value_proportion: 0.1
+    default_effective_value_explanation: "非亚洲难用，按1折算。"
   }
   earning_rates {
-    multiplier: 12.0
+    multiplier: 12
     category: HOTEL
     channel: TRAVEL_PORTAL
     notes: "适用于酒店、租车、景点。"
   }
   earning_rates {
-    multiplier: 12.0
+    multiplier: 12
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 6.0
+    multiplier: 6
     category: FLIGHT
     channel: TRAVEL_PORTAL
   }
   earning_rates {
-    multiplier: 6.0
+    multiplier: 6
     category: DINING
     channel: SPECIFIC_MERCHANTS
     notes: "仅限周五/周六 6PM-6AM ET"
   }
   earning_rates {
-    multiplier: 3.0
+    multiplier: 3
     category: DINING
     channel: GENERAL
     notes: "其他时间"
@@ -1548,11 +1735,14 @@ cards {
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.6
-    notes: "Citi ThankYou Points (TYP) 估值"
+  point_system_info {
+    system_id: "typ-transferable"
+    system_type: CITI_THANKYOU_POINTS
+    default_cents_per_point: 1.6
+    notes: "Citi ThankYou Points (TYP) 可转点体系综合估值"
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -1560,6 +1750,7 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-admirals-club"
     lounge_access {
       network: AA_ADMIRALS_CLUB
       guest_count: 0
@@ -1567,12 +1758,14 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: SECONDARY
       notes: "在美国境外是Primary"
@@ -1580,86 +1773,96 @@ cards {
   }
 }
 cards {
+  card_id: "citi-aadvantage-executive"
   name: "Citi AAdvantage Executive"
   image_name: "citi_aadvantage_executive.png"
   issuer: CITI
   annual_fee_cents: 59500
   credits {
+    credit_id: "admirals-club-membership"
     type: LOUNGE_MEMBERSHIP
     frequency: ANNUAL
     qualifying_merchants: "Admirals Club"
     details: "Admirals Club会籍"
-    effective_value_cents: 16000
-    effective_value_explanation: "可带2人，假设长持这张卡就是为了Admirals Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
+    default_effective_value_cents: 16000
+    default_effective_value_explanation: "可带2人，假设长持这张卡就是为了Admirals Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
   }
   credits {
+    credit_id: "avis-budget-credit"
     type: GROUND_TRANSPORTATION
     frequency: ANNUAL
     default_period_value_cents: 12000
     qualifying_merchants: "Avis"
     qualifying_merchants: "Budget"
     details: "$120 Avis/Budget rental car credit"
-    effective_value_proportion: 0.4
-    effective_value_explanation: "特定租车平台报销，似乎难用？按40%估值。"
+    default_effective_value_proportion: 0.4
+    default_effective_value_explanation: "特定租车平台报销，似乎难用？按40%估值。"
   }
   credits {
+    credit_id: "grubhub-credit"
     type: FOOD_DELIVERY
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "Grubhub"
     details: "$10*12 Grubhub credit"
-    effective_value_proportion: 0.8
-    effective_value_explanation: "礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   credits {
+    credit_id: "lyft-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1000
     qualifying_merchants: "Lyft"
     details: "$10*12 Lyft credit"
-    effective_value_proportion: 0.45
-    effective_value_explanation: "网约车礼品卡常有80%-90%折扣，假设1年只用得上6次，按45%估值。"
+    default_effective_value_proportion: 0.45
+    default_effective_value_explanation: "网约车礼品卡常有80%-90%折扣，假设1年只用得上6次，按45%估值。"
   }
   earning_rates {
-    multiplier: 4.0
+    multiplier: 4
     category: FLIGHT
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "American Airlines"
     notes: "每年消费满$150k后，此项消费可得 5x 里程。"
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
     qualifying_merchants: "AA portal Hotels"
   }
   earning_rates {
-    multiplier: 10.0
+    multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
     qualifying_merchants: "AA portal Cars"
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.5
+  point_system_info {
+    system_id: "aa-aadvantage"
+    system_type: AA_AADVANTAGE
+    default_cents_per_point: 1.5
     notes: "American Airlines AAdvantage Mile 估值"
   }
   other_benefits {
+    benefit_id: "baggage-benefit"
     baggage {
       free_checked_bags_count: 1
     }
   }
   other_benefits {
+    benefit_id: "travel-status-priority-boarding"
     travel_status {
       type: AIRLINE_PRIORITY_ACCESS
       description: "享受AA执飞航班的优先登机权."
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
@@ -1667,33 +1870,36 @@ cards {
   }
 }
 cards {
+  card_id: "bofa-premium-rewards-elite"
   name: "Bank of America Premium Rewards Elite"
   image_name: "bofa_premium_elite.png"
   issuer: BANK_OF_AMERICA
   annual_fee_cents: 55000
   credits {
+    credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
     frequency: ANNUAL
     default_period_value_cents: 30000
     details: "$300 annual airline incidental fee credit"
-    effective_value_proportion: 1.0
-    effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
   }
   credits {
+    credit_id: "lifestyle-credit"
     type: LIFESTYLE
     frequency: ANNUAL
     default_period_value_cents: 15000
     details: "$150 annual lifestyle credit for streaming, food delivery, fitness, and rideshare."
-    effective_value_proportion: 0.9
-    effective_value_explanation: "同其他打车系，外卖系credit，按9折算。"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "同其他打车系，外卖系credit，按9折算。"
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: DINING
     channel: GENERAL
   }
@@ -1702,11 +1908,14 @@ cards {
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.25
+  point_system_info {
+    system_id: "bofa-preferred-rewards"
+    system_type: SYSTEM_UNSPECIFIED # BoA points don't have a formal "family" like MR or UR
+    default_cents_per_point: 1.25
     notes: "BoA 点数估值，持有 Preferred Rewards 等级可获更高返现"
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -1714,58 +1923,66 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: PRIMARY
     }
   }
 }
 cards {
+  card_id: "hsbc-elite"
   name: "HSBC Elite"
   image_name: "hsbc_elite.png"
   issuer: HSBC
   annual_fee_cents: 49500
   credits {
+    credit_id: "travel-credit"
     type: TRAVEL
     frequency: ANNUAL
     default_period_value_cents: 40000
     details: "$400 annual travel credit，Priceline消费每满$2,000给$100"
-    effective_value_proportion: 0
-    effective_value_explanation: "原则上不使用奇技淫巧。通过合作平台 (Priceline) 支付机票/酒店/租车费用，每累计消费满$2,000给$100，每个calendar year 上限$400"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "原则上不使用奇技淫巧。通过合作平台 (Priceline) 支付机票/酒店/租车费用，每累计消费满$2,000给$100，每个calendar year 上限$400"
   }
   credits {
+    credit_id: "rideshare-credit"
     type: RIDESHARE
     frequency: MONTHLY
     default_period_value_cents: 1000
     details: "$10*12 Rideshare credit"
-    effective_value_proportion: 0.8
-    effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   earning_rates {
-    multiplier: 5.0
+    multiplier: 5
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 2.0
+    multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
-    multiplier: 1.0
+    multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
   }
-  point_value {
-    cents_per_point: 1.5
+  point_system_info {
+    system_id: "hsbc-rewards"
+    system_type: SYSTEM_UNSPECIFIED
+    default_cents_per_point: 1.5
     notes: "HSBC 点数估值"
   }
   other_benefits {
+    benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
@@ -1773,17 +1990,20 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "point-perk-expedia-agoda-10-off"
     point_perk {
       description: "在 Expedia 和 Agoda 订酒店可以获得 10% off."
     }
   }
   other_benefits {
+    benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
     }
   }
   other_benefits {
+    benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: SECONDARY
       notes: "在美国境外是Primary"

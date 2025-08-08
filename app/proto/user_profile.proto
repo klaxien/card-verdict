@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package uservaluation.v1;
+
+// 引入 cardverdict 的 CreditFrequency 枚举
+import "cards.proto";
+
+// ===================================================================
+// 1. 核心消息体 (Core Messages)
+// ===================================================================
+
+// 代表用户对单个项目的自定义价值
+message CustomValue {
+  // 用户设定的估值
+  oneof value {
+    // 价值比例 (e.g., 0.8 代表用户认为此福利只值票面价值的80%)
+    float proportion = 1;
+    // 绝对价值 (以美分为单位, e.g., 用户认为$300的旅行报销对他只值$200, 或 1.8 cpp 的积分价值表示为 180)
+    int32 cents = 2;
+  }
+
+  // 用户对该估值的解释 (e.g., "这个航空报销太难用了，我只能用到一半")
+  string explanation = 3;
+}
+
+// (已重命名) 用于表示一个完全由用户自定义的财务调整项 (福利或成本)
+message CustomAdjustment {
+  // 由客户端生成的唯一ID (e.g., UUID)，用于编辑或删除此条目。
+  string custom_adjustment_id = 1;
+
+  // 用户对此项目的描述
+  // e.g., "系统里没有的$50酒店报销", "Retention Offer: $100 statement credit", "海外账户管理费"
+  string description = 2;
+
+  // 此项目的发生频率
+  cardverdict.v1.CreditFrequency frequency = 3;
+
+  // 此项目的价值，以美分为单位。
+  // 使用 sint32 (有符号整数) 来支持正值 (福利) 和负值 (成本)。
+  // e.g., 10000 for a $100 benefit, -10000 for a $100 cost.
+  sint32 value_cents = 4;
+
+  // 用户的可选备注
+  string notes = 5;
+}
+
+// 存储用户对单张信用卡所有“本地”福利和年费的自定义估值 - (已更新)
+message UserCardValuation {
+  // 映射 credit_id 到用户的自定义价值。
+  // Key: cardverdict.v1.Credit.credit_id
+  map<string, CustomValue> credit_valuations = 1;
+
+  // 映射 benefit_id 到用户的自定义价值。
+  // Key: cardverdict.v1.OtherBenefit.benefit_id
+  map<string, CustomValue> other_benefit_valuations = 2;
+
+  // (可选) 用户对年费的自定义估值。
+  // 如果用户有办法通过特殊offer减免年费，可在此记录。
+  optional CustomValue annual_fee_valuation = 3;
+
+  // (已更新) 一个列表，包含所有由用户手动添加的、非官方的财务调整项。
+  repeated CustomAdjustment custom_adjustments = 4;
+}
+
+// ===================================================================
+// 2. 顶层消息体 (Top-Level Messages)
+// ===================================================================
+
+// 顶层消息，代表一个用户的所有估值数据
+message UserValuationDatabase {
+  // 映射 card_id 到该卡的自定义估值集合。
+  // Key: cardverdict.v1.CreditCard.card_id
+  map<string, UserCardValuation> card_valuations = 1;
+
+  // 用户对所有“全局”积分体系的自定义估值
+  // Key: cardverdict.v1.PointSystemInfo.system_id 字符串
+  // Value: 用户对该点数体系的估值
+  map<string, CustomValue> point_system_valuations = 2;
+}

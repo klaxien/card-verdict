@@ -75,65 +75,73 @@ message PeriodOverride {
 
 // 定义一个具体的信用/报销项目
 message Credit {
+  // (新增) 唯一的、人类可读的福利标识符，在单张卡片内必须唯一。
+  // e.g., "uber-cash", "saks-credit", "airline-fee-credit"
+  string credit_id = 1;
+
   // 报销类型
-  CreditType type = 1;
+  CreditType type = 2;
 
   // 报销频率
-  CreditFrequency frequency = 2;
+  CreditFrequency frequency = 3;
 
   // 每个周期的“标准”报销金额 (以美分为单位)。
   // 如果福利完全不规则 (例如，只在特定月份提供)，可将此设为 0。
-  int32 default_period_value_cents = 3;
+  int32 default_period_value_cents = 4;
 
   // 一个列表，包含所有金额不符合标准的周期。
   // 用于处理 "1-11月每月$15, 12月$35" 这样的例外情况。
-  repeated PeriodOverride overrides = 4;
+  repeated PeriodOverride overrides = 5;
 
   // 限定商户列表。
   // 如果此列表非空，则表示福利仅适用于列表中的商户。
   // 如果列表为空，则表示福利是通用的 (适用于该类别下的任何商户)。
-  repeated string qualifying_merchants = 5;
+  repeated string qualifying_merchants = 6;
 
   // 额外备注，用于说明人类易读的、无法结构化的使用条件。
   // e.g., "需预定至少两晚", "每年最多使用两次"
-  string details = 6;
+  string details = 7;
 
-  // 评估的等效价值 (Represents the user-perceived value)
-  oneof effective_value {
+  // 官方/默认的等效价值 (Represents the default perceived value)
+  oneof default_effective_value {
     // 价值比例 (e.g., 0.8 represents 80% of face value)
-    float effective_value_proportion = 7;
+    float default_effective_value_proportion = 8;
     // 绝对价值 (以美分为单位)
-    int32 effective_value_cents = 8;
+    int32 default_effective_value_cents = 9;
   }
 
-  // 对等效价值的解释 (Explanation for the assigned effective value)
-  string effective_value_explanation = 9;
+  // 对默认估值的解释 (Explanation for the assigned default value)
+  string default_effective_value_explanation = 10;
 }
 
-// (已重构) 定义其他福利项目，现在是一个包含多种具体福利的容器
+// 定义其他福利项目，现在是一个包含多种具体福利的容器
 message OtherBenefit {
-  // 评估的等效价值 (Represents the user-perceived value)
-  oneof effective_value {
+  // (新增) 唯一的、人类可读的福利标识符，在单张卡片内必须唯一。
+  // e.g., "priority-pass", "global-entry-reimbursement", "primary-rental-insurance"
+  string benefit_id = 1;
+
+  // 官方/默认的等效价值 (Represents the default perceived value)
+  oneof default_effective_value {
     // 价值比例 (e.g., 0.8 represents 80% of face value)
-    float effective_value_proportion = 1;
+    float default_effective_value_proportion = 2;
     // 绝对价值 (以美分为单位)
-    int32 effective_value_cents = 2;
+    int32 default_effective_value_cents = 3;
   }
 
-  // 对等效价值的解释 (Explanation for the assigned effective value)
-  string effective_value_explanation = 3;
+  // 对默认估值的解释 (Explanation for the assigned default value)
+  string default_effective_value_explanation = 4;
 
   // 使用 oneof 确保一个福利条目只有一个具体的、结构化的类型。
   oneof benefit_type {
     // 对于无法结构化的其他福利（如保险），保留一个通用描述
-    string generic_benefit_description = 4;
+    string generic_benefit_description = 5;
 
-    LoungeAccessBenefit lounge_access = 5;
-    TravelStatusBenefit travel_status = 6;
-    FeeReimbursementBenefit fee_reimbursement = 7;
-    BaggageBenefit baggage = 8;
-    PointPerkBenefit point_perk = 9;
-    CarRentalInsuranceBenefit car_rental_insurance = 10;
+    LoungeAccessBenefit lounge_access = 6;
+    TravelStatusBenefit travel_status = 7;
+    FeeReimbursementBenefit fee_reimbursement = 8;
+    BaggageBenefit baggage = 9;
+    PointPerkBenefit point_perk = 10;
+    CarRentalInsuranceBenefit car_rental_insurance = 11;
   }
 }
 
@@ -142,7 +150,7 @@ message OtherBenefit {
 // 3. "OtherBenefit" 的具体结构化消息
 // ===================================================================
 
-// (已重构) 用于描述休息室权益
+// 用于描述休息室权益
 message LoungeAccessBenefit {
   // 定义可用的休息室网络
   enum LoungeNetwork {
@@ -224,7 +232,9 @@ message CarRentalInsuranceBenefit {
   string notes = 2;
 }
 
-
+// ===================================================================
+// 4. 消费与积分相关消息 (Earning & Points Messages)
+// ===================================================================
 
 message EarningRate {
   // (新增) 定义标准的消费类别 (Spending Category)
@@ -279,15 +289,38 @@ message EarningRate {
 }
 
 
-// (新增) 用于描述卡片关联的积分/里程价值
-message PointValue {
-  // 每一点/里程的估值 (以美分为单位)。
-  // 例如, 1.6 代表 1.6 cents/point.
-  float cents_per_point = 1;
+// 用于描述卡片关联的、具体的积分体系信息
+message PointSystemInfo {
+  // 积分体系的唯一、细粒度标识符。这是用户估值的关键key。
+  // e.g., "ur-transferable", "typ-premium", "typ-cash-back", "altitude-reserve"
+  string system_id = 1;
+
+  // 定义高阶的积分体系“家族”，用于分类。
+  // 这与具体的积分规则（是否可转点等）解耦。
+  enum PointSystem {
+    SYSTEM_UNSPECIFIED = 0;
+    AMEX_MEMBERSHIP_REWARDS = 1;
+    CHASE_ULTIMATE_REWARDS = 2;
+    CITI_THANKYOU_POINTS = 3;
+    CAPITAL_ONE_MILES = 4;
+    MARRIOTT_BONVOY = 5;
+    HILTON_HONORS = 6;
+    DELTA_SKYMILES = 7;
+    UNITED_MILEAGEPLUS = 8;
+    AA_AADVANTAGE = 9;
+    US_BANK_ALTITUDE = 10;
+    // 可以根据需要添加更多体系...
+  }
+
+  // 积分体系的“家族”分类，用于UI分组和逻辑归类
+  PointSystem system_type = 2;
+
+  // 该积分体系的“官方”或“默认”估值 (以美分为单位)。
+  float default_cents_per_point = 3;
 
   // 对该估值的解释或说明。
-  // e.g., "Amex Membership Rewards (MR) 综合估值", "通过 Real-Time Rewards 兑换旅行时"
-  string notes = 2;
+  // e.g., "可1:1转点至多个航司酒店伙伴，综合估值", "仅可1cpp兑换现金"
+  string notes = 4;
 }
 
 // ===================================================================
@@ -296,25 +329,29 @@ message PointValue {
 
 // 主消息体，代表一张信用卡
 message CreditCard {
-  string name = 1;
+  // (新增) 唯一的、人类可读的信用卡标识符。
+  // e.g., "amex-platinum", "chase-sapphire-preferred"
+  string card_id = 1;
+
+  string name = 2;
 
   // 卡片图名字
-  string image_name = 2;
+  string image_name = 3;
 
-  Issuer issuer = 3;
-  int32 annual_fee_cents = 4;
+  Issuer issuer = 4;
+  int32 annual_fee_cents = 5;
 
   // 这张卡提供的所有基于“返还”的福利
-  repeated Credit credits = 5;
+  repeated Credit credits = 6;
 
   // 这张卡提供的所有其他类型的福利
-  repeated OtherBenefit other_benefits = 6;
+  repeated OtherBenefit other_benefits = 7;
 
-  // (已更新) 这张卡的所有消费返现/积分累积规则
-  repeated EarningRate earning_rates = 7;
+  // 这张卡的所有消费返现/积分累积规则
+  repeated EarningRate earning_rates = 8;
 
-  // (新增) 卡片关联的积分/里程价值
-  PointValue point_value = 8;
+  // 卡片关联的积分/里程体系的详细信息
+  PointSystemInfo point_system_info = 9;
 }
 
 // 用于存储一个信用卡列表
