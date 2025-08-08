@@ -165,7 +165,7 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
 
                 {/* Section 3: Credits */}
                 <Box sx={{flexGrow: 1, overflowY: 'auto', minHeight: 0}}>
-                    <Typography variant="h6" component="div" gutterBottom>
+                    <Typography variant="h6" component="div" gutterBottom   sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
                         Credits
                     </Typography>
 
