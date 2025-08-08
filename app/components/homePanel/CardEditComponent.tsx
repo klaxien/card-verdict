@@ -101,7 +101,7 @@ const normalizeProportionString = (input: string): string => {
     const numberValue = Number(input);
     if (Number.isNaN(numberValue) || !Number.isFinite(numberValue)) return '';
     const clamped = Math.max(0, Math.min(1, numberValue));
-    return clamped.toFixed(4);
+    return clamped.toFixed(2); // 改为仅保留两位小数
 };
 
 /**
@@ -122,7 +122,7 @@ const syncLinkedFieldBySource = (
             !Number.isFinite(dollarsNumber) ||
             annualFaceValueDollars === 0
                 ? ''
-                : (dollarsNumber / annualFaceValueDollars).toString();
+                : (dollarsNumber / annualFaceValueDollars).toFixed(2); // 两位小数
         updated.lastEdited = 'dollars';
     } else if (lastEditedSource === 'proportion') {
         const proportionNumber = Number(updated.proportionInput);
@@ -131,7 +131,7 @@ const syncLinkedFieldBySource = (
             Number.isNaN(proportionNumber) ||
             !Number.isFinite(proportionNumber)
                 ? ''
-                : (proportionNumber * annualFaceValueDollars).toString();
+                : (proportionNumber * annualFaceValueDollars).toFixed(2); // 两位小数
         updated.lastEdited = 'proportion';
     }
 
@@ -153,7 +153,7 @@ const normalizeRowOnBlur = (
         updated.dollarsInput = normalizedDollars;
         updated.proportionInput =
             normalizedDollars && annualFaceValueDollars
-                ? (Number(normalizedDollars) / annualFaceValueDollars).toString()
+                ? (Number(normalizedDollars) / annualFaceValueDollars).toFixed(2) // 两位小数
                 : '';
         updated.lastEdited = 'dollars';
         return updated;
@@ -334,7 +334,7 @@ const CardEditComponent: React.FC<CardEditProps> = ({
             if (userCreditValuation?.cents != null) {
                 const dollars = (userCreditValuation.cents / 100).toFixed(2);
                 const proportion = annualFaceValueDollars
-                    ? (userCreditValuation.cents / 100 / annualFaceValueDollars).toFixed(4)
+                    ? (userCreditValuation.cents / 100 / annualFaceValueDollars).toFixed(2)
                     : '';
                 nextStateByCreditId[creditId] = {
                     dollarsInput: dollars,
@@ -351,9 +351,20 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                     : '';
                 nextStateByCreditId[creditId] = {
                     dollarsInput: dollars,
-                    proportionInput: String(userCreditValuation.proportion),
+                    proportionInput: Number(userCreditValuation.proportion).toFixed(2),
                     explanation: userCreditValuation.explanation ?? '',
                     lastEdited: 'proportion',
+                };
+                continue;
+            }
+
+            // 仅有说明（无估值）也要回显
+            if ((userCreditValuation?.explanation?.trim()?.length ?? 0) > 0) {
+                nextStateByCreditId[creditId] = {
+                    dollarsInput: '',
+                    proportionInput: '',
+                    explanation: userCreditValuation!.explanation ?? '',
+                    lastEdited: undefined,
                 };
                 continue;
             }
@@ -441,6 +452,7 @@ const CardEditComponent: React.FC<CardEditProps> = ({
     }, []);
 
     // 保存：根据最后编辑字段写入 oneof（cents 或 proportion）
+    // 允许仅保存说明（即便没有估值更改）
     const handleSave = React.useCallback(() => {
         const outputValuation: UserCardValuation = {
             creditValuations: {},
@@ -455,6 +467,8 @@ const CardEditComponent: React.FC<CardEditProps> = ({
             const rowState = rowStateByCreditId[creditId];
             if (!rowState) continue;
 
+            let saved = false;
+
             if (rowState.lastEdited === 'dollars') {
                 const dollarsNumber = Number(normalizeDollarString(rowState.dollarsInput));
                 if (rowState.dollarsInput !== '' && Number.isFinite(dollarsNumber) && !Number.isNaN(dollarsNumber)) {
@@ -462,21 +476,25 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                         cents: Math.round(dollarsNumber * 100),
                         explanation: rowState.explanation,
                     } as CustomValue;
+                    saved = true;
                 }
-                continue;
-            }
-
-            if (rowState.lastEdited === 'proportion') {
+            } else if (rowState.lastEdited === 'proportion') {
                 const proportionNumber = Number(normalizeProportionString(rowState.proportionInput));
                 if (rowState.proportionInput !== '' && Number.isFinite(proportionNumber) && !Number.isNaN(proportionNumber)) {
                     outputValuation.creditValuations![creditId] = {
                         proportion: proportionNumber,
                         explanation: rowState.explanation,
                     } as CustomValue;
+                    saved = true;
                 }
             }
 
-            // 未编辑或无效输入：保持默认（不写该项）
+            // 仅说明：也写入（不设置 oneof 值）
+            if (!saved && (rowState.explanation?.trim().length ?? 0) > 0) {
+                outputValuation.creditValuations![creditId] = {
+                    explanation: rowState.explanation,
+                } as CustomValue;
+            }
         }
 
         onSave?.(outputValuation);
