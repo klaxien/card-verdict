@@ -1,11 +1,17 @@
 import React, {useMemo} from 'react';
-import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography} from '@mui/material';
+import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import {cardverdict} from "~/generated/bundle";
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
 
 type CreditValueOptions = { useEffectiveValue: boolean };
+
+type CreditCardComponentProps = {
+    card: cardverdict.v1.ICreditCard;
+    onEdit?: (card: cardverdict.v1.ICreditCard) => void;
+};
 
 const PERIODS_PER_YEAR: Record<CreditFrequency, number> = {
     [CreditFrequency.FREQUENCY_UNSPECIFIED]: 0,
@@ -92,7 +98,7 @@ const colorRank = (credit: cardverdict.v1.ICredit): number => {
     return color === 'success' ? 3 : color === 'warning' ? 2 : color === 'error' ? 1 : 0;
 };
 
-const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({card}) => {
+const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onEdit}) => {
     const totalCreditsValue = useMemo(
         () => calculateTotalAnnualCredits(card, {useEffectiveValue: true}),
         [card],
@@ -114,8 +120,22 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
     }, [card.credits]);
 
     return (
-        <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4}}>
+        <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4, position: 'relative'}}>
             <CardContent sx={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
+                {/* Edit button: top-right corner */}
+                <Box sx={{position: 'absolute', top: 8, right: 8, zIndex: 1}}>
+                    <Tooltip title="Edit">
+                        <IconButton
+                            aria-label="edit card"
+                            size="small"
+                            color="primary"
+                            onClick={() => onEdit?.(card)}
+                        >
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+
                 {/* Section 1: Image & Name */}
                 <Grid container spacing={2} alignItems="center" flexWrap="nowrap">
                     <Grid size={4} flexShrink={0}>
