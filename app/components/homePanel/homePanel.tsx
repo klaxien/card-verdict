@@ -41,17 +41,24 @@ const HomePanel: React.FC = () => {
     }
 
     return (
-        <div className="p-4">
+
+
+    <div className="p-4">
             <Typography variant="h4" gutterBottom>
                 Credit Cards
             </Typography>
-            <Grid container spacing={3}>
-                {cardData?.cards?.map((card, index) => (
-                    <Grid item xs={12} key={index} sx={{ flexGrow: 1 }}>
-                        <CreditCardComponent card={card} />
-                    </Grid>
-                ))}
-            </Grid>
+
+        <Grid container spacing={3}>
+            {cardData?.cards?.map((card, index) => (
+                // 使用 Grid item 来包裹每个卡片
+                // xs={12}: 在超小屏幕上 (extra-small), 每行1个卡片 (12/12)
+                // sm={6}: 在小屏幕上 (small), 每行2个卡片 (12/6)
+                // md={4}: 在中等及以上屏幕上 (medium), 每行3个卡片 (12/4)
+                <Grid item key={index} size={{ xs: 12, sm:6, md:4 }} >
+                    <CreditCardComponent card={card} />
+                </Grid>
+            ))}
+        </Grid>
         </div>
     );
 };

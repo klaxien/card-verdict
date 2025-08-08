@@ -98,7 +98,7 @@ cards {
     qualifying_merchants: "AmexTravel.com"
     details: "$200 hotel credit for prepaid Fine Hotels + Resorts® or The Hotel Collection bookings."
     effective_value_proportion: 1
-    effective_value_explanation: "FHR谭友评价好，按100%估值算"
+    effective_value_explanation: "FHR评价好，按100%估值算"
   }
   credits {
     type: DIGITAL_ENTERTAINMENT

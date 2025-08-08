@@ -1,7 +1,6 @@
 import React from 'react';
-import {Card, CardContent, Typography, Grid, CardMedia, Chip, Tooltip} from '@mui/material';
+import {Box, Card, CardContent, Chip, Divider, Grid,CardMedia, Stack, Tooltip, Typography} from '@mui/material';
 import {cardverdict} from "~/generated/bundle";
-import CreditType = cardverdict.v1.CreditType;
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
@@ -97,169 +96,97 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
     const roi = totalCreditsValue - annualFee;
 
     return (
-        <Card>
-            <CardContent>
-                <Grid
-                    container
-                    spacing={2}
-                    sx={{
-                        flexWrap: {xs: 'wrap', md: 'nowrap'},
-                    }}
-                >
-                    {/* Region 1: Image, Fee */}
-                    <Grid
-                        item
-                        xs={12}
-                        md={4}
-                        sx={{
-                            display: 'flex',
-                            flexGrow: 1,
-                            flexBasis: {md: '33.33%'},
-                            flexDirection: 'column',
-                            alignItems: {xs: 'center', md: 'center',},
-                            paddingRight: {md: '6em'},
-                        }}
-                    >
-                        <Typography variant="h6" component="div" sx={{fontWeight: 'bold', textAlign: 'center'}}>
+        <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4,}}>
+            <CardContent sx={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
+                {/* Section 1: Image & Name */}
+                <Grid container spacing={2} alignItems="center" flexWrap="nowrap" >
+                    <Grid size={4} flexShrink={0}>
+                        <CardMedia
+                            component="img"
+                            image={`images/${card.imageName || genericImageName}`}
+                            alt={`${card.name} card image`}
+                            sx={{
+                                width: 125,
+                                objectFit: 'fill',
+                                aspectRatio: '1.586/1', // Standard credit card aspect ratio
+                                borderRadius: '4px',
+                                boxShadow: 3
+                            }}
+                        />
+                    </Grid>
+                    <Grid >
+                        <Typography variant="subtitle1" component="div" sx={{fontWeight: 'bold', wordBreak: 'break-word' }}>
                             {card.name}
                         </Typography>
-
-                        <Grid container direction="column" alignItems="center" sx={{maxWidth: '250px'}}>
-                            <CardMedia
-                                component="img"
-                                image={`images/${card.imageName || genericImageName}`}
-                                alt={`${card.name} card image`}
-                                sx={{
-                                    mt: 1,
-                                    mb: 1,
-                                    width: '100%',
-                                }}
-                            />
-                            {card.annualFeeCents != null && (
-                                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                    <Chip label={`$${(card.annualFeeCents / 100).toFixed(0)}`} size="small"
-                                          color="primary"/>
-                                    <Typography variant="body2">年费</Typography>
-                                </div>
-                            )}
-                        </Grid>
                     </Grid>
+                </Grid>
 
-                    {/* Region 2: Credits */}
-                    <Grid
-                        item
-                        xs={12}
-                        md={4}
-                        sx={{flexGrow: 1, flexBasis: {md: '33.33%'}}}
-                    >
-                        <Typography variant="h6" component="div" gutterBottom>
-                            Credits
+                {/* Section 2: Fees */}
+                <Grid container spacing={2} sx={{my: 2, textAlign: 'center'}}>
+                    <Grid size={{xs: 6}}>
+                        <Typography variant="body2" color="text.secondary">年费</Typography>
+                        <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+                            {card.annualFeeCents != null ? `$${(card.annualFeeCents / 100).toFixed(0)}` : 'N/A'}
                         </Typography>
-                        {card.credits && card.credits.length > 0 ? (
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-                                {card.credits.map((credit, index) => {
-                                    const creditValue = calculateAnnualCreditValue(credit, {useEffectiveValue: true}) / 100;
-                                    return (
-                                        <div
-                                            key={index}
-                                            style={{
-                                                display: 'grid',
-                                                gridTemplateColumns: 'minmax(3em, auto) minmax(0, 1fr)',
-                                                gap: '1rem',
-                                                alignItems: 'first baseline' // Using first baseline for natural text alignment
-                                            }}
+                    </Grid>
+                    <Grid size={{xs: 6}}>
+                        <Typography variant="body2" color="text.secondary">净值</Typography>
+                        <Typography variant="h5"
+                                    sx={{fontWeight: 'bold', color: roi >= 0 ? 'success.main' : 'error.main'}}>
+                            ${(roi / 100).toFixed(0)}
+                        </Typography>
+                    </Grid>
+                </Grid>
+
+                <Divider sx={{mb: 2}}/>
+
+                {/* Section 3: Credits */}
+                <Box sx={{flexGrow: 1, overflowY: 'auto', minHeight: 0}}>
+                    <Typography variant="h6" component="div" gutterBottom>
+                        Credits
+                    </Typography>
+                    {card.credits && card.credits.length > 0 ? (
+                        <Stack spacing={1.5}>
+                            {card.credits.map((credit, index) => {
+                                const creditValue = calculateAnnualCreditValue(credit, { useEffectiveValue: true }) / 100;
+                                const isLast = index === card.credits!.length - 1;
+
+                                return (
+                                    <Box key={index}>
+                                        <Grid
+                                            alignItems="baseline"
+                                            justifyContent="space-between"
+                                            display="flex"
+                                            gap={1}
                                         >
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'first baseline'
-                                            }}>
+                                            <Grid flexGrow={1} size={{ xs: 10 }}>
+                                                <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                                                    {credit.details}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid flexShrink={0} flexGrow={1}>
                                                 <Tooltip title={credit.effectiveValueExplanation}>
                                                     <Chip
                                                         label={`$${creditValue.toFixed(0)}`}
                                                         size="small"
                                                         color={getCreditChipColor(credit)}
-                                                        sx={{
-                                                            maxWidth: '100%',
-                                                            minWidth: '5em',
-                                                            '& .MuiChip-label': {
-                                                                display: 'block',
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis'
-                                                            }
-                                                        }}
+                                                        sx={{ width: '4em', textAlign: 'center' }}
                                                     />
                                                 </Tooltip>
-                                            </div>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    minWidth: 0,
-                                                    wordBreak: 'break-word',
-                                                    overflowWrap: 'break-word'
-                                                }}
-                                            >
-                                                {credit.details}
-                                            </Typography>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <Typography variant="body2">No credits available.</Typography>
-                        )}
-                    </Grid>
+                                            </Grid>
+                                        </Grid>
 
-                    {/* Region 3: Net Value  */}
-                    <Grid
-                        item
-                        xs={12}
-                        md={4}
-                        sx={{flexGrow: 1, flexBasis: {md: '33.33%'}}}
-                    >
-                        <Typography variant="h6" component="div" gutterBottom>
-                            Net Value
-                        </Typography>
-                        <Typography variant="h5" component="div"
-                                    sx={{color: roi >= 0 ? 'success.main' : 'error.main', fontWeight: 'bold'}}>
-                            ${(roi / 100).toFixed(0)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>
-                            Based on credits:
-                        </Typography>
-                        <Typography variant="body2" sx={{mt: 0.5}}>
-                            ${(totalCreditsValue / 100).toFixed(0)} in credits
-                        </Typography>
-                        <Typography variant="body2">
-                            - ${(annualFee / 100).toFixed(0)} annual fee
-                        </Typography>
-                    </Grid>
-                </Grid>
+                                        {!isLast && <Divider sx={{ mb: 1, mt: 1 }} />}
+                                    </Box>
+                                );
+                            })}
+                        </Stack>
+                    ) : (
+                        <Typography variant="body2">No credits available.</Typography>
+                    )}
+                </Box>
             </CardContent>
         </Card>
-    );
-};
-
-const renderOtherBenefit = (benefit: cardverdict.v1.IOtherBenefit, index: number) => {
-    let description = '';
-    if (benefit.loungeAccess) {
-        const {network, guestPolicy} = benefit.loungeAccess;
-        description = `Lounge Access: ${network} (Guest Policy: ${guestPolicy})`;
-    } else if (benefit.travelStatus) {
-        description = `Travel Status: ${benefit.travelStatus.description}`;
-    } else if (benefit.feeReimbursement) {
-        description = `Fee Reimbursement: ${benefit.feeReimbursement.programs?.join(', ')}`;
-    } else if (benefit.baggage) {
-        description = `Baggage: ${benefit.baggage.freeCheckedBagsCount} free checked bag(s)`;
-    } else if (benefit.pointPerk) {
-        description = `Point Perk: ${benefit.pointPerk.description}`;
-    } else if (benefit.genericBenefitDescription) {
-        description = benefit.genericBenefitDescription;
-    }
-
-    return (
-        <Typography key={index} variant="body2" component="div" sx={{mt: 1}}>
-            • {description}
-        </Typography>
     );
 };
 
