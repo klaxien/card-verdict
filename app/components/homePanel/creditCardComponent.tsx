@@ -146,43 +146,57 @@ const CreditCardComponent: React.FC<{ card: cardverdict.v1.ICreditCard }> = ({ca
                         Credits
                     </Typography>
                     {card.credits && card.credits.length > 0 ? (
-                        <Stack spacing={1.5}>
-                            {card.credits.map((credit, index) => {
-                                const creditValue = calculateAnnualCreditValue(credit, { useEffectiveValue: true }) / 100;
-                                const isLast = index === card.credits!.length - 1;
+                      <Stack spacing={1.5}>
+                        {([...card.credits]
+                          .sort((a, b) => {
+                            const colorRank = (c: cardverdict.v1.ICredit) => {
+                              const color = getCreditChipColor(c);
+                              return color === 'success' ? 3 : color === 'warning' ? 2 : color === 'error' ? 1 : 0;
+                            };
 
-                                return (
-                                    <Box key={index}>
-                                        <Grid
-                                            alignItems="baseline"
-                                            justifyContent="space-between"
-                                            display="flex"
-                                            gap={1}
-                                        >
-                                            <Grid flexGrow={1} size={{ xs: 10 }}>
-                                                <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
-                                                    {credit.details}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid flexShrink={0} flexGrow={1}>
-                                                <Tooltip title={credit.effectiveValueExplanation}>
-                                                    <Chip
-                                                        label={`$${creditValue.toFixed(0)}`}
-                                                        size="small"
-                                                        color={getCreditChipColor(credit)}
-                                                        sx={{ width: '4em', textAlign: 'center' }}
-                                                    />
-                                                </Tooltip>
-                                            </Grid>
-                                        </Grid>
+                            const rankDiff = colorRank(b) - colorRank(a);
+                            if (rankDiff !== 0) return rankDiff;
 
-                                        {!isLast && <Divider sx={{ mb: 1, mt: 1 }} />}
-                                    </Box>
-                                );
-                            })}
-                        </Stack>
+                            const aVal = calculateAnnualCreditValue(a, { useEffectiveValue: true });
+                            const bVal = calculateAnnualCreditValue(b, { useEffectiveValue: true });
+                            return bVal - aVal; // higher value first
+                          })
+                        ).map((credit, index, arr) => {
+                          const creditValue = calculateAnnualCreditValue(credit, { useEffectiveValue: true }) / 100;
+                          const isLast = index === arr.length - 1;
+
+                          return (
+                            <Box key={index}>
+                              <Grid
+                                alignItems="baseline"
+                                justifyContent="space-between"
+                                display="flex"
+                                gap={1}
+                              >
+                                <Grid flexGrow={1} size={{ xs: 10 }}>
+                                  <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                                    {credit.details}
+                                  </Typography>
+                                </Grid>
+                                <Grid flexShrink={0} flexGrow={1}>
+                                  <Tooltip title={credit.effectiveValueExplanation}>
+                                    <Chip
+                                      label={`$${creditValue.toFixed(0)}`}
+                                      size="small"
+                                      color={getCreditChipColor(credit)}
+                                      sx={{ width: '4em', textAlign: 'center' }}
+                                    />
+                                  </Tooltip>
+                                </Grid>
+                              </Grid>
+
+                              {!isLast && <Divider sx={{ mb: 1, mt: 1 }} />}
+                            </Box>
+                          );
+                        })}
+                      </Stack>
                     ) : (
-                        <Typography variant="body2">No credits available.</Typography>
+                      <Typography variant="body2">No credits available.</Typography>
                     )}
                 </Box>
             </CardContent>
