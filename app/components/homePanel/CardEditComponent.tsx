@@ -52,6 +52,9 @@ type RowState = {
     proportionError?: string | null;
 };
 
+const { CreditFrequency } = cardverdict.v1;
+
+
 // ------------------------------
 // Utilities
 // ------------------------------
@@ -620,7 +623,10 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                 const dollars = (item.valueCents ?? 0) / 100;
                 const dollarsStr = Number.isFinite(dollars) ? dollars.toFixed(2) : '0.00';
                 const id = item.customAdjustmentId ?? '';
-
+                // @ts-ignore wrong identification?
+                const frequency = item.frequency && item.frequency !== CreditFrequency.FREQUENCY_UNSPECIFIED
+                    ? item.frequency
+                    : CreditFrequency.ANNUAL;
                 return (
                     <Box key={id} sx={{p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider'}}>
                         <Grid container spacing={2} alignItems="center">
@@ -642,7 +648,7 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                                     <Select
                                         labelId={`freq-${id}`}
                                         label="频率"
-                                        value={item.frequency ?? cardverdict.v1.CreditFrequency.ANNUAL}
+                                        value={frequency}
                                         onChange={(e) =>
                                             handleUpdateCustomAdjustment(
                                                 id,
