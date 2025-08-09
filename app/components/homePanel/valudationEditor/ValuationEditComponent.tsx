@@ -195,15 +195,15 @@ const newCustomAdjustment = (): CustomAdjustment => ({
 // 主组件（仅展示与自定义报销相关的新逻辑）
 // ------------------------------
 const ValuationEditComponent: React.FC<CardEditProps> = ({
-                                                        open,
-                                                        card,
-                                                        displayCredits,
-                                                        initialValuation,
-                                                        onClose,
-                                                        onSave,
-                                                        singleCreditIdToEdit,
-                                                        singleCustomAdjustmentIdToEdit,
-                                                    }) => {
+                                                             open,
+                                                             card,
+                                                             displayCredits,
+                                                             initialValuation,
+                                                             onClose,
+                                                             onSave,
+                                                             singleCreditIdToEdit,
+                                                             singleCustomAdjustmentIdToEdit,
+                                                         }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -520,9 +520,31 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
     // Render
     // ------------------------------
     return (
-        <Dialog fullScreen={isMobile} open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog
+            fullScreen={isMobile}
+            open={open}
+            onClose={onClose}
+            maxWidth="md"
+            fullWidth
+            slotProps={{
+                paper: {
+                    sx: {
+                        paddingBottom: {xs: 'env(safe-area-inset-bottom)'},
+                    }
+                }
+            }}
+        >
             <DialogTitle>{sessionTitle}</DialogTitle>
-            <DialogContent dividers>
+
+            <DialogContent
+                dividers
+                sx={{
+                    // 为底部操作区预留空间（按钮高度 + 间距 + 安全区）
+                    pb: {
+                        xs: 'calc(96px + env(safe-area-inset-bottom))',
+                    },
+                }}
+            >
                 {sessionCredits.length > 0 && (
                     <Stack spacing={2}>
                         {sessionCredits.map((credit, index) => {
@@ -558,7 +580,6 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
                     </Stack>
                 )}
 
-
                 {sessionCredits.length > 0 && !sessionSingleCreditId && <Divider sx={{my: 2}}/>}
 
                 {!sessionSingleCreditId && (
@@ -572,7 +593,19 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
                 )}
             </DialogContent>
 
-            <DialogActions>
+            <DialogActions
+                sx={{
+                    // 粘底并覆盖整行
+                    position: {xs: 'sticky', sm: 'static'},
+                    bottom: 0,
+                    zIndex: 1,
+                    bgcolor: 'background.paper',
+                    borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+                    // 留出安全区内边距，提升全面屏手势区的可点性
+                    pb: {xs: 'max(env(safe-area-inset-bottom), 8px)', sm: 2},
+                    pt: 1,
+                }}
+            >
                 <Typography variant="caption" color={hasAnyError ? 'error' : 'text.secondary'} sx={{mr: 'auto'}}>
                     {hasAnyError ? '存在无效输入，请修正后再保存' : ' '}
                 </Typography>
