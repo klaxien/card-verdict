@@ -42,11 +42,11 @@ export function HydrateFallbackComponent() {
                                     >
                                         <CardContent sx={{ flexGrow: 1 }}>
                                             <Grid container spacing={2} alignItems="center" sx={{ flexWrap: "nowrap" }}>
-                                                <Grid size="auto" sx={{ minWidth: 125, flexShrink: 0 }}>
+                                                <Grid size="auto" sx={{ minWidth: 94.11, flexShrink: 0 }}>
                                                     <Skeleton
                                                         variant="rounded"
-                                                        width={125}
-                                                        height={79}
+                                                        width={94.11}
+                                                        height={59.77}
                                                         sx={{ borderRadius: 1, boxShadow: 2 }}
                                                     />
                                                 </Grid>
