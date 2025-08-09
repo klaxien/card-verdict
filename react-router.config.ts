@@ -1,7 +1,6 @@
 import type { Config } from "@react-router/dev/config";
 
 export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
-  ssr: true,
+    // 切换到 SPA 模式，GitHub Pages 不支持 SSR
+    ssr: false,
 } satisfies Config;
