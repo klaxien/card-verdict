@@ -681,8 +681,10 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                                             handleUpdateCustomAdjustment(id, {valueCents: Math.round(num * 100)});
                                         }
                                     }}
-                                    InputProps={{
-                                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                    slotProps={{
+                                        input: {
+                                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                        },
                                     }}
                                     size="small"
                                 />
