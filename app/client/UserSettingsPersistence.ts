@@ -1,6 +1,6 @@
 import { uservaluation } from '~/generated/bundle';
 
-const LOCAL_STORAGE_KEY = 'userValuationDatabase';
+const LOCAL_STORAGE_KEY = 'userAccountData';
 
 /**
  * 将 Uint8Array 编码为 Base64 字符串。
@@ -34,47 +34,104 @@ function fromBase64(base64: string): Uint8Array {
 }
 
 /**
- * 将用户的整个估值数据库保存到 localStorage。
- * 数据被序列化为 Protobuf 的二进制 wire 格式，然后作为 Base64 字符串存储。
- * @param db 用户估值数据库对象。
+ * 保存当前的估值画像 (Valuation Profile)。
+ *
+ * 此函数会获取现有的 `UserAccountData`，更新或添加指定的 `ValuationProfile`，
+ * 然后将整个 `UserAccountData` 写回 localStorage。
+ * 如果 `profileToSave` 对象中没有 `profileId`，此操作将会失败。
+ *
+ * @param profileToSave 要保存的估值画像。它必须包含 `profileId`。
  */
-export function saveUserValuationDatabase(db: uservaluation.v1.IUserValuationDatabase): void {
+export function saveValuationProfile(profileToSave: uservaluation.v1.IValuationProfile): void {
+    if (!profileToSave.profileId) {
+        console.error("Cannot save a profile without a profileId.");
+        return;
+    }
+
     try {
-        // 确保我们正在处理的是一个用于编码的消息实例
-        const message = uservaluation.v1.UserValuationDatabase.fromObject(db);
-        // 将消息编码为 Uint8Array (wire 格式)
-        const buffer = uservaluation.v1.UserValuationDatabase.encode(message).finish();
-        // 将二进制缓冲区转换为 Base64 字符串以便存入 localStorage
-        const base64String = toBase64(buffer);
-        localStorage.setItem(LOCAL_STORAGE_KEY, base64String);
+        // 1. 加载现有的 UserAccountData，如果不存在则创建一个新的。
+        const base64String = localStorage.getItem(LOCAL_STORAGE_KEY);
+        let accountData: uservaluation.v1.IUserAccountData;
+
+        if (base64String) {
+            const buffer = fromBase64(base64String);
+            const decoded = uservaluation.v1.UserAccountData.decode(buffer);
+            // 使用 toObject 将其转换为普通的 JS 对象
+            accountData = uservaluation.v1.UserAccountData.toObject(decoded, { defaults: true });
+        } else {
+            // 如果 localStorage 中没有数据，则初始化一个空的账户数据结构
+            accountData = {
+                profiles: {},
+                activeProfileId: '',
+            };
+        }
+
+        // 2. 准备时间戳并更新 Profile Map 中的画像。
+        const now = new Date();
+        const timestamp = {
+            seconds: Math.floor(now.getTime() / 1000),
+            nanos: (now.getTime() % 1000) * 1e6
+        };
+
+        const existingProfile = accountData.profiles?.[profileToSave.profileId] ?? {};
+
+        accountData.profiles = accountData.profiles ?? {};
+        accountData.profiles[profileToSave.profileId] = {
+            ...existingProfile,
+            ...profileToSave,
+            updatedAt: timestamp,
+            createdAt: existingProfile.createdAt ?? profileToSave.createdAt ?? timestamp
+        };
+
+        // 3. 将当前保存的画像设置为激活画像。
+        accountData.activeProfileId = profileToSave.profileId;
+
+        // 4. 将更新后的 UserAccountData 对象序列化并存回 localStorage。
+        const message = uservaluation.v1.UserAccountData.fromObject(accountData);
+        const buffer = uservaluation.v1.UserAccountData.encode(message).finish();
+        const newBase64String = toBase64(buffer);
+        localStorage.setItem(LOCAL_STORAGE_KEY, newBase64String);
+
     } catch (error) {
-        console.error("Failed to save user valuation database to localStorage:", error);
+        console.error("Failed to save valuation profile to localStorage:", error);
     }
 }
 
 /**
- * 从 localStorage 加载用户的估值数据库。
- * 它会读取 Base64 字符串，解码，并将其反序列化为 JavaScript 对象。
- * @returns 加载的用户估值数据库，如果未找到或出错则返回 null。
+ * 从 localStorage 加载并返回活动的估值画像 (Valuation Profile)。
+ *
+ * 根据“暂不考虑多profile支持”的简化逻辑，此函数会加载整个`UserAccountData`，
+ * 并简单地返回 `profiles` map中的第一个画像。
+ *
+ * @returns 第一个可用的用户估值画像，如果没有任何画像则返回 `null`。
  */
-export function loadUserValuationDatabase(): uservaluation.v1.IUserValuationDatabase | null {
+export function loadActiveValuationProfile(): uservaluation.v1.IValuationProfile | null {
     try {
         const base64String = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (!base64String) {
             return null;
         }
 
-        // 将 Base64 字符串转换回 Uint8Array
         const buffer = fromBase64(base64String);
+        const decodedMessage = uservaluation.v1.UserAccountData.decode(buffer);
+        const accountData = uservaluation.v1.UserAccountData.toObject(decodedMessage);
 
-        // 将 wire 格式的缓冲区解码为消息实例
-        const decodedMessage = uservaluation.v1.UserValuationDatabase.decode(buffer);
+        if (!accountData.profiles) {
+            return null;
+        }
 
-        // React 组件期望的是普通的 JS 对象 (接口)，而不是消息实例，因此需要转换
-        return uservaluation.v1.UserValuationDatabase.toObject(decodedMessage);
+        const profileIds = Object.keys(accountData.profiles);
+        if (profileIds.length === 0) {
+            return null;
+        }
+
+        // 展示不考虑多用户支持，我们直接返回第一个 profile
+        const firstProfileId = profileIds[0];
+        return accountData.profiles[firstProfileId];
+
     } catch (error) {
-        console.error("Failed to load user valuation database from localStorage:", error);
-        // 如果解码失败，数据可能已损坏，所以我们将其清除。
+        console.error("Failed to load valuation profile from localStorage:", error);
+        // 如果数据损坏或解析失败，清除它
         localStorage.removeItem(LOCAL_STORAGE_KEY);
         return null;
     }

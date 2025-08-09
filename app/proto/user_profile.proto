@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package uservaluation.v1;
 
+import "google/protobuf/timestamp.proto";
 // 引入 cardverdict 的 CreditFrequency 枚举
 import "cards.proto";
 
@@ -23,7 +24,7 @@ message CustomValue {
   string explanation = 3;
 }
 
-// (已重命名) 用于表示一个完全由用户自定义的财务调整项 (福利或成本)
+// 代表用户自定义的财务调整项
 message CustomAdjustment {
   // 由客户端生成的唯一ID (e.g., UUID)，用于编辑或删除此条目。
   string custom_adjustment_id = 1;
@@ -44,7 +45,7 @@ message CustomAdjustment {
   string notes = 5;
 }
 
-// 存储用户对单张信用卡所有“本地”福利和年费的自定义估值 - (已更新)
+// 存储用户对单张信用卡所有福利和年费的自定义估值
 message UserCardValuation {
   // 映射 credit_id 到用户的自定义价值。
   // Key: cardverdict.v1.Credit.credit_id
@@ -54,22 +55,79 @@ message UserCardValuation {
   // Key: cardverdict.v1.OtherBenefit.benefit_id
   map<string, CustomValue> other_benefit_valuations = 2;
 
-  // (已更新) 一个列表，包含所有由用户手动添加的、非官方的财务调整项。
+  // 一个列表，包含所有由用户手动添加的、非官方的财务调整项。
   repeated CustomAdjustment custom_adjustments = 3;
 }
 
 // ===================================================================
-// 2. 顶层消息体 (Top-Level Messages)
+// 2. 新的核心结构：估值画像 (NEW: Valuation Profile)
+//    这是本次重构的核心，用于封装一套完整的、独立的估值方案。
 // ===================================================================
 
-// 顶层消息，代表一个用户的所有估值数据
-message UserValuationDatabase {
+// 代表一套完整的用户估值画像 (e.g., "我的估值", "家人的估值")
+message ValuationProfile {
+  // Profile 的唯一标识符，由客户端生成 (e.g., UUID)。
+  // 将作为 UserAccountData.profiles map 的 key。
+  string profile_id = 1;
+
+  // 用户为此 Profile 自定义的显示名称。
+  string display_name = 2;
+
+  // Profile 的创建时间戳
+  google.protobuf.Timestamp created_at = 3;
+
+  // Profile 的最后更新时间戳
+  google.protobuf.Timestamp updated_at = 4;
+
   // 映射 card_id 到该卡的自定义估值集合。
   // Key: cardverdict.v1.CreditCard.card_id
-  map<string, UserCardValuation> card_valuations = 1;
+  map<string, UserCardValuation> card_valuations = 5;
 
-  // 用户对所有“全局”积分体系的自定义估值
-  // Key: cardverdict.v1.PointSystemInfo.system_id 字符串
-  // Value: 用户对该点数体系的估值
-  map<string, CustomValue> point_system_valuations = 2;
+  // 用户对所有“全局”积分体系的自定义估值。
+  // Key: cardverdict.v1.PointSystemInfo.system_id
+  map<string, CustomValue> point_system_valuations = 6;
+
+  // [可扩展] Profile 级别的特定设置。
+  ProfileSettings settings = 7;
+}
+
+// 为 Profile 级别的未来设置预留的容器
+message ProfileSettings {
+  // 可以在此添加未来的设置，例如：
+  // message ValuationOverride {
+  //   string system_id = 1; // e.g., "amex_mr"
+  //   CustomValue value = 2;
+  // }
+  // repeated ValuationOverride global_overrides = 1;
+}
+
+
+// ===================================================================
+// 3. 新的顶层消息 (NEW: Top-Level Message)
+//    管理用户所有的 Profile 和跨 Profile 的全局设置。
+// ===================================================================
+
+// 新的顶层消息，代表一个用户账户的所有相关数据
+message UserAccountData {
+  // 存储用户拥有的所有估值 Profile。
+  // Key: ValuationProfile.profile_id
+  map<string, ValuationProfile> profiles = 1;
+
+  // 用户当前激活（或默认查看）的 Profile ID。
+  // 这个 ID 必须是 profiles map 中的一个 key。
+  string active_profile_id = 2;
+
+  // [可扩展] 跨 Profile 的全局用户偏好设置。
+  GlobalSettings global_settings = 3;
+}
+
+// 为跨 Profile 的全局设置预留的容器
+message GlobalSettings {
+  // 可以在此添加未来的设置，例如：
+  // enum Theme {
+  //   THEME_UNSPECIFIED = 0;
+  //   THEME_LIGHT = 1;
+  //   THEME_DARK = 2;
+  // }
+  // Theme theme = 1; // 网站的显示主题
 }

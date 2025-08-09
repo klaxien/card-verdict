@@ -3,7 +3,7 @@ import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, 
 import EditIcon from '@mui/icons-material/Edit';
 import {cardverdict, uservaluation} from '~/generated/bundle';
 import ValuationEditComponent from './valudationEditor/ValuationEditComponent';
-import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
+import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
 import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
@@ -110,7 +110,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
     useEffect(() => {
         // We only try to load from local storage if no initial valuation was provided via props.
         if (!initialValuation) {
-            const db = loadUserValuationDatabase();
+            const db = loadActiveValuationProfile();
             if (db && card.cardId) {
                 const cardValuation = db.cardValuations?.[card.cardId];
                 if (cardValuation) {
@@ -215,12 +215,12 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
             return;
         }
         setUserValuation(valuation);
-        const db = loadUserValuationDatabase() ?? {cardValuations: {}, pointSystemValuations: {}};
+        const db = loadActiveValuationProfile() ?? {cardValuations: {}, pointSystemValuations: {}};
         if (!db.cardValuations) {
             db.cardValuations = {};
         }
         db.cardValuations[card.cardId] = valuation;
-        saveUserValuationDatabase(db);
+        saveValuationProfile(db);
         onSaveValuation?.(valuation, card);
     };
 

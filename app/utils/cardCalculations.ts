@@ -51,7 +51,7 @@ export const getDisplayEffectiveCents = (
 
 export const calculateNetWorth = (
     card: cardverdict.v1.ICreditCard,
-    userDb: uservaluation.v1.IUserValuationDatabase | null
+    userDb: uservaluation.v1.IValuationProfile | null
 ): number => {
     const cardId = card.cardId ?? '';
     const userValuation = userDb?.cardValuations?.[cardId];

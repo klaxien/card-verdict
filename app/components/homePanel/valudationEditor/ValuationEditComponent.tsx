@@ -16,7 +16,7 @@ import {cardverdict, uservaluation} from '~/generated/bundle';
 import {calcRawAnnualCents} from "~/utils/cardCalculations";
 import {CreditRow} from "./CreditRow";
 import {CustomAdjustmentsEditor} from "./CustomAdjustmentsEditor";
-import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
+import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
 
 type CustomValue = uservaluation.v1.ICustomValue;
 type UserCardValuation = uservaluation.v1.IUserCardValuation;
@@ -516,13 +516,13 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
     // 新增：清空当前卡片的所有自定义设置（credit + custom），直接从 map 中删除并持久化
     const handleConfirmClear = () => {
         try {
-            const db = loadUserValuationDatabase() ?? {cardValuations: {}, pointSystemValuations: {}};
+            const db = loadActiveValuationProfile() ?? {cardValuations: {}, pointSystemValuations: {}};
             const cardId = card.cardId ?? '';
             if (cardId) {
                 if (db.cardValuations && Object.prototype.hasOwnProperty.call(db.cardValuations, cardId)) {
                     delete db.cardValuations[cardId];
                 }
-                saveUserValuationDatabase(db);
+                saveValuationProfile(db);
             }
         } catch (e) {
             console.error('Failed to clear card valuation:', e);
