@@ -273,6 +273,7 @@ const CreditRow: React.FC<CreditRowProps> = ({
                             <TextField
                                 size="small"
                                 fullWidth
+                                autoComplete="off"
                                 label="美元（年）"
                                 placeholder={`(0 - ${Number.isInteger(faceDollars) ? faceDollars : faceDollars.toFixed(2)})`}
                                 value={row.dollarsInput}
@@ -293,6 +294,7 @@ const CreditRow: React.FC<CreditRowProps> = ({
                             <TextField
                                 size="small"
                                 fullWidth
+                                autoComplete="off"
                                 label="等效比例 (0-1)"
                                 placeholder="例如：0.75"
                                 value={row.proportionInput}
