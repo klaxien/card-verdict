@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import {getCardDatabase} from "~/client/CardDetailsFetcher";
 import {cardverdict, uservaluation} from "~/generated/bundle";
-import CreditCardComponent from "~/components/homePanel/CreditCardComponent";
+import CreditCardComponent from "~/components/homePanel/valudationEditor/CreditCardComponent";
 import {loadUserValuationDatabase} from "~/client/UserSettingsPersistence";
 import {calculateNetWorth} from "~/utils/cardCalculations";
 

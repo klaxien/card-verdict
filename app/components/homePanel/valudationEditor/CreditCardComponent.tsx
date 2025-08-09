@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import {cardverdict, uservaluation} from '~/generated/bundle';
-import CardEditComponent from './CardEditComponent';
+import ValuationEditComponent from './ValuationEditComponent';
 import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
 import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
 import CreditFrequency = cardverdict.v1.CreditFrequency;
@@ -309,7 +309,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
             </CardContent>
 
             {/* 把最新的用户估值作为 initialValuation 回传，保证二次打开能回显 */}
-            <CardEditComponent
+            <ValuationEditComponent
                 open={editOpen}
                 card={card}
                 displayCredits={sortedCredits}
@@ -318,7 +318,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 onSave={handleSaveValuation}
             />
             {/* 单个 credit 编辑对话框 */}
-            <CardEditComponent
+            <ValuationEditComponent
                 open={!!editingCreditId}
                 card={card}
                 displayCredits={sortedCredits}
@@ -328,7 +328,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 singleCreditIdToEdit={editingCreditId ?? undefined}
             />
             {/* 单个 custom adjustment 编辑对话框 */}
-            <CardEditComponent
+            <ValuationEditComponent
                 open={!!editingCustomAdjustmentId}
                 card={card}
                 displayCredits={sortedCredits}

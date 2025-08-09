@@ -7,24 +7,15 @@ import {
     DialogContent,
     DialogTitle,
     Divider,
-    Grid,
-    IconButton,
-    InputAdornment,
-    TextField,
-    Typography,
     Stack,
-    Tooltip,
+    Typography,
     useMediaQuery,
     useTheme,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
 } from '@mui/material';
-import ClearIcon from '@mui/icons-material/Clear';
-import DeleteIcon from '@mui/icons-material/Delete';
 import {cardverdict, uservaluation} from '~/generated/bundle';
 import {calcRawAnnualCents} from "~/utils/cardCalculations";
+import {CreditRow} from "./CreditRow";
+import {CustomAdjustmentsEditor} from "./CustomAdjustmentsEditor";
 
 type CustomValue = uservaluation.v1.ICustomValue;
 type UserCardValuation = uservaluation.v1.IUserCardValuation;
@@ -53,8 +44,6 @@ type RowState = {
     dollarsError?: string | null;
     proportionError?: string | null;
 };
-
-const { CreditFrequency } = cardverdict.v1;
 
 
 // ------------------------------
@@ -105,15 +94,6 @@ const validateDollars = (raw: string): { ok: boolean; msg?: string; cleaned?: st
     if (cleaned === '') return {ok: false, msg: '请输入数字'};
     // 必须是“纯数字+可选两位小数”，中间不能混字母
     if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return {ok: false, msg: '最多两位小数，且不能包含字母'};
-    return {ok: true, cleaned};
-};
-
-// 允许正负的美元值（最多两位小数），用于自定义报销
-const validateSignedDollars = (raw: string): { ok: boolean; msg?: string; cleaned?: string } => {
-    if (raw.trim() === '') return {ok: false, msg: '请输入金额（可为负数）'};
-    const cleaned = cleanEdge(raw);
-    if (cleaned === '') return {ok: false, msg: '请输入数字'};
-    if (!/^-?\d+(\.\d{1,2})?$/.test(cleaned)) return {ok: false, msg: '最多两位小数，可加负号'};
     return {ok: true, cleaned};
 };
 
@@ -211,149 +191,10 @@ const newCustomAdjustment = (): CustomAdjustment => ({
     notes: '',
 });
 
-const frequencyOptions: Array<{ label: string; value: cardverdict.v1.CreditFrequency }> = [
-    {label: '每年一次', value: cardverdict.v1.CreditFrequency.ANNUAL},
-    {label: '每半年一次', value: cardverdict.v1.CreditFrequency.SEMI_ANNUAL},
-    {label: '每季度一次', value: cardverdict.v1.CreditFrequency.QUARTERLY},
-    {label: '每月一次', value: cardverdict.v1.CreditFrequency.MONTHLY},
-];
-
-// ------------------------------
-// Row Component (原有内容保持)
-// ------------------------------
-/* 原有 CreditRow 及其他编辑逻辑保持不变 ... */
-
-type CreditRowProps = {
-    credit: Credit;
-    row: RowState;
-    faceDollars: number;
-    hasProportionDefault: boolean;
-    isLastRow: boolean;
-    onChange: (patch: Partial<RowState>, source?: LastEdited) => void;
-    onBlur: (field: 'dollars' | 'proportion') => void;
-    onClear: () => void;
-};
-
-const CreditRow: React.FC<CreditRowProps> = ({
-                                                 credit,
-                                                 row,
-                                                 faceDollars,
-                                                 hasProportionDefault,
-                                                 isLastRow,
-                                                 onChange,
-                                                 onBlur,
-                                                 onClear,
-                                             }) => {
-    const creditId = credit.creditId ?? '';
-    const showClear = (row.explanation?.trim().length ?? 0) > 0;
-
-    const theme = useTheme();
-    const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
-
-    const dollarsHelperText = row.dollarsError
-        ? row.dollarsError
-        : (isSmUp && row.proportionError ? ' ' : '');
-
-    const proportionHelperText = row.proportionError
-        ? row.proportionError
-        : (isSmUp && row.dollarsError ? ' ' : '');
-
-    return (
-        <Box key={creditId}>
-            <Grid container alignItems="center" spacing={1}>
-                <Grid size={{xs: 12, md: 6}}>
-                    <Typography variant="subtitle2" sx={{wordBreak: 'break-word'}}>
-                        {credit.details || creditId || '未命名报销'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        面值（年）约：$
-                        {Number.isInteger(faceDollars) ? faceDollars : faceDollars.toFixed(2)}
-                        {hasProportionDefault &&
-                            ` · 默认等效比例：${(credit.defaultEffectiveValueProportion).toFixed(2)}`}
-                    </Typography>
-                </Grid>
-
-                <Grid size={{xs: 12, md: 6}}>
-                    <Grid container spacing={1} alignItems="center">
-                        <Grid size={{xs: 12, sm: 6}}>
-                            <TextField
-                                size="small"
-                                fullWidth
-                                autoComplete="off"
-                                label="美元（年）"
-                                placeholder={`(0 - ${Number.isInteger(faceDollars) ? faceDollars : faceDollars.toFixed(2)})`}
-                                value={row.dollarsInput}
-                                onChange={(e) => onChange({dollarsInput: e.target.value}, 'dollars')}
-                                onBlur={() => onBlur('dollars')}
-                                error={!!row.dollarsError}
-                                helperText={dollarsHelperText}
-                                slotProps={{
-                                    input: {
-                                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                        inputMode: 'decimal',
-                                    },
-                                }}
-                            />
-                        </Grid>
-
-                        <Grid size={{xs: 12, sm: 6}}>
-                            <TextField
-                                size="small"
-                                fullWidth
-                                autoComplete="off"
-                                label="等效比例 (0-1)"
-                                placeholder="例如：0.75"
-                                value={row.proportionInput}
-                                onChange={(e) => onChange({proportionInput: e.target.value}, 'proportion')}
-                                onBlur={() => onBlur('proportion')}
-                                error={!!row.proportionError}
-                                helperText={proportionHelperText}
-                                slotProps={{
-                                    input: {
-                                        inputMode: 'decimal',
-                                    },
-                                }}
-                            />
-                        </Grid>
-
-                        <Grid size={{xs: 12}}>
-                            <TextField
-                                size="small"
-                                fullWidth
-                                label="说明（可选）"
-                                placeholder={`如：${credit.defaultEffectiveValueExplanation ?? ''}`}
-                                value={row.explanation}
-                                onChange={(e) => onChange({explanation: e.target.value})}
-                                slotProps={{
-                                    input: showClear
-                                        ? {
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <Tooltip title="清空此行">
-                                                        <IconButton aria-label="clear row" size="small"
-                                                                    onClick={onClear}>
-                                                            <ClearIcon fontSize="small"/>
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </InputAdornment>
-                                            ),
-                                        }
-                                        : undefined,
-                                }}
-                            />
-                        </Grid>
-                    </Grid>
-                </Grid>
-            </Grid>
-            {!isLastRow && <Divider sx={{my: 1}}/>}
-        </Box>
-    );
-};
-
 // ------------------------------
 // 主组件（仅展示与自定义报销相关的新逻辑）
 // ------------------------------
-const CardEditComponent: React.FC<CardEditProps> = ({
+const ValuationEditComponent: React.FC<CardEditProps> = ({
                                                         open,
                                                         card,
                                                         displayCredits,
@@ -594,115 +435,6 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         setCustomAdjustments(prev => prev.filter(item => item.customAdjustmentId !== id));
     };
 
-    const renderCustomAdjustments = () => (
-        <Stack spacing={2}>
-            {(sessionSingleCustomAdjustmentId
-                    ? customAdjustments.filter(item => item.customAdjustmentId === sessionSingleCustomAdjustmentId)
-                    : customAdjustments
-            ).map((item) => {
-                const dollars = (item.valueCents ?? 0) / 100;
-                const dollarsStr = Number.isFinite(dollars) ? dollars.toFixed(2) : '0.00';
-                const id = item.customAdjustmentId ?? '';
-                // @ts-ignore wrong identification?
-                const frequency = item.frequency && item.frequency !== CreditFrequency.FREQUENCY_UNSPECIFIED
-                    ? item.frequency
-                    : CreditFrequency.ANNUAL;
-                return (
-                    <Box key={id} sx={{p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider'}}>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid size={{xs: 12, sm: 6}}>
-                                <TextField
-                                    fullWidth
-                                    label="描述"
-                                    value={item.description ?? ''}
-                                    onChange={(e) =>
-                                        handleUpdateCustomAdjustment(id, {description: e.target.value})
-                                    }
-                                    size="small"
-                                />
-                            </Grid>
-
-                            <Grid size={{xs: 12, sm: 3}}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel id={`freq-${id}`}>频率</InputLabel>
-                                    <Select
-                                        labelId={`freq-${id}`}
-                                        label="频率"
-                                        value={frequency}
-                                        onChange={(e) =>
-                                            handleUpdateCustomAdjustment(
-                                                id,
-                                                {frequency: Number(e.target.value) as cardverdict.v1.CreditFrequency},
-                                            )
-                                        }
-                                    >
-                                        {frequencyOptions.map(opt => (
-                                            <MenuItem key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            <Grid size={{xs: 12, sm: 3}}>
-                                <TextField
-                                    fullWidth
-                                    label="金额（美元，可为负）"
-                                    value={dollarsStr}
-                                    onChange={(e) => {
-                                        const v = e.target.value;
-                                        const vr = validateSignedDollars(v);
-                                        if (!vr.ok || !vr.cleaned) {
-                                            // 直接回显输入，不更新 valueCents，避免跳动
-                                            handleUpdateCustomAdjustment(id, {valueCents: item.valueCents});
-                                        } else {
-                                            const num = Number(vr.cleaned);
-                                            handleUpdateCustomAdjustment(id, {valueCents: Math.round(num * 100)});
-                                        }
-                                    }}
-                                    slotProps={{
-                                        input: {
-                                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                        },
-                                    }}
-                                    size="small"
-                                />
-                            </Grid>
-
-                            <Grid size={{xs: 12}}>
-                                <TextField
-                                    fullWidth
-                                    label="备注（可选）"
-                                    value={item.notes ?? ''}
-                                    onChange={(e) =>
-                                        handleUpdateCustomAdjustment(id, {notes: e.target.value})
-                                    }
-                                    size="small"
-                                    multiline
-                                    minRows={1}
-                                    maxRows={4}
-                                />
-                            </Grid>
-
-                            <Grid size={{xs: 12}} display="flex" justifyContent="flex-end">
-                                <Tooltip title="删除此自定义报销">
-                                    <IconButton
-                                        color="error"
-                                        onClick={() => handleDeleteCustomAdjustment(id)}
-                                        size="small"
-                                    >
-                                        <DeleteIcon fontSize="small"/>
-                                    </IconButton>
-                                </Tooltip>
-                            </Grid>
-                        </Grid>
-                    </Box>
-                );
-            })}
-        </Stack>
-    );
-
     // 保存：允许仅保存说明；若有错误则禁用保存
     const handleSaveCredit = React.useCallback(() => {
         if (hasAnyError) return;
@@ -830,26 +562,13 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                 {sessionCredits.length > 0 && !sessionSingleCreditId && <Divider sx={{my: 2}}/>}
 
                 {!sessionSingleCreditId && (
-                    <>
-                        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{mb: 1}}>
-                            <Typography variant="h6" component="div">
-                                自定义报销
-                            </Typography>
-                            {!sessionSingleCustomAdjustmentId &&
-                                <Button variant="outlined" onClick={handleAddCustomAdjustment}>
-                                    添加自定义报销
-                                </Button>
-                            }
-                        </Box>
-
-                        {customAdjustments.length === 0 ? (
-                            <Typography variant="body2" color="text.secondary">
-                                暂无自定义报销。点击“添加自定义报销”新建一条。
-                            </Typography>
-                        ) : (
-                            renderCustomAdjustments()
-                        )}
-                    </>
+                    <CustomAdjustmentsEditor
+                        customAdjustments={customAdjustments}
+                        onAdd={handleAddCustomAdjustment}
+                        onUpdate={handleUpdateCustomAdjustment}
+                        onDelete={handleDeleteCustomAdjustment}
+                        sessionSingleCustomAdjustmentId={sessionSingleCustomAdjustmentId}
+                    />
                 )}
             </DialogContent>
 
@@ -864,4 +583,4 @@ const CardEditComponent: React.FC<CardEditProps> = ({
     );
 };
 
-export default CardEditComponent;
+export default ValuationEditComponent;
