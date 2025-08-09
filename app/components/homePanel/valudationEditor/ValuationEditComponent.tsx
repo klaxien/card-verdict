@@ -16,6 +16,7 @@ import {cardverdict, uservaluation} from '~/generated/bundle';
 import {calcRawAnnualCents} from "~/utils/cardCalculations";
 import {CreditRow} from "./CreditRow";
 import {CustomAdjustmentsEditor} from "./CustomAdjustmentsEditor";
+import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
 
 type CustomValue = uservaluation.v1.ICustomValue;
 type UserCardValuation = uservaluation.v1.IUserCardValuation;
@@ -30,11 +31,13 @@ type CardEditProps = {
     card: CreditCard;
     displayCredits?: Credit[];
     initialValuation?: UserCardValuation;
+    onCustomValuationClear?: () => void;
     onClose: () => void;
     onSave?: (valuation: UserCardValuation) => void;
     singleCreditIdToEdit?: string;
     singleCustomAdjustmentIdToEdit?: string;
 };
+
 
 type RowState = {
     dollarsInput: string;
@@ -200,6 +203,7 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
                                                              card,
                                                              displayCredits,
                                                              initialValuation,
+                                                             onCustomValuationClear,
                                                              onClose,
                                                              onSave,
                                                              singleCreditIdToEdit,
@@ -207,6 +211,9 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
                                                          }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    // 二次确认对话框
+    const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
     // 用于渲染的顺序（由父组件传入），对话框会基于该顺序进行“置顶”，但在一次打开会话中不再实时变动
     const credits: Credit[] = React.useMemo(
@@ -506,6 +513,28 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
         onClose();
     };
 
+    // 新增：清空当前卡片的所有自定义设置（credit + custom），直接从 map 中删除并持久化
+    const handleConfirmClear = () => {
+        try {
+            const db = loadUserValuationDatabase() ?? {cardValuations: {}, pointSystemValuations: {}};
+            const cardId = card.cardId ?? '';
+            if (cardId) {
+                if (db.cardValuations && Object.prototype.hasOwnProperty.call(db.cardValuations, cardId)) {
+                    delete db.cardValuations[cardId];
+                }
+                saveUserValuationDatabase(db);
+            }
+        } catch (e) {
+            console.error('Failed to clear card valuation:', e);
+        } finally {
+            // 重置本地 UI，通知父组件刷新，并关闭弹窗
+            setRowStateByCreditId({});
+            setCustomAdjustments([]);
+            setConfirmClearOpen(false);
+            onCustomValuationClear?.(); // 新增：通知父层把 userValuation 清空
+            onClose();
+        }
+    };
 
     // 会话内冻结的标题，防止关闭动画期间因 props 变化造成闪动
     const [sessionTitle, setSessionTitle] = React.useState<string>('');
@@ -524,100 +553,133 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
     // Render
     // ------------------------------
     return (
-        <Dialog
-            fullScreen={isMobile}
-            open={open}
-            onClose={onClose}
-            maxWidth="md"
-            fullWidth
-            slotProps={{
-                paper: {
-                    sx: {
-                        paddingBottom: {xs: 'env(safe-area-inset-bottom)'},
+        <>
+            <Dialog
+                fullScreen={isMobile}
+                open={open}
+                onClose={onClose}
+                maxWidth="md"
+                fullWidth
+                slotProps={{
+                    paper: {
+                        sx: {
+                            paddingBottom: {xs: 'env(safe-area-inset-bottom)'},
+                        }
                     }
-                }
-            }}
-        >
-            <DialogTitle>{sessionTitle}</DialogTitle>
-
-            <DialogContent
-                dividers
-                sx={{
-                    // 为底部操作区预留空间（按钮高度 + 间距 + 安全区）
-                    pb: {
-                        xs: 'calc(96px + env(safe-area-inset-bottom))',
-                    },
                 }}
             >
-                {sessionCredits.length > 0 && (
-                    <Stack spacing={2}>
-                        {sessionCredits.map((credit, index) => {
-                            const creditId = credit.creditId ?? '';
-                            const rowState =
-                                rowStateByCreditId[creditId] ?? {
-                                    dollarsInput: '',
-                                    proportionInput: '',
-                                    explanation: '',
-                                    lastEdited: undefined,
-                                    dollarsError: null,
-                                    proportionError: null,
-                                };
+                <DialogTitle>{sessionTitle}</DialogTitle>
 
-                            const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
-                            const hasProportionDefault = credit.defaultEffectiveValueProportion != null;
-                            const isLastRow = index === sessionCredits.length - 1;
+                <DialogContent
+                    dividers
+                    sx={{
+                        // 为底部操作区预留空间（按钮高度 + 间距 + 安全区）
+                        pb: {
+                            xs: 'calc(96px + env(safe-area-inset-bottom))',
+                        },
+                    }}
+                >
+                    {sessionCredits.length > 0 && (
+                        <Stack spacing={2}>
+                            {sessionCredits.map((credit, index) => {
+                                const creditId = credit.creditId ?? '';
+                                const rowState =
+                                    rowStateByCreditId[creditId] ?? {
+                                        dollarsInput: '',
+                                        proportionInput: '',
+                                        explanation: '',
+                                        lastEdited: undefined,
+                                        dollarsError: null,
+                                        proportionError: null,
+                                    };
 
-                            return (
-                                <CreditRow
-                                    key={creditId || index}
-                                    credit={credit}
-                                    row={rowState}
-                                    faceDollars={annualFaceValueDollars}
-                                    hasProportionDefault={hasProportionDefault}
-                                    isLastRow={isLastRow}
-                                    onChange={(patch, source) => updateRow(creditId, patch, source)}
-                                    onBlur={(field) => handleBlurRow(creditId, field)}
-                                    onClear={() => clearRowState(creditId)}
-                                />
-                            );
-                        })}
-                    </Stack>
-                )}
+                                const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
+                                const hasProportionDefault = credit.defaultEffectiveValueProportion != null;
+                                const isLastRow = index === sessionCredits.length - 1;
 
-                {sessionCredits.length > 0 && !sessionSingleCreditId && <Divider sx={{my: 2}}/>}
+                                return (
+                                    <CreditRow
+                                        key={creditId || index}
+                                        credit={credit}
+                                        row={rowState}
+                                        faceDollars={annualFaceValueDollars}
+                                        hasProportionDefault={hasProportionDefault}
+                                        isLastRow={isLastRow}
+                                        onChange={(patch, source) => updateRow(creditId, patch, source)}
+                                        onBlur={(field) => handleBlurRow(creditId, field)}
+                                        onClear={() => clearRowState(creditId)}
+                                    />
+                                );
+                            })}
+                        </Stack>
+                    )}
 
-                {!sessionSingleCreditId && (
-                    <CustomAdjustmentsEditor
-                        customAdjustments={customAdjustments}
-                        onAdd={handleAddCustomAdjustment}
-                        onUpdate={handleUpdateCustomAdjustment}
-                        onDelete={handleDeleteCustomAdjustment}
-                        sessionSingleCustomAdjustmentId={sessionSingleCustomAdjustmentId}
-                        onValidityChange={setCustomAdjustmentsHasError}
-                    />
-                )}
-            </DialogContent>
+                    {sessionCredits.length > 0 && !sessionSingleCreditId && <Divider sx={{my: 2}}/>}
 
-            <DialogActions
-                sx={{
-                    // 粘底并覆盖整行
-                    position: {xs: 'sticky', sm: 'static'},
-                    bottom: 0,
-                    zIndex: 1,
-                    bgcolor: 'background.paper',
-                    borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-                    // 留出安全区内边距，提升全面屏手势区的可点性
-                    pb: {xs: 'max(env(safe-area-inset-bottom), 8px)', sm: 2},
-                    pt: 1,
-                }}
+                    {!sessionSingleCreditId && (
+                        <CustomAdjustmentsEditor
+                            customAdjustments={customAdjustments}
+                            onAdd={handleAddCustomAdjustment}
+                            onUpdate={handleUpdateCustomAdjustment}
+                            onDelete={handleDeleteCustomAdjustment}
+                            sessionSingleCustomAdjustmentId={sessionSingleCustomAdjustmentId}
+                            onValidityChange={setCustomAdjustmentsHasError}
+                        />
+                    )}
+                </DialogContent>
+
+                <DialogActions
+                    sx={{
+                        // 粘底并覆盖整行
+                        position: {xs: 'sticky', sm: 'static'},
+                        bottom: 0,
+                        zIndex: 1,
+                        bgcolor: 'background.paper',
+                        borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+                        // 留出安全区内边距，提升全面屏手势区的可点性
+                        pb: {xs: 'max(env(safe-area-inset-bottom), 8px)', sm: 2},
+                        pt: 1,
+                    }}
+                >
+                    {/* 左下角红色“清空”按钮 */}
+                    <Button
+                        color="error"
+                        variant="text"
+                        onClick={() => setConfirmClearOpen(true)}
+                    >
+                        清空
+                    </Button>
+
+                    {/* 占位将右侧内容推到右边 */}
+                    <Typography variant="caption" color={hasAnyError ? 'error' : 'text.secondary'} sx={{ml: 'auto'}}>
+                        {hasAnyError ? '存在无效输入，请修正后再保存' : ' '}
+                    </Typography>
+                    <Button onClick={onClose}>取消</Button>
+                    <Button variant="contained" onClick={handleSave} disabled={hasAnyError}>保存</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* 二次确认对话框 */}
+            <Dialog
+                open={confirmClearOpen}
+                onClose={() => setConfirmClearOpen(false)}
+                maxWidth="xs"
+                fullWidth
             >
-                <Typography variant="caption" color={hasAnyError ? 'error' : 'text.secondary'} sx={{mr: 'auto'}}>
-                    {hasAnyError ? '存在无效输入，请修正后再保存' : ' '}
-                </Typography>
-                <Button onClick={onClose}>取消</Button>
-                <Button variant="contained" onClick={handleSave} disabled={hasAnyError}>保存</Button>
-            </DialogActions>
-        </Dialog>
+                <DialogTitle>确认清空？</DialogTitle>
+                <DialogContent dividers>
+                    <Typography variant="body2">
+                        这将清除“{card.name}”的所有自定义设置（报销估值与自定义调整），此操作不可撤销。
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmClearOpen(false)}>取消</Button>
+                    <Button color="error" variant="contained" onClick={handleConfirmClear}>
+                        确认清空
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
     );
 };
 

@@ -314,6 +314,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 card={card}
                 displayCredits={sortedCredits}
                 initialValuation={userValuation}
+                onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditOpen(false)}
                 onSave={handleSaveValuation}
             />
@@ -323,6 +324,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 card={card}
                 displayCredits={sortedCredits}
                 initialValuation={userValuation}
+                onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditingCreditId(null)}
                 onSave={handleSaveValuation}
                 singleCreditIdToEdit={editingCreditId ?? undefined}
@@ -333,6 +335,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 card={card}
                 displayCredits={sortedCredits}
                 initialValuation={userValuation}
+                onCustomValuationClear={() => setUserValuation(undefined)} // 新增
                 onClose={() => setEditingCustomAdjustmentId(null)}
                 onSave={handleSaveValuation}
                 singleCustomAdjustmentIdToEdit={editingCustomAdjustmentId ?? undefined}

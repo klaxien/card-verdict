@@ -191,7 +191,7 @@ function textProtoToBinaryPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-    base: '/CardVerdict/',
+    base: '/card-verdict/',
     plugins: [
         reactRouter(),
         tsconfigPaths(),

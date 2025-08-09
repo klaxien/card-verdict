@@ -1,6 +1,6 @@
 import {cardverdict} from "~/generated/bundle.js";
 
-// 使用 Vite 的 BASE_URL，兼容子路径部署（/CardVerdict/）
+// 使用 Vite 的 BASE_URL，兼容子路径部署（/card-verdict/）
 const base = import.meta.env.BASE_URL ?? '/';
 
 export async function getCardDatabase(): Promise<cardverdict.v1.CreditCardDatabase> {
