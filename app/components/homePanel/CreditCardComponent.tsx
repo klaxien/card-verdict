@@ -149,6 +149,7 @@ type CreditCardComponentProps = {
 const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
     const [editOpen, setEditOpen] = useState(false);
     const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
+    const [editingCustomAdjustmentId, setEditingCustomAdjustmentId] = useState<string | null>(null);
 
     // This is the key state. It will be initialized from props, then updated from localStorage.
     const [userValuation, setUserValuation] = useState<uservaluation.v1.IUserCardValuation | undefined>(initialValuation);
@@ -250,6 +251,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
             tooltip: adj.notes || adj.description || '自定义调整项',
             chipColor: getCustomAdjustmentChipColor(annualValue),
             isLast: index === sortedCustomAdjustments.length - 1,
+            onClick: () => setEditingCustomAdjustmentId(adj.customAdjustmentId ?? null),
         };
     });
 
@@ -372,6 +374,16 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 onClose={() => setEditingCreditId(null)}
                 onSave={handleSaveValuation}
                 singleCreditIdToEdit={editingCreditId ?? undefined}
+            />
+            {/* 单个 custom adjustment 编辑对话框 */}
+            <CardEditComponent
+                open={!!editingCustomAdjustmentId}
+                card={card}
+                displayCredits={sortedCredits}
+                initialValuation={userValuation}
+                onClose={() => setEditingCustomAdjustmentId(null)}
+                onSave={handleSaveValuation}
+                singleCustomAdjustmentIdToEdit={editingCustomAdjustmentId ?? undefined}
             />
         </Card>
     );

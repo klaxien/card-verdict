@@ -41,6 +41,7 @@ type CardEditProps = {
     onClose: () => void;
     onSave?: (valuation: UserCardValuation) => void;
     singleCreditIdToEdit?: string;
+    singleCustomAdjustmentIdToEdit?: string;
 };
 
 type RowState = {
@@ -393,6 +394,7 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                                                         onClose,
                                                         onSave,
                                                         singleCreditIdToEdit,
+                                                        singleCustomAdjustmentIdToEdit,
                                                     }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -495,11 +497,13 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         if (singleCreditIdToEdit) {
             const creditToEdit = credits.find(c => c.creditId === singleCreditIdToEdit);
             setSessionCredits(creditToEdit ? [creditToEdit] : []);
+        } else if (singleCustomAdjustmentIdToEdit) {
+            setSessionCredits([]);
         } else {
             // 否则，采用父组件传入的顺序
             setSessionCredits(credits);
         }
-    }, [open, credits, rawAnnualFaceCentsByCreditId, initialValuation, singleCreditIdToEdit]);
+    }, [open, credits, rawAnnualFaceCentsByCreditId, initialValuation, singleCreditIdToEdit, singleCustomAdjustmentIdToEdit]);
 
     // 行级操作：在变更时做校验并标红；联动仍然基于清洗后的数值
     const updateRow = React.useCallback(
@@ -619,7 +623,10 @@ const CardEditComponent: React.FC<CardEditProps> = ({
 
     const renderCustomAdjustments = () => (
         <Stack spacing={2}>
-            {customAdjustments.map((item) => {
+            {(singleCustomAdjustmentIdToEdit
+                    ? customAdjustments.filter(item => item.customAdjustmentId === singleCustomAdjustmentIdToEdit)
+                    : customAdjustments
+            ).map((item) => {
                 const dollars = (item.valueCents ?? 0) / 100;
                 const dollarsStr = Number.isFinite(dollars) ? dollars.toFixed(2) : '0.00';
                 const id = item.customAdjustmentId ?? '';
@@ -787,9 +794,13 @@ const CardEditComponent: React.FC<CardEditProps> = ({
 
     React.useEffect(() => {
         if (open) {
-            setSessionTitle(`编辑${singleCreditIdToEdit ? '单项' : ''}报销估值 — ${card.name}`);
+            if (singleCustomAdjustmentIdToEdit) {
+                setSessionTitle(`编辑自定义调整 — ${card.name}`);
+            } else {
+                setSessionTitle(`编辑${singleCreditIdToEdit ? '单项' : ''}报销估值 — ${card.name}`);
+            }
         }
-    }, [open]); // 仅在打开时锁定，避免关闭中因 props 更新而抖动
+    }, [open, card.name, singleCreditIdToEdit, singleCustomAdjustmentIdToEdit]);
 
     // ------------------------------
     // Render
@@ -798,57 +809,65 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         <Dialog fullScreen={isMobile} open={open} onClose={onClose} maxWidth="md" fullWidth>
             <DialogTitle>{sessionTitle}</DialogTitle>
             <DialogContent dividers>
+                {sessionCredits.length > 0 && (
+                    <Stack spacing={2}>
+                        {sessionCredits.map((credit, index) => {
+                            const creditId = credit.creditId ?? '';
+                            const rowState =
+                                rowStateByCreditId[creditId] ?? {
+                                    dollarsInput: '',
+                                    proportionInput: '',
+                                    explanation: '',
+                                    lastEdited: undefined,
+                                    dollarsError: null,
+                                    proportionError: null,
+                                };
 
-                <Stack spacing={2}>
-                    {sessionCredits.map((credit, index) => {
-                        const creditId = credit.creditId ?? '';
-                        const rowState =
-                            rowStateByCreditId[creditId] ?? {
-                                dollarsInput: '',
-                                proportionInput: '',
-                                explanation: '',
-                                lastEdited: undefined,
-                                dollarsError: null,
-                                proportionError: null,
-                            };
+                            const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
+                            const hasProportionDefault = credit.defaultEffectiveValueProportion != null;
+                            const isLastRow = index === sessionCredits.length - 1;
 
-                        const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
-                        const hasProportionDefault = credit.defaultEffectiveValueProportion != null;
-                        const isLastRow = index === sessionCredits.length - 1;
+                            return (
+                                <CreditRow
+                                    key={creditId || index}
+                                    credit={credit}
+                                    row={rowState}
+                                    faceDollars={annualFaceValueDollars}
+                                    hasProportionDefault={hasProportionDefault}
+                                    isLastRow={isLastRow}
+                                    onChange={(patch, source) => updateRow(creditId, patch, source)}
+                                    onBlur={(field) => handleBlurRow(creditId, field)}
+                                    onClear={() => clearRowState(creditId)}
+                                />
+                            );
+                        })}
+                    </Stack>
+                )}
 
-                        return (
-                            <CreditRow
-                                key={creditId || index}
-                                credit={credit}
-                                row={rowState}
-                                faceDollars={annualFaceValueDollars}
-                                hasProportionDefault={hasProportionDefault}
-                                isLastRow={isLastRow}
-                                onChange={(patch, source) => updateRow(creditId, patch, source)}
-                                onBlur={(field) => handleBlurRow(creditId, field)}
-                                onClear={() => clearRowState(creditId)}
-                            />
-                        );
-                    })}
-                </Stack>
 
-                <Divider sx={{my: 2}}/>
+                {sessionCredits.length > 0 && !singleCreditIdToEdit && <Divider sx={{my: 2}}/>}
 
-                <Box display="flex" alignItems="center" justifyContent="space-between" sx={{mb: 1}}>
-                    <Typography variant="h6" component="div">
-                        自定义报销
-                    </Typography>
-                    <Button variant="outlined" onClick={handleAddCustomAdjustment}>
-                        添加自定义报销
-                    </Button>
-                </Box>
+                {!singleCreditIdToEdit && (
+                    <>
+                        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{mb: 1}}>
+                            <Typography variant="h6" component="div">
+                                自定义报销
+                            </Typography>
+                            {!singleCustomAdjustmentIdToEdit &&
+                                <Button variant="outlined" onClick={handleAddCustomAdjustment}>
+                                    添加自定义报销
+                                </Button>
+                            }
+                        </Box>
 
-                {customAdjustments.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                        暂无自定义报销。点击“添加自定义报销”新建一条。
-                    </Typography>
-                ) : (
-                    renderCustomAdjustments()
+                        {customAdjustments.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                                暂无自定义报销。点击“添加自定义报销”新建一条。
+                            </Typography>
+                        ) : (
+                            renderCustomAdjustments()
+                        )}
+                    </>
                 )}
             </DialogContent>
 
