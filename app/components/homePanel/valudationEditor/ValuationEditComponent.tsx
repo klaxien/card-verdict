@@ -183,10 +183,11 @@ const normalizeRowOnBlur = (
 // ------------------------------
 // 自定义报销（CustomAdjustment）支持
 // ------------------------------
+// 1) 将新增自定义项的默认频率改为 ANNUAL，避免未指定
 const newCustomAdjustment = (): CustomAdjustment => ({
     customAdjustmentId: (globalThis.crypto?.randomUUID?.() ?? `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`),
     description: '',
-    frequency: cardverdict.v1.CreditFrequency.FREQUENCY_UNSPECIFIED,
+    frequency: cardverdict.v1.CreditFrequency.ANNUAL, // 原来是 FREQUENCY_UNSPECIFIED
     valueCents: 0,
     notes: '',
 });
@@ -397,12 +398,15 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
         }));
     }, []);
 
-    // 表单是否存在错误
+    // 新增：收集“自定义报销”内的错误，用于禁用保存
+    const [customAdjustmentsHasError, setCustomAdjustmentsHasError] = useState(false);
+
+    // 表单是否存在错误（合并自定义报销的错误）
     const hasAnyError = React.useMemo(() => {
         return Object.values(rowStateByCreditId).some(
             (r) => !!r.dollarsError || !!r.proportionError,
-        );
-    }, [rowStateByCreditId]);
+        ) || customAdjustmentsHasError;
+    }, [rowStateByCreditId, customAdjustmentsHasError]);
 
     // 自定义报销 state 初始化与同步（camelCase：customAdjustments）
     const [customAdjustments, setCustomAdjustments] = useState<uservaluation.v1.ICustomAdjustment[]>(
@@ -589,6 +593,7 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
                         onUpdate={handleUpdateCustomAdjustment}
                         onDelete={handleDeleteCustomAdjustment}
                         sessionSingleCustomAdjustmentId={sessionSingleCustomAdjustmentId}
+                        onValidityChange={setCustomAdjustmentsHasError}
                     />
                 )}
             </DialogContent>

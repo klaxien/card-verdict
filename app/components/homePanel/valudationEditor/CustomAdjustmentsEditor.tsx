@@ -46,6 +46,13 @@ type CustomAdjustmentsEditorProps = {
     onUpdate: (id: string, patch: Partial<CustomAdjustment>) => void;
     onDelete: (id: string) => void;
     sessionSingleCustomAdjustmentId?: string;
+    // 上报当前组件内是否存在错误，以便外层禁用保存
+    onValidityChange?: (hasError: boolean) => void;
+};
+
+type AmountFieldState = {
+    input: string;        // 原始显示值（未必通过校验）
+    error?: string | null;
 };
 
 export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = ({
@@ -54,10 +61,70 @@ export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = (
                                                                                     onUpdate,
                                                                                     onDelete,
                                                                                     sessionSingleCustomAdjustmentId,
+                                                                                    onValidityChange,
                                                                                 }) => {
     const adjustmentsToRender = sessionSingleCustomAdjustmentId
         ? customAdjustments.filter(item => item.customAdjustmentId === sessionSingleCustomAdjustmentId)
         : customAdjustments;
+
+    // 本地“显示值”与错误态，按 id 存
+    const [amountFieldById, setAmountFieldById] = React.useState<Record<string, AmountFieldState>>({});
+
+    // 同步初始化/外部变更
+    React.useEffect(() => {
+        setAmountFieldById((previousMap) => {
+            const nextMap: Record<string, AmountFieldState> = {};
+            for (const item of adjustmentsToRender) {
+                const id = item.customAdjustmentId ?? '';
+                const dollars = (item.valueCents ?? 0) / 100;
+                const initialDisplay = Number.isFinite(dollars) ? dollars.toFixed(2) : '0.00';
+                // 已存在则保留正在编辑的输入；否则以当前 cents 的格式化值作为初始显示
+                nextMap[id] = previousMap[id] ?? {input: initialDisplay, error: null};
+            }
+            return nextMap;
+        });
+    }, [adjustmentsToRender]);
+
+    // 上报是否有错误
+    React.useEffect(() => {
+        const hasError = Object.values(amountFieldById).some(state => !!state.error);
+        onValidityChange?.(hasError);
+    }, [amountFieldById, onValidityChange]);
+
+    const handleAmountChange = (id: string, rawInput: string, currentItem: CustomAdjustment) => {
+        setAmountFieldById((previousMap) => {
+            const validationResult = validateSignedDollars(rawInput);
+            const nextFieldState: AmountFieldState = {
+                input: rawInput,                          // 始终回显用户输入
+                error: validationResult.ok ? null : (validationResult.msg ?? '输入无效'),
+            };
+
+            // 输入有效则更新分值；无效则保持父级不变，避免跳动
+            if (validationResult.ok && validationResult.cleaned != null) {
+                const numeric = Number(validationResult.cleaned);
+                onUpdate(id, {valueCents: Math.round(numeric * 100)});
+            } else {
+                onUpdate(id, {valueCents: currentItem.valueCents});
+            }
+
+            return {...previousMap, [id]: nextFieldState};
+        });
+    };
+
+    const handleAmountBlur = (id: string) => {
+        setAmountFieldById((previousMap) => {
+            const currentField = previousMap[id];
+            if (!currentField) return previousMap;
+            const validationResult = validateSignedDollars(currentField.input);
+            if (validationResult.ok && validationResult.cleaned != null) {
+                const numeric = Number(validationResult.cleaned);
+                // 失焦时规范化为两位小数
+                return {...previousMap, [id]: {input: numeric.toFixed(2), error: null}};
+            }
+            // 保留错误与原样显示
+            return previousMap;
+        });
+    };
 
     return (
         <>
@@ -79,13 +146,18 @@ export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = (
             ) : (
                 <Stack spacing={2}>
                     {adjustmentsToRender.map((item) => {
-                        const dollars = (item.valueCents ?? 0) / 100;
-                        const dollarsStr = Number.isFinite(dollars) ? dollars.toFixed(2) : '0.00';
                         const id = item.customAdjustmentId ?? '';
+                        const fieldState = amountFieldById[id];
+
                         // @ts-ignore wrong identification?
                         const frequency = item.frequency && item.frequency !== CreditFrequency.FREQUENCY_UNSPECIFIED
                             ? item.frequency
                             : CreditFrequency.ANNUAL;
+
+                        const fallbackDisplay = Number.isFinite((item.valueCents ?? 0) / 100)
+                            ? ((item.valueCents ?? 0) / 100).toFixed(2)
+                            : '0.00';
+
                         return (
                             <Box key={id} sx={{p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider'}}>
                                 <Grid container spacing={2} alignItems="center">
@@ -128,18 +200,11 @@ export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = (
                                         <TextField
                                             fullWidth
                                             label="金额（美元，可为负）"
-                                            value={dollarsStr}
-                                            onChange={(e) => {
-                                                const v = e.target.value;
-                                                const vr = validateSignedDollars(v);
-                                                if (!vr.ok || !vr.cleaned) {
-                                                    // 直接回显输入，不更新 valueCents，避免跳动
-                                                    onUpdate(id, {valueCents: item.valueCents});
-                                                } else {
-                                                    const num = Number(vr.cleaned);
-                                                    onUpdate(id, {valueCents: Math.round(num * 100)});
-                                                }
-                                            }}
+                                            value={fieldState?.input ?? fallbackDisplay}
+                                            onChange={(e) => handleAmountChange(id, e.target.value, item)}
+                                            onBlur={() => handleAmountBlur(id)}
+                                            error={!!fieldState?.error}
+                                            helperText={fieldState?.error ?? ''}
                                             slotProps={{
                                                 input: {
                                                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
