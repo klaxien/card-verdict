@@ -24,6 +24,7 @@ import {
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {cardverdict, uservaluation} from '~/generated/bundle';
+import {calcRawAnnualCents} from "~/utils/cardCalculations";
 
 type CustomValue = uservaluation.v1.ICustomValue;
 type UserCardValuation = uservaluation.v1.IUserCardValuation;
@@ -59,40 +60,6 @@ const { CreditFrequency } = cardverdict.v1;
 // ------------------------------
 // Utilities
 // ------------------------------
-
-const PERIODS_PER_YEAR: Record<cardverdict.v1.CreditFrequency, number> = {
-    [cardverdict.v1.CreditFrequency.FREQUENCY_UNSPECIFIED]: 0,
-    [cardverdict.v1.CreditFrequency.ANNUAL]: 1,
-    [cardverdict.v1.CreditFrequency.SEMI_ANNUAL]: 2,
-    [cardverdict.v1.CreditFrequency.QUARTERLY]: 4,
-    [cardverdict.v1.CreditFrequency.MONTHLY]: 12,
-};
-
-const periodsInYearFor = (
-    frequency?: cardverdict.v1.CreditFrequency | null,
-): number => (frequency == null ? 0 : PERIODS_PER_YEAR[frequency] ?? 0);
-
-const calculateRawAnnualCents = (credit: Credit): number => {
-    const periods = periodsInYearFor(credit.frequency);
-    if (!periods) return 0;
-
-    const basePeriodValueCents = credit.defaultPeriodValueCents ?? 0;
-    const periodOverrides = credit.overrides ?? [];
-    if (!periodOverrides.length) return basePeriodValueCents * periods;
-
-    const overrideValueByPeriod = new Map<number, number>();
-    for (const overrideItem of periodOverrides) {
-        if (overrideItem.period != null && overrideItem.valueCents != null) {
-            overrideValueByPeriod.set(overrideItem.period, overrideItem.valueCents);
-        }
-    }
-
-    let totalCents = 0;
-    for (let periodIndex = 1; periodIndex <= periods; periodIndex++) {
-        totalCents += overrideValueByPeriod.get(periodIndex) ?? basePeriodValueCents;
-    }
-    return totalCents;
-};
 
 const emptyValuation = (): UserCardValuation => ({
     creditValuations: {},
@@ -411,7 +378,7 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         for (const creditItem of credits) {
             const creditId = creditItem.creditId ?? '';
             if (!creditId) continue;
-            result.set(creditId, calculateRawAnnualCents(creditItem));
+            result.set(creditId, calcRawAnnualCents(creditItem));
         }
         return result;
     }, [credits]);

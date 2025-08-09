@@ -4,6 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import {cardverdict, uservaluation} from '~/generated/bundle';
 import CardEditComponent from './CardEditComponent';
 import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
+import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
@@ -46,55 +47,6 @@ const ItemRow: React.FC<{ item: DisplayItem, chipWidth: string }> = ({item, chip
 
 
 // --- Helper Functions ---
-
-const PERIODS_PER_YEAR: Record<CreditFrequency, number> = {
-    [CreditFrequency.FREQUENCY_UNSPECIFIED]: 0,
-    [CreditFrequency.ANNUAL]: 1,
-    [CreditFrequency.SEMI_ANNUAL]: 2,
-    [CreditFrequency.QUARTERLY]: 4,
-    [CreditFrequency.MONTHLY]: 12,
-};
-
-const periodsInYearFor = (frequency?: CreditFrequency | null): number =>
-    frequency == null ? 0 : PERIODS_PER_YEAR[frequency] ?? 0;
-
-const calcRawAnnualCents = (credit: cardverdict.v1.ICredit): number => {
-    const {frequency, defaultPeriodValueCents = 0, overrides = []} = credit;
-    const periods = periodsInYearFor(frequency ?? undefined);
-    if (!periods) return 0;
-
-    if (!overrides?.length) return defaultPeriodValueCents * periods;
-
-    const map = new Map<number, number>();
-    for (const ov of overrides) {
-        if (ov.period != null && ov.valueCents != null) map.set(ov.period, ov.valueCents);
-    }
-    let total = 0;
-    for (let p = 1; p <= periods; p++) total += map.get(p) ?? defaultPeriodValueCents;
-    return total;
-};
-
-const defaultEffectiveCents = (credit: cardverdict.v1.ICredit): number => {
-    if (credit.defaultEffectiveValueCents != null) return credit.defaultEffectiveValueCents;
-    if (credit.defaultEffectiveValueProportion != null) {
-        return Math.round(calcRawAnnualCents(credit) * credit.defaultEffectiveValueProportion);
-    }
-    return 0;
-};
-
-const getDisplayEffectiveCents = (
-    credit: cardverdict.v1.ICredit,
-    userVal?: uservaluation.v1.IUserCardValuation,
-): number => {
-    const creditId = credit.creditId ?? '';
-    const entry = userVal?.creditValuations?.[creditId];
-    if (entry?.cents != null) return entry.cents;
-    if (entry?.proportion != null) {
-        return Math.round(calcRawAnnualCents(credit) * entry.proportion);
-    }
-    return defaultEffectiveCents(credit);
-};
-
 
 const getCreditChipColor = (
     credit: cardverdict.v1.ICredit,
