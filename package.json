@@ -1,5 +1,6 @@
 {
   "name": "cardverdict",
+  "homepage": "https://klaxien.github.io/CardVerdict",
   "private": true,
   "type": "module",
   "scripts": {
