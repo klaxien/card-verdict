@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import {cardverdict, uservaluation} from '~/generated/bundle';
-import ValuationEditComponent from './ValuationEditComponent';
+import ValuationEditComponent from './valudationEditor/ValuationEditComponent';
 import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
 import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
 import CreditFrequency = cardverdict.v1.CreditFrequency;
