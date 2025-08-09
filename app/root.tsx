@@ -32,15 +32,24 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({children}: { children: React.ReactNode }) {
+    // Read the scheme set by InitColorSchemeScript so client render matches the DOM
+    const htmlColorScheme =
+        typeof document !== "undefined"
+            ? document.documentElement.getAttribute("data-mui-color-scheme") ?? undefined
+            : undefined;
+
     return (
-        <html lang="en">
+        <html
+            lang="en"
+            data-mui-color-scheme={htmlColorScheme}
+        >
         <head>
+            {/* Ensure this runs before hydration to avoid flash and set the attribute */}
+            <InitColorSchemeScript defaultMode="system"/>
             <meta charSet="utf-8"/>
             <meta name="viewport" content="width=device-width, initial-scale=1"/>
             <Meta/>
             <Links/>
-            {/* Prevent SSR flicker and enable system mode on first paint */}
-            <InitColorSchemeScript defaultMode="system"/>
             <link rel="apple-touch-icon" sizes="180x180"
                   href={`${import.meta.env.BASE_URL}favicons/apple-touch-icon.png`}/>
             <link rel="icon" type="image/png" sizes="32x32"
@@ -65,15 +74,9 @@ export function Layout({children}: { children: React.ReactNode }) {
 const theme = createTheme({
     cssVariables: true,        // use CSS variables for proper dark-mode handling
     colorSchemes: {
-        dark: true,            // enable built-in dark scheme; light is enabled by default
+        dark: true,
         light: true,
     },
-    // 如果你需要自定义颜色，不要直接用 palette 顶层覆盖；
-    // 用 colorSchemes.light/dark 分别配置：
-    // colorSchemes: {
-    //   light: { palette: { primary: { main: '#1976d2' } } },
-    //   dark:  { palette: { primary: { main: '#90caf9' } } },
-    // },
 });
 
 export default function App() {
