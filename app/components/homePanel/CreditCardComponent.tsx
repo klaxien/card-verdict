@@ -1,20 +1,51 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import {cardverdict, uservaluation} from "~/generated/bundle";
+import {cardverdict, uservaluation} from '~/generated/bundle';
 import CardEditComponent from './CardEditComponent';
 import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
 
-type CreditValueOptions = { useEffectiveValue: boolean };
+// --- Reusable Item Display ---
 
-type CreditCardComponentProps = {
-    card: cardverdict.v1.ICreditCard;
-    onSaveValuation?: (valuation: uservaluation.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
-    initialValuation?: uservaluation.v1.IUserCardValuation;
+type DisplayItem = {
+    id: string;
+    details: string;
+    valueCents: number;
+    tooltip: string;
+    chipColor: 'success' | 'warning' | 'error' | 'primary';
+    isLast: boolean;
+    onClick?: () => void;
 };
+
+const ItemRow: React.FC<{ item: DisplayItem, chipWidth: string }> = ({item, chipWidth}) => (
+    <Box key={item.id}>
+        <Grid alignItems="baseline" justifyContent="space-between" display="flex" gap={1}>
+            <Grid flexGrow={1} size={{xs: 10}}>
+                <Typography variant="body2" sx={{wordBreak: 'break-word'}}>
+                    {item.details}
+                </Typography>
+            </Grid>
+            <Grid flexShrink={0} flexGrow={1}>
+                <Tooltip title={item.tooltip}>
+                    <Chip
+                        label={`$${(item.valueCents / 100).toFixed(0)}`}
+                        size="small"
+                        color={item.chipColor}
+                        sx={{width: chipWidth, textAlign: 'center', cursor: item.onClick ? 'pointer' : 'default'}}
+                        onClick={item.onClick}
+                    />
+                </Tooltip>
+            </Grid>
+        </Grid>
+        {!item.isLast && <Divider sx={{mb: 1, mt: 1}}/>}
+    </Box>
+);
+
+
+// --- Helper Functions ---
 
 const PERIODS_PER_YEAR: Record<CreditFrequency, number> = {
     [CreditFrequency.FREQUENCY_UNSPECIFIED]: 0,
@@ -24,7 +55,7 @@ const PERIODS_PER_YEAR: Record<CreditFrequency, number> = {
     [CreditFrequency.MONTHLY]: 12,
 };
 
-const periodsInYearFor = (frequency?: CreditFrequency): number =>
+const periodsInYearFor = (frequency?: CreditFrequency | null): number =>
     frequency == null ? 0 : PERIODS_PER_YEAR[frequency] ?? 0;
 
 const calcRawAnnualCents = (credit: cardverdict.v1.ICredit): number => {
@@ -57,11 +88,11 @@ const getDisplayEffectiveCents = (
 ): number => {
     const creditId = credit.creditId ?? '';
     const entry = userVal?.creditValuations?.[creditId];
-    if (entry?.cents != null) return entry.cents; // 用户以美元（分）覆盖
+    if (entry?.cents != null) return entry.cents;
     if (entry?.proportion != null) {
-        return Math.round(calcRawAnnualCents(credit) * entry.proportion); // 用户以比例覆盖
+        return Math.round(calcRawAnnualCents(credit) * entry.proportion);
     }
-    return defaultEffectiveCents(credit); // 回退默认有效值
+    return defaultEffectiveCents(credit);
 };
 
 
@@ -83,9 +114,36 @@ const getCreditChipColor = (
     return 'error';
 };
 
+const getCustomAdjustmentChipColor = (annualValueCents: number): 'success' | 'error' | 'primary' => {
+    if (annualValueCents > 0) return 'success';
+    if (annualValueCents < 0) return 'error';
+    return 'primary';
+};
+
 const colorRank = (credit: cardverdict.v1.ICredit, userVal?: uservaluation.v1.IUserCardValuation): number => {
     const color = getCreditChipColor(credit, userVal);
     return color === 'success' ? 3 : color === 'warning' ? 2 : color === 'error' ? 1 : 0;
+};
+
+const getTooltipForCredit = (
+    credit: cardverdict.v1.ICredit,
+    userVal?: uservaluation.v1.IUserCardValuation,
+): string => {
+    const creditId = credit.creditId ?? '';
+    const creditValuation = userVal?.creditValuations?.[creditId];
+    const userNote = userVal?.creditValuations?.[creditId]?.explanation?.trim();
+    if(userNote && userNote.length > 0) return userNote;
+    if(creditValuation?.cents || creditValuation?.proportion) return '自定义估值（未输入原因）';
+    return credit.defaultEffectiveValueExplanation ?? '';
+};
+
+
+// --- Main Component ---
+
+type CreditCardComponentProps = {
+    card: cardverdict.v1.ICreditCard;
+    onSaveValuation?: (valuation: uservaluation.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
+    initialValuation?: uservaluation.v1.IUserCardValuation;
 };
 
 const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
@@ -109,16 +167,28 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
         }
     }, [card.cardId, initialValuation]);
 
-    // 使用“用户优先”的有效值计算汇总
+    // --- Calculations ---
+
     const totalCreditsValue = useMemo(() => {
         const credits = card.credits ?? [];
         return credits.reduce((sum, c) => sum + getDisplayEffectiveCents(c, userValuation), 0);
     }, [card.credits, userValuation]);
 
-    const annualFee = card.annualFeeCents || 0;
-    const roi = totalCreditsValue - annualFee;
+    const totalCustomAdjustmentsValue = useMemo(() => {
+        const adjustments = userValuation?.customAdjustments ?? [];
+        if (!adjustments) return 0;
+        return adjustments.reduce((sum, adj) => {
+            const periods = periodsInYearFor(adj.frequency ?? undefined);
+            const annualValue = (adj.valueCents ?? 0) * periods;
+            return sum + annualValue;
+        }, 0);
+    }, [userValuation?.customAdjustments]);
 
-    // 卡片UI展示顺序（使用用户估值后的颜色/数值排序，确保与编辑对话框一致）
+    const annualFee = card.annualFeeCents || 0;
+    const roi = totalCreditsValue + totalCustomAdjustmentsValue - annualFee;
+
+    // --- Display Data Preparation ---
+
     const sortedCredits = useMemo(() => {
         const credits = card.credits ?? [];
         return [...credits].sort((a, b) => {
@@ -126,47 +196,81 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
             if (rankDiff !== 0) return rankDiff;
             const aVal = getDisplayEffectiveCents(a, userValuation);
             const bVal = getDisplayEffectiveCents(b, userValuation);
-            return bVal - aVal; // higher value first
+            return bVal - aVal;
         });
     }, [card.credits, userValuation]);
 
-    // 如果列表里任意一个 credit 的整数金额（四舍五入到美元）为4位数及以上，则所有 Chip 用 5em，否则 4em
+    const sortedCustomAdjustments = useMemo(() => {
+        const adjustments = userValuation?.customAdjustments ?? [];
+        if (!adjustments) return [];
+        return [...adjustments].sort((a, b) => {
+            const aVal = (a.valueCents ?? 0) * periodsInYearFor(a.frequency);
+            const bVal = (b.valueCents ?? 0) * periodsInYearFor(b.frequency);
+            return bVal - aVal;
+        });
+    }, [userValuation?.customAdjustments]);
+
     const hasAnyFourPlusDigits = useMemo(() => {
         const credits = card.credits ?? [];
         for (const c of credits) {
             const cents = getDisplayEffectiveCents(c, userValuation);
             const dollarsRounded = Math.round(cents / 100);
-            const digits = Math.abs(dollarsRounded).toString().length; // 负值也能正确计算位数
-            if (digits >= 4) return true; // 提前返回，提升性能
+            if (Math.abs(dollarsRounded).toString().length >= 4) return true;
+        }
+        const adjustments = userValuation?.customAdjustments ?? [];
+        if (adjustments) {
+            for (const adj of adjustments) {
+                const periods = periodsInYearFor(adj.frequency ?? undefined);
+                const annualValueCents = (adj.valueCents ?? 0) * periods;
+                const dollarsRounded = Math.round(annualValueCents / 100);
+                if (Math.abs(dollarsRounded).toString().length >= 4) return true;
+            }
         }
         return false;
     }, [card.credits, userValuation]);
+
+    const chipWidth = hasAnyFourPlusDigits ? '5em' : '4em';
+
+    const creditDisplayItems: DisplayItem[] = sortedCredits.map((credit, index) => ({
+        id: credit.creditId ?? `credit-${index}`,
+        details: credit.details ?? '',
+        valueCents: getDisplayEffectiveCents(credit, userValuation),
+        tooltip: getTooltipForCredit(credit, userValuation),
+        chipColor: getCreditChipColor(credit, userValuation),
+        isLast: index === sortedCredits.length - 1,
+        onClick: () => setEditingCreditId(credit.creditId ?? null),
+    }));
+
+    const customDisplayItems: DisplayItem[] = sortedCustomAdjustments.map((adj, index) => {
+        const annualValue = (adj.valueCents ?? 0) * periodsInYearFor(adj.frequency);
+        return {
+            id: adj.customAdjustmentId ?? `custom-${index}`,
+            details: adj.description ?? '自定义项',
+            valueCents: annualValue,
+            tooltip: adj.notes || adj.description || '自定义调整项',
+            chipColor: getCustomAdjustmentChipColor(annualValue),
+            isLast: index === sortedCustomAdjustments.length - 1,
+        };
+    });
+
+    // --- Handlers ---
 
     const handleSaveValuation = (valuation: uservaluation.v1.IUserCardValuation) => {
         if (!card.cardId) {
             console.error("Cannot save valuation for a card without a cardId.");
             return;
         }
-
-        // 1. Update local component state to immediately reflect changes in the UI.
         setUserValuation(valuation);
-
-        // 2. Load the entire database, or create a new one.
-        const db = loadUserValuationDatabase() ?? { cardValuations: {}, pointSystemValuations: {} };
-
-        // 3. Update the valuation for the current card.
+        const db = loadUserValuationDatabase() ?? {cardValuations: {}, pointSystemValuations: {}};
         if (!db.cardValuations) {
             db.cardValuations = {};
         }
         db.cardValuations[card.cardId] = valuation;
-
-        // 4. Save the updated database back to localStorage.
         saveUserValuationDatabase(db);
-
-        // 5. Notify any parent component about the save.
         onSaveValuation?.(valuation, card);
     };
 
+    // --- Render ---
 
     return (
         <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4, position: 'relative'}}>
@@ -179,7 +283,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                             color="primary"
                             onClick={() => setEditOpen(true)}
                         >
-                            <EditIcon fontSize="small" />
+                            <EditIcon fontSize="small"/>
                         </IconButton>
                     </Tooltip>
                 </Box>
@@ -190,18 +294,11 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                             component="img"
                             image={`images/${card.imageName || genericImageName}`}
                             alt={`${card.name} card image`}
-                            sx={{
-                                width: 125,
-                                objectFit: 'fill',
-                                aspectRatio: '1.586/1',
-                                borderRadius: '4px',
-                                boxShadow: 3,
-                            }}
+                            sx={{width: 125, objectFit: 'fill', aspectRatio: '1.586/1', borderRadius: '4px', boxShadow: 3}}
                         />
                     </Grid>
                     <Grid>
-                        <Typography variant="subtitle1" component="div"
-                                    sx={{fontWeight: 'bold', wordBreak: 'break-word'}}>
+                        <Typography variant="subtitle1" component="div" sx={{fontWeight: 'bold', wordBreak: 'break-word'}}>
                             {card.name}
                         </Typography>
                     </Grid>
@@ -209,19 +306,14 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
 
                 <Grid container spacing={2} sx={{my: 2, textAlign: 'center'}}>
                     <Grid size={{xs: 6}}>
-                        <Typography variant="body2" color="text.secondary">
-                            年费
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary">年费</Typography>
                         <Typography variant="h6" sx={{fontWeight: 'bold'}}>
                             {card.annualFeeCents != null ? `$${(card.annualFeeCents / 100).toFixed(0)}` : 'N/A'}
                         </Typography>
                     </Grid>
                     <Grid size={{xs: 6}}>
-                        <Typography variant="body2" color="text.secondary">
-                            净值
-                        </Typography>
-                        <Typography variant="h5"
-                                    sx={{fontWeight: 'bold', color: roi >= 0 ? 'success.main' : 'error.main'}}>
+                        <Typography variant="body2" color="text.secondary">净值</Typography>
+                        <Typography variant="h5" sx={{fontWeight: 'bold', color: roi >= 0 ? 'success.main' : 'error.main'}}>
                             ${(roi / 100).toFixed(0)}
                         </Typography>
                     </Grid>
@@ -230,61 +322,35 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 <Divider sx={{mb: 2}}/>
 
                 <Box sx={{flexGrow: 1, overflowY: 'auto', minHeight: 0}}>
-                    <Typography variant="h6" component="div" gutterBottom sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
-                        Credits
-                    </Typography>
+                    <Stack spacing={2}>
+                        <Box>
+                            <Typography variant="h6" component="div" gutterBottom sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
+                                Credits
+                            </Typography>
+                            {creditDisplayItems.length > 0 ? (
+                                <Stack>
+                                    {creditDisplayItems.map((item) => (
+                                        <ItemRow key={item.id} item={item} chipWidth={chipWidth} />
+                                    ))}
+                                </Stack>
+                            ) : (
+                                <Typography variant="body2">No credits available.</Typography>
+                            )}
+                        </Box>
 
-                    {(sortedCredits?.length ?? 0) > 0 ? (
-                        <Stack>
-                            {sortedCredits.map((credit, index) => {
-                                const valueCents = getDisplayEffectiveCents(credit, userValuation);
-                                const value = valueCents / 100;
-                                const isLast = index === sortedCredits.length - 1;
-                                const getTooltipForCredit = (
-                                    credit: cardverdict.v1.ICredit,
-                                    userVal?: uservaluation.v1.IUserCardValuation,
-                                ): string | undefined => {
-                                    const creditId = credit.creditId ?? '';
-                                    const creditValuation = userVal?.creditValuations?.[creditId];
-                                    const userNote = userVal?.creditValuations?.[creditId]?.explanation?.trim();
-                                    if(userNote && userNote.length > 0) return userNote;
-
-                                    if(creditValuation?.cents || creditValuation?.proportion) return '自定义估值（未输入原因）';
-
-                                    return credit.defaultEffectiveValueExplanation ?? '';
-                                };
-
-
-                                return (
-                                    <Box key={credit.creditId ?? index}>
-                                        <Grid alignItems="baseline" justifyContent="space-between" display="flex" gap={1}>
-                                            <Grid flexGrow={1} size={{xs: 10}}>
-                                                <Typography variant="body2" sx={{wordBreak: 'break-word'}}>
-                                                    {credit.details}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid flexShrink={0} flexGrow={1}>
-                                                <Tooltip title={getTooltipForCredit(credit, userValuation)}>
-                                                    <Chip
-                                                        label={`$${value.toFixed(0)}`}
-                                                        size="small"
-                                                        color={getCreditChipColor(credit, userValuation)}
-                                                        sx={{ width: hasAnyFourPlusDigits ? '5em' : '4em', textAlign: 'center', cursor: 'pointer' }}
-                                                        onClick={() => setEditingCreditId(credit.creditId ?? null)}
-                                                    />
-                                                </Tooltip>
-
-                                            </Grid>
-                                        </Grid>
-
-                                        {!isLast && <Divider sx={{mb: 1, mt: 1}}/>}
-                                    </Box>
-                                );
-                            })}
-                        </Stack>
-                    ) : (
-                        <Typography variant="body2">No credits available.</Typography>
-                    )}
+                        {customDisplayItems.length > 0 && (
+                            <Box>
+                                <Typography variant="h6" component="div" gutterBottom sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
+                                    Custom
+                                </Typography>
+                                <Stack>
+                                    {customDisplayItems.map((item) => (
+                                        <ItemRow key={item.id} item={item} chipWidth={chipWidth} />
+                                    ))}
+                                </Stack>
+                            </Box>
+                        )}
+                    </Stack>
                 </Box>
             </CardContent>
 
