@@ -1,4 +1,4 @@
-import {cardverdict, uservaluation} from '~/generated/bundle';
+import {cardverdict, userprofile} from '~/generated/bundle';
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 export const PERIODS_PER_YEAR: Record<CreditFrequency, number> = {
@@ -38,7 +38,7 @@ export const defaultEffectiveCents = (credit: cardverdict.v1.ICredit): number =>
 
 export const getDisplayEffectiveCents = (
     credit: cardverdict.v1.ICredit,
-    userVal?: uservaluation.v1.IUserCardValuation,
+    userVal?: userprofile.v1.IUserCardValuation,
 ): number => {
     const creditId = credit.creditId ?? '';
     const entry = userVal?.creditValuations?.[creditId];
@@ -51,7 +51,7 @@ export const getDisplayEffectiveCents = (
 
 export const calculateNetWorth = (
     card: cardverdict.v1.ICreditCard,
-    userDb: uservaluation.v1.IValuationProfile | null
+    userDb: userprofile.v1.IValuationProfile | null
 ): number => {
     const cardId = card.cardId ?? '';
     const userValuation = userDb?.cardValuations?.[cardId];

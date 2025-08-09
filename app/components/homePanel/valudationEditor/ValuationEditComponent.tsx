@@ -12,17 +12,17 @@ import {
     useMediaQuery,
     useTheme,
 } from '@mui/material';
-import {cardverdict, uservaluation} from '~/generated/bundle';
+import {cardverdict, userprofile} from '~/generated/bundle';
 import {calcRawAnnualCents} from "~/utils/cardCalculations";
 import {CreditRow} from "./CreditRow";
 import {CustomAdjustmentsEditor} from "./CustomAdjustmentsEditor";
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
 
-type CustomValue = uservaluation.v1.ICustomValue;
-type UserCardValuation = uservaluation.v1.IUserCardValuation;
+type CustomValue = userprofile.v1.ICustomValue;
+type UserCardValuation = userprofile.v1.IUserCardValuation;
 type Credit = cardverdict.v1.ICredit;
 type CreditCard = cardverdict.v1.ICreditCard;
-type CustomAdjustment = uservaluation.v1.ICustomAdjustment;
+type CustomAdjustment = userprofile.v1.ICustomAdjustment;
 
 type LastEdited = 'dollars' | 'proportion' | undefined;
 
@@ -416,7 +416,7 @@ const ValuationEditComponent: React.FC<CardEditProps> = ({
     }, [rowStateByCreditId, customAdjustmentsHasError]);
 
     // 自定义报销 state 初始化与同步（camelCase：customAdjustments）
-    const [customAdjustments, setCustomAdjustments] = useState<uservaluation.v1.ICustomAdjustment[]>(
+    const [customAdjustments, setCustomAdjustments] = useState<userprofile.v1.ICustomAdjustment[]>(
         initialValuation?.customAdjustments ? [...initialValuation.customAdjustments] : [],
     );
 

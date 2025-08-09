@@ -15,9 +15,9 @@ import {
     Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {cardverdict, uservaluation} from '~/generated/bundle';
+import {cardverdict, userprofile} from '~/generated/bundle';
 
-type CustomAdjustment = uservaluation.v1.ICustomAdjustment;
+type CustomAdjustment = userprofile.v1.ICustomAdjustment;
 const {CreditFrequency} = cardverdict.v1;
 
 const frequencyOptions: Array<{ label: string; value: cardverdict.v1.CreditFrequency }> = [

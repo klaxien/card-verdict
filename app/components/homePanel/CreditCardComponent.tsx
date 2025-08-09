@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import {cardverdict, uservaluation} from '~/generated/bundle';
+import {cardverdict, userprofile} from '~/generated/bundle';
 import ValuationEditComponent from './valudationEditor/ValuationEditComponent';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
 import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
@@ -50,7 +50,7 @@ const ItemRow: React.FC<{ item: DisplayItem, chipWidth: string }> = ({item, chip
 
 const getCreditChipColor = (
     credit: cardverdict.v1.ICredit,
-    userVal?: uservaluation.v1.IUserCardValuation,
+    userVal?: userprofile.v1.IUserCardValuation,
 ): 'success' | 'warning' | 'error' | 'primary' => {
     const effective = getDisplayEffectiveCents(credit, userVal);
     if (effective === 0) return 'error';
@@ -72,14 +72,14 @@ const getCustomAdjustmentChipColor = (annualValueCents: number): 'success' | 'er
     return 'primary';
 };
 
-const colorRank = (credit: cardverdict.v1.ICredit, userVal?: uservaluation.v1.IUserCardValuation): number => {
+const colorRank = (credit: cardverdict.v1.ICredit, userVal?: userprofile.v1.IUserCardValuation): number => {
     const color = getCreditChipColor(credit, userVal);
     return color === 'success' ? 3 : color === 'warning' ? 2 : color === 'error' ? 1 : 0;
 };
 
 const getTooltipForCredit = (
     credit: cardverdict.v1.ICredit,
-    userVal?: uservaluation.v1.IUserCardValuation,
+    userVal?: userprofile.v1.IUserCardValuation,
 ): string => {
     const creditId = credit.creditId ?? '';
     const creditValuation = userVal?.creditValuations?.[creditId];
@@ -94,8 +94,8 @@ const getTooltipForCredit = (
 
 type CreditCardComponentProps = {
     card: cardverdict.v1.ICreditCard;
-    onSaveValuation?: (valuation: uservaluation.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
-    initialValuation?: uservaluation.v1.IUserCardValuation;
+    onSaveValuation?: (valuation: userprofile.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
+    initialValuation?: userprofile.v1.IUserCardValuation;
 };
 
 const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
@@ -104,7 +104,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
     const [editingCustomAdjustmentId, setEditingCustomAdjustmentId] = useState<string | null>(null);
 
     // This is the key state. It will be initialized from props, then updated from localStorage.
-    const [userValuation, setUserValuation] = useState<uservaluation.v1.IUserCardValuation | undefined>(initialValuation);
+    const [userValuation, setUserValuation] = useState<userprofile.v1.IUserCardValuation | undefined>(initialValuation);
 
     // Effect for loading valuation from localStorage on component mount
     useEffect(() => {
@@ -209,7 +209,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
 
     // --- Handlers ---
 
-    const handleSaveValuation = (valuation: uservaluation.v1.IUserCardValuation) => {
+    const handleSaveValuation = (valuation: userprofile.v1.IUserCardValuation) => {
         if (!card.cardId) {
             console.error("Cannot save valuation for a card without a cardId.");
             return;

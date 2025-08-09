@@ -12,7 +12,7 @@ import {
     type SelectChangeEvent,
 } from '@mui/material';
 import {getCardDatabase} from "~/client/CardDetailsFetcher";
-import {cardverdict, uservaluation} from "~/generated/bundle";
+import {cardverdict, userprofile} from "~/generated/bundle";
 import CreditCardComponent from "~/components/homePanel/CreditCardComponent";
 import {loadActiveValuationProfile} from "~/client/UserSettingsPersistence";
 import {calculateNetWorth} from "~/utils/cardCalculations";
@@ -22,7 +22,7 @@ type SortOrder = 'net-high-to-low' | 'net-low-to-high' | 'credits-high-to-low' |
 
 const HomePanel: React.FC = () => {
     const [cardData, setCardData] = useState<cardverdict.v1.CreditCardDatabase | null>(null);
-    const [userValuationDb, setUserValuationDb] = useState<uservaluation.v1.IValuationProfile | null>(null);
+    const [userValuationDb, setUserValuationDb] = useState<userprofile.v1.IValuationProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<SortOrder>('net-high-to-low');

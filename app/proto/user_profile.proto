@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package uservaluation.v1;
+package userprofile.v1;
 
 import "google/protobuf/timestamp.proto";
 // 引入 cardverdict 的 CreditFrequency 枚举

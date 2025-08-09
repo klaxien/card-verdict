@@ -1,4 +1,4 @@
-import { uservaluation } from '~/generated/bundle';
+import { userprofile } from '~/generated/bundle';
 
 const LOCAL_STORAGE_KEY = 'userAccountData';
 
@@ -42,7 +42,7 @@ function fromBase64(base64: string): Uint8Array {
  *
  * @param profileToSave 要保存的估值画像。它必须包含 `profileId`。
  */
-export function saveValuationProfile(profileToSave: uservaluation.v1.IValuationProfile): void {
+export function saveValuationProfile(profileToSave: userprofile.v1.IValuationProfile): void {
     if (!profileToSave.profileId) {
         console.error("Cannot save a profile without a profileId.");
         return;
@@ -51,13 +51,13 @@ export function saveValuationProfile(profileToSave: uservaluation.v1.IValuationP
     try {
         // 1. 加载现有的 UserAccountData，如果不存在则创建一个新的。
         const base64String = localStorage.getItem(LOCAL_STORAGE_KEY);
-        let accountData: uservaluation.v1.IUserAccountData;
+        let accountData: userprofile.v1.IUserAccountData;
 
         if (base64String) {
             const buffer = fromBase64(base64String);
-            const decoded = uservaluation.v1.UserAccountData.decode(buffer);
+            const decoded = userprofile.v1.UserAccountData.decode(buffer);
             // 使用 toObject 将其转换为普通的 JS 对象
-            accountData = uservaluation.v1.UserAccountData.toObject(decoded, { defaults: true });
+            accountData = userprofile.v1.UserAccountData.toObject(decoded, { defaults: true });
         } else {
             // 如果 localStorage 中没有数据，则初始化一个空的账户数据结构
             accountData = {
@@ -87,8 +87,8 @@ export function saveValuationProfile(profileToSave: uservaluation.v1.IValuationP
         accountData.activeProfileId = profileToSave.profileId;
 
         // 4. 将更新后的 UserAccountData 对象序列化并存回 localStorage。
-        const message = uservaluation.v1.UserAccountData.fromObject(accountData);
-        const buffer = uservaluation.v1.UserAccountData.encode(message).finish();
+        const message = userprofile.v1.UserAccountData.fromObject(accountData);
+        const buffer = userprofile.v1.UserAccountData.encode(message).finish();
         const newBase64String = toBase64(buffer);
         localStorage.setItem(LOCAL_STORAGE_KEY, newBase64String);
 
@@ -105,7 +105,7 @@ export function saveValuationProfile(profileToSave: uservaluation.v1.IValuationP
  *
  * @returns 第一个可用的用户估值画像，如果没有任何画像则返回 `null`。
  */
-export function loadActiveValuationProfile(): uservaluation.v1.IValuationProfile | null {
+export function loadActiveValuationProfile(): userprofile.v1.IValuationProfile | null {
     try {
         const base64String = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (!base64String) {
@@ -113,8 +113,8 @@ export function loadActiveValuationProfile(): uservaluation.v1.IValuationProfile
         }
 
         const buffer = fromBase64(base64String);
-        const decodedMessage = uservaluation.v1.UserAccountData.decode(buffer);
-        const accountData = uservaluation.v1.UserAccountData.toObject(decodedMessage);
+        const decodedMessage = userprofile.v1.UserAccountData.decode(buffer);
+        const accountData = userprofile.v1.UserAccountData.toObject(decodedMessage);
 
         if (!accountData.profiles) {
             return null;
