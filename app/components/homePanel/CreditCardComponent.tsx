@@ -90,6 +90,7 @@ const colorRank = (credit: cardverdict.v1.ICredit, userVal?: uservaluation.v1.IU
 
 const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
     const [editOpen, setEditOpen] = useState(false);
+    const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
 
     // This is the key state. It will be initialized from props, then updated from localStorage.
     const [userValuation, setUserValuation] = useState<uservaluation.v1.IUserCardValuation | undefined>(initialValuation);
@@ -268,7 +269,8 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                                                         label={`$${value.toFixed(0)}`}
                                                         size="small"
                                                         color={getCreditChipColor(credit, userValuation)}
-                                                        sx={{ width: hasAnyFourPlusDigits ? '5em' : '4em', textAlign: 'center' }}
+                                                        sx={{ width: hasAnyFourPlusDigits ? '5em' : '4em', textAlign: 'center', cursor: 'pointer' }}
+                                                        onClick={() => setEditingCreditId(credit.creditId ?? null)}
                                                     />
                                                 </Tooltip>
 
@@ -294,6 +296,16 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 initialValuation={userValuation}
                 onClose={() => setEditOpen(false)}
                 onSave={handleSaveValuation}
+            />
+            {/* 单个 credit 编辑对话框 */}
+            <CardEditComponent
+                open={!!editingCreditId}
+                card={card}
+                displayCredits={sortedCredits}
+                initialValuation={userValuation}
+                onClose={() => setEditingCreditId(null)}
+                onSave={handleSaveValuation}
+                singleCreditIdToEdit={editingCreditId ?? undefined}
             />
         </Card>
     );

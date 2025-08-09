@@ -34,6 +34,7 @@ type CardEditProps = {
     initialValuation?: UserCardValuation;
     onClose: () => void;
     onSave?: (valuation: UserCardValuation) => void;
+    singleCreditIdToEdit?: string;
 };
 
 type RowState = {
@@ -143,29 +144,29 @@ const validateProportion = (raw: string): { ok: boolean; msg?: string; cleaned?:
 
 // 仅在当前编辑字段有效时才联动另一字段；无效时不动联动字段，也不清空
 const syncLinkedFieldBySource = (
-  draftRow: RowState,
-  lastEditedSource: LastEdited,
-  annualFaceValueDollars: number,
+    draftRow: RowState,
+    lastEditedSource: LastEdited,
+    annualFaceValueDollars: number,
 ): RowState => {
-  const updated = { ...draftRow };
+    const updated = { ...draftRow };
 
-  if (lastEditedSource === 'dollars') {
-    const v = validateDollars(updated.dollarsInput);
-    if (v.ok && v.cleaned && annualFaceValueDollars > 0) {
-      const dollarsNumber = Number(v.cleaned);
-      updated.proportionInput = (dollarsNumber / annualFaceValueDollars).toFixed(2);
+    if (lastEditedSource === 'dollars') {
+        const v = validateDollars(updated.dollarsInput);
+        if (v.ok && v.cleaned && annualFaceValueDollars > 0) {
+            const dollarsNumber = Number(v.cleaned);
+            updated.proportionInput = (dollarsNumber / annualFaceValueDollars).toFixed(2);
+        }
+        updated.lastEdited = 'dollars';
+    } else if (lastEditedSource === 'proportion') {
+        const v = validateProportion(updated.proportionInput);
+        if (v.ok && v.cleaned) {
+            const proportionNumber = Number(v.cleaned);
+            updated.dollarsInput = (proportionNumber * annualFaceValueDollars).toFixed(2);
+        }
+        updated.lastEdited = 'proportion';
     }
-    updated.lastEdited = 'dollars';
-  } else if (lastEditedSource === 'proportion') {
-    const v = validateProportion(updated.proportionInput);
-    if (v.ok && v.cleaned) {
-      const proportionNumber = Number(v.cleaned);
-      updated.dollarsInput = (proportionNumber * annualFaceValueDollars).toFixed(2);
-    }
-    updated.lastEdited = 'proportion';
-  }
 
-  return updated;
+    return updated;
 };
 
 /**
@@ -348,13 +349,14 @@ const CreditRow: React.FC<CreditRowProps> = ({
 // ------------------------------
 
 const CardEditComponent: React.FC<CardEditProps> = ({
-                                                        open,
-                                                        card,
-                                                        displayCredits,
-                                                        initialValuation,
-                                                        onClose,
-                                                        onSave,
-                                                    }) => {
+    open,
+    card,
+    displayCredits,
+    initialValuation,
+    onClose,
+    onSave,
+    singleCreditIdToEdit,
+}) => {
     // 用于渲染的顺序（由父组件传入），对话框会基于该顺序进行“置顶”，但在一次打开会话中不再实时变动
     const credits: Credit[] = React.useMemo(
         () => (displayCredits && displayCredits.length ? displayCredits : card.credits ?? []),
@@ -449,9 +451,15 @@ const CardEditComponent: React.FC<CardEditProps> = ({
 
         setRowStateByCreditId(nextStateByCreditId);
 
-        // 会话内渲染顺序直接采用父组件传入的顺序，不再做额外排序
-        setSessionCredits(credits);
-    }, [open, credits, rawAnnualFaceCentsByCreditId, initialValuation]);
+        // 如果是单个 credit 编辑模式，则只显示那个 credit
+        if (singleCreditIdToEdit) {
+            const creditToEdit = credits.find(c => c.creditId === singleCreditIdToEdit);
+            setSessionCredits(creditToEdit ? [creditToEdit] : []);
+        } else {
+            // 否则，采用父组件传入的顺序
+            setSessionCredits(credits);
+        }
+    }, [open, credits, rawAnnualFaceCentsByCreditId, initialValuation, singleCreditIdToEdit]);
 
     // 行级操作：在变更时做校验并标红；联动仍然基于清洗后的数值
     const updateRow = React.useCallback(
@@ -587,12 +595,21 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         onClose();
     }, [credits, rowStateByCreditId, onClose, onSave, hasAnyError]);
 
+    // 会话内冻结的标题，防止关闭动画期间因 props 变化造成闪动
+    const [sessionTitle, setSessionTitle] = React.useState<string>('');
+
+    React.useEffect(() => {
+        if (open) {
+            setSessionTitle(`编辑${singleCreditIdToEdit ? '单项' : ''}报销估值 — ${card.name}`);
+        }
+    }, [open]); // 仅在打开时锁定，避免关闭中因 props 更新而抖动
+
     // ------------------------------
     // Render
     // ------------------------------
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-            <DialogTitle>编辑报销估值 — {card.name}</DialogTitle>
+            <DialogTitle>{sessionTitle}</DialogTitle>
             <DialogContent dividers>
                 <Stack spacing={2}>
                     {sessionCredits.map((credit, index) => {
