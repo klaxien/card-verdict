@@ -13,7 +13,7 @@ import CardVerdictNavBar from "~/components/navBar/CardVerdictNavBar";
 import Grid from '@mui/material/Grid';
 
 // MUI theme imports
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import {ThemeProvider, createTheme} from '@mui/material/styles';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 
 import CssBaseline from '@mui/material/CssBaseline';
@@ -40,8 +40,17 @@ export function Layout({children}: { children: React.ReactNode }) {
             <Meta/>
             <Links/>
             {/* Prevent SSR flicker and enable system mode on first paint */}
-            <InitColorSchemeScript defaultMode="system" />
-            <link rel="icon" href={`${import.meta.env.BASE_URL}favicon.ico`} />
+            <InitColorSchemeScript defaultMode="system"/>
+            <link rel="apple-touch-icon" sizes="180x180"
+                  href={`${import.meta.env.BASE_URL}favicons/apple-touch-icon.png`}/>
+            <link rel="icon" type="image/png" sizes="32x32"
+                  href={`${import.meta.env.BASE_URL}favicons/favicon-32x32.png`}/>
+            <link rel="icon" type="image/png" sizes="16x16"
+                  href={`${import.meta.env.BASE_URL}favicons/favicon-16x16.png`}/>
+            <link rel="shortcut icon" href={`${import.meta.env.BASE_URL}favicons/favicon.ico`}/>
+            <link rel="manifest" href={`${import.meta.env.BASE_URL}favicons/site.webmanifest`}/>
+            <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+            <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1020" />
         </head>
         <body>
         {children}
@@ -75,10 +84,10 @@ export default function App() {
             disableTransitionOnChange          // 切换时不闪烁
             noSsr                              // SPA 可开启以避免双渲染导致的闪烁
         >
-            <CssBaseline />
+            <CssBaseline/>
             <CardVerdictNavBar/>
             <Grid container display="flex" justifyContent="center" sx={{paddingTop: '2em', paddingBottom: '2em'}}>
-                <Grid size={{ xs: 11, md: 10, xl: 9 }}>
+                <Grid size={{xs: 11, md: 10, xl: 9}}>
                     <Outlet/>
                 </Grid>
             </Grid>

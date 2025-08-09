@@ -3,8 +3,8 @@ import HomePanel from "~/components/homePanel/HomePanel";
 
 export function meta({}: Route.MetaArgs) {
     return [
-        {title: "New React Router App"},
-        {name: "description", content: "Welcome to React Router!"},
+        {title: "Card Verdict"},
+        {name: "description", content: "Card Verdict"},
     ];
 }
 
