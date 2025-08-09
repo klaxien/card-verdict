@@ -49,7 +49,7 @@ cards {
     default_period_value_cents: 5000
     qualifying_merchants: "Resy"
     details: "$50*2 Resy credit"
-    default_effective_value_proportion: 0.5
+    default_effective_value_proportion: 0.4
     default_effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
   }
   earning_rates {

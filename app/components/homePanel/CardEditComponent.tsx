@@ -263,7 +263,7 @@ const CreditRow: React.FC<CreditRowProps> = ({
                         面值（年）约：$
                         {Number.isInteger(faceDollars) ? faceDollars : faceDollars.toFixed(2)}
                         {hasProportionDefault &&
-                            ` · 默认等效比例：${(credit.defaultEffectiveValueProportion as number).toFixed(2)}`}
+                            ` · 默认等效比例：${(credit.defaultEffectiveValueProportion ).toFixed(2)}`}
                     </Typography>
                 </Grid>
 
