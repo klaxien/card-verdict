@@ -12,6 +12,12 @@ import "./app.css";
 import CardVerdictNavBar from "~/components/navBar/CardVerdictNavBar";
 import Grid from '@mui/material/Grid';
 
+// MUI theme imports
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
+
+import CssBaseline from '@mui/material/CssBaseline';
+
 export const links: Route.LinksFunction = () => [
     {rel: "preconnect", href: "https://fonts.googleapis.com"},
     {
@@ -33,6 +39,8 @@ export function Layout({children}: { children: React.ReactNode }) {
             <meta name="viewport" content="width=device-width, initial-scale=1"/>
             <Meta/>
             <Links/>
+            {/* Prevent SSR flicker and enable system mode on first paint */}
+            <InitColorSchemeScript defaultMode="system" />
             <link rel="icon" href={`${import.meta.env.BASE_URL}favicon.ico`} />
         </head>
         <body>
@@ -44,18 +52,38 @@ export function Layout({children}: { children: React.ReactNode }) {
     );
 }
 
+// Create a theme that supports light + dark via colorSchemes
+const theme = createTheme({
+    cssVariables: true,        // use CSS variables for proper dark-mode handling
+    colorSchemes: {
+        dark: true,            // enable built-in dark scheme; light is enabled by default
+        light: true,
+    },
+    // 如果你需要自定义颜色，不要直接用 palette 顶层覆盖；
+    // 用 colorSchemes.light/dark 分别配置：
+    // colorSchemes: {
+    //   light: { palette: { primary: { main: '#1976d2' } } },
+    //   dark:  { palette: { primary: { main: '#90caf9' } } },
+    // },
+});
+
 export default function App() {
     return (
-        <>
+        <ThemeProvider
+            theme={theme}
+            defaultMode="system"               // 跟随系统
+            disableTransitionOnChange          // 切换时不闪烁
+            noSsr                              // SPA 可开启以避免双渲染导致的闪烁
+        >
+            <CssBaseline />
             <CardVerdictNavBar/>
-          <Grid container display="flex" justifyContent="center" sx={{paddingTop: '2em', paddingBottom: '2em'}}>
-            <Grid size={{ xs: 11, md: 10, xl: 9 }}>
-              <Outlet/>
+            <Grid container display="flex" justifyContent="center" sx={{paddingTop: '2em', paddingBottom: '2em'}}>
+                <Grid size={{ xs: 11, md: 10, xl: 9 }}>
+                    <Outlet/>
+                </Grid>
             </Grid>
-          </Grid>
-        </>
+        </ThemeProvider>
     );
-
 }
 
 export function ErrorBoundary({error}: Route.ErrorBoundaryProps) {

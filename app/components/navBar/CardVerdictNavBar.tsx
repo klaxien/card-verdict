@@ -10,13 +10,18 @@ const CardVerdictNavBar = () => {
 
     return (
         <React.Fragment>
-            <AppBar color={'transparent'} elevation={0} sx={{
-                backdropFilter: 'blur(30px)',
-                backgroundColor: 'white',
-                border: '1px solid #E8ECFC',
-                borderStyle: trigger ? 'none none solid none' : 'none none none none',
-            }}
-                    variant={'outlined'}>
+            <AppBar
+                color="transparent"
+                elevation={0}
+                sx={{
+                    backdropFilter: 'blur(30px)',
+                    backgroundColor: 'var(--mui-palette-background-paper)',
+                    borderColor: 'var(--mui-palette-divider)',
+                    borderWidth: 1,
+                    borderStyle: trigger ? 'none none solid none' : 'none',
+                }}
+                variant="outlined"
+            >
                 <Toolbar>
                     <Typography variant="h6" component="div" className={styles.leftTitle}>
                         CardVerdict
