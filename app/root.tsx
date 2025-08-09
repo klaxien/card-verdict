@@ -17,6 +17,7 @@ import {ThemeProvider, createTheme} from '@mui/material/styles';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 
 import CssBaseline from '@mui/material/CssBaseline';
+import {HydrateFallbackComponent} from "~/components/common/HydrateComponent";
 
 export const links: Route.LinksFunction = () => [
     {rel: "preconnect", href: "https://fonts.googleapis.com"},
@@ -30,6 +31,11 @@ export const links: Route.LinksFunction = () => [
         href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
     },
 ];
+
+export function HydrateFallback() {
+    return HydrateFallbackComponent();
+}
+
 
 export function Layout({children}: { children: React.ReactNode }) {
     // Read the scheme set by InitColorSchemeScript so client render matches the DOM
@@ -58,8 +64,8 @@ export function Layout({children}: { children: React.ReactNode }) {
                   href={`${import.meta.env.BASE_URL}favicons/favicon-16x16.png`}/>
             <link rel="shortcut icon" href={`${import.meta.env.BASE_URL}favicons/favicon.ico`}/>
             <link rel="manifest" href={`${import.meta.env.BASE_URL}favicons/site.webmanifest`}/>
-            <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-            <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1020" />
+            <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff"/>
+            <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1020"/>
         </head>
         <body>
         {children}

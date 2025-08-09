@@ -75,7 +75,21 @@ const HomePanel: React.FC = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <CircularProgress/>
+                <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                    <CircularProgress
+                        size={72}
+                        thickness={4.5}
+                        disableShrink
+                        sx={{
+                            '& .MuiCircularProgress-circle': {
+                                strokeLinecap: 'butt', // 端点不圆润，看起来更像连续环
+                            },
+                        }}
+                    />
+                    <Typography variant="body1" color="text.secondary">
+                        Loading...
+                    </Typography>
+                </Box>
             </div>
         );
     }
@@ -92,9 +106,9 @@ const HomePanel: React.FC = () => {
         <div className="p-4">
             <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2}}>
                 <Typography variant="h4" gutterBottom sx={{mb: 0}}>
-                    Credit Cards
+
                 </Typography>
-                <FormControl size="small" sx={{m: 1, minWidth: 180}}>
+                <FormControl size="small" sx={{ m: 1, minWidth: 180}}>
                     <InputLabel id="sort-order-label">排序</InputLabel>
                     <Select
                         labelId="sort-order-label"
