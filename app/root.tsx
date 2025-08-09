@@ -49,7 +49,7 @@ export default function App() {
         <>
             <CardVerdictNavBar/>
           <Grid container display="flex" justifyContent="center" sx={{paddingTop: '2em', paddingBottom: '2em'}}>
-            <Grid size={{ xs: 11, md: 11, xl: 6 }}>
+            <Grid size={{ xs: 11, md: 10, xl: 9 }}>
               <Outlet/>
             </Grid>
           </Grid>

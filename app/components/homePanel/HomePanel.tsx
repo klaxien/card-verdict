@@ -117,7 +117,8 @@ const HomePanel: React.FC = () => {
                     // xs={12}: 在超小屏幕上 (extra-small), 每行1个卡片 (12/12)
                     // sm={6}: 在小屏幕上 (small), 每行2个卡片 (12/6)
                     // md={4}: 在中等及以上屏幕上 (medium), 每行3个卡片 (12/4)
-                    <Grid key={card.cardId} size={{xs: 12, sm: 6, md: 4}}>
+                    // xl={3}: 每行4个卡片 (12/3)
+                    <Grid key={card.cardId} size={{xs: 12, sm: 6, md: 4, xl: 3}}>
                         <CreditCardComponent
                             card={card}
                             initialValuation={userValuationDb?.cardValuations?.[card.cardId ?? '']}
