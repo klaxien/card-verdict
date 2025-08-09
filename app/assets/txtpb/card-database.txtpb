@@ -795,7 +795,7 @@ cards {
     qualifying_merchants: "Sapphire Reserve Tables"
     details: "$150*2 Dining Credit"
     default_effective_value_cents: 5000
-    default_effective_value_explanation: "非常难用，按$50算顶天了"
+    default_effective_value_explanation: "非常难用，作者一己之见算$50"
   }
   credits {
     credit_id: "ticketing-credit"

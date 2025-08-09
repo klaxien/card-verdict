@@ -1,8 +1,9 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import {cardverdict, uservaluation} from "~/generated/bundle";
 import CardEditComponent from './CardEditComponent';
+import {loadUserValuationDatabase, saveUserValuationDatabase} from '~/client/UserSettingsPersistence';
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
@@ -90,8 +91,22 @@ const colorRank = (credit: cardverdict.v1.ICredit, userVal?: uservaluation.v1.IU
 const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
     const [editOpen, setEditOpen] = useState(false);
 
-    // 新增：在父组件持久化用户估值状态，以便更新 UI 与再次编辑时回显
+    // This is the key state. It will be initialized from props, then updated from localStorage.
     const [userValuation, setUserValuation] = useState<uservaluation.v1.IUserCardValuation | undefined>(initialValuation);
+
+    // Effect for loading valuation from localStorage on component mount
+    useEffect(() => {
+        // We only try to load from local storage if no initial valuation was provided via props.
+        if (!initialValuation) {
+            const db = loadUserValuationDatabase();
+            if (db && card.cardId) {
+                const cardValuation = db.cardValuations?.[card.cardId];
+                if (cardValuation) {
+                    setUserValuation(cardValuation);
+                }
+            }
+        }
+    }, [card.cardId, initialValuation]);
 
     // 使用“用户优先”的有效值计算汇总
     const totalCreditsValue = useMemo(() => {
@@ -125,6 +140,32 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
         }
         return false;
     }, [card.credits, userValuation]);
+
+    const handleSaveValuation = (valuation: uservaluation.v1.IUserCardValuation) => {
+        if (!card.cardId) {
+            console.error("Cannot save valuation for a card without a cardId.");
+            return;
+        }
+
+        // 1. Update local component state to immediately reflect changes in the UI.
+        setUserValuation(valuation);
+
+        // 2. Load the entire database, or create a new one.
+        const db = loadUserValuationDatabase() ?? { cardValuations: {}, pointSystemValuations: {} };
+
+        // 3. Update the valuation for the current card.
+        if (!db.cardValuations) {
+            db.cardValuations = {};
+        }
+        db.cardValuations[card.cardId] = valuation;
+
+        // 4. Save the updated database back to localStorage.
+        saveUserValuationDatabase(db);
+
+        // 5. Notify any parent component about the save.
+        onSaveValuation?.(valuation, card);
+    };
+
 
     return (
         <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4, position: 'relative'}}>
@@ -252,10 +293,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 displayCredits={sortedCredits}
                 initialValuation={userValuation}
                 onClose={() => setEditOpen(false)}
-                onSave={(v) => {
-                    setUserValuation(v);               // 本地持久化，驱动 UI 更新
-                    onSaveValuation?.(v, card);        // 可选地通知更高层
-                }}
+                onSave={handleSaveValuation}
             />
         </Card>
     );
