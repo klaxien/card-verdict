@@ -422,9 +422,17 @@ const CardEditComponent: React.FC<CardEditProps> = ({
     // 本次打开会话的渲染顺序（只在打开时计算一次；编辑过程中不变）
     const [sessionCredits, setSessionCredits] = React.useState<Credit[]>(credits);
 
+    // [FIX] 用于在对话框打开期间“冻结”视图模式，防止关闭动画时内容闪烁
+    const [sessionSingleCreditId, setSessionSingleCreditId] = useState<string | undefined>();
+    const [sessionSingleCustomAdjustmentId, setSessionSingleCustomAdjustmentId] = useState<string | undefined>();
+
     // 初始化/重置表单 + 会话内排序（基于 initialValuation 是否有编辑痕迹来置顶）
     React.useEffect(() => {
         if (!open) return;
+
+        // [FIX] 捕获打开时的编辑模式
+        setSessionSingleCreditId(singleCreditIdToEdit);
+        setSessionSingleCustomAdjustmentId(singleCustomAdjustmentIdToEdit);
 
         // 1) 先构建表单初始值
         const initialUserValuation = initialValuation ?? emptyValuation();
@@ -597,8 +605,6 @@ const CardEditComponent: React.FC<CardEditProps> = ({
     useEffect(() => {
         if (open) {
             setCustomAdjustments(initialValuation?.customAdjustments ? [...initialValuation.customAdjustments] : []);
-            // 如有其他草稿 state（例如各个 credit 的行编辑缓存），在这里同样重置
-            // setRows(buildRowsFrom(initialValuation));
         }
     }, [open, initialValuation]);
 
@@ -623,8 +629,8 @@ const CardEditComponent: React.FC<CardEditProps> = ({
 
     const renderCustomAdjustments = () => (
         <Stack spacing={2}>
-            {(singleCustomAdjustmentIdToEdit
-                    ? customAdjustments.filter(item => item.customAdjustmentId === singleCustomAdjustmentIdToEdit)
+            {(sessionSingleCustomAdjustmentId
+                    ? customAdjustments.filter(item => item.customAdjustmentId === sessionSingleCustomAdjustmentId)
                     : customAdjustments
             ).map((item) => {
                 const dollars = (item.valueCents ?? 0) / 100;
@@ -780,11 +786,20 @@ const CardEditComponent: React.FC<CardEditProps> = ({
         return outputValuation;
     }, [credits, rowStateByCreditId, hasAnyError]);
 
-    // 保存时将 customAdjustments 写回（camelCase）
+    // [FIX] 保存时合并 credit 编辑和 custom adjustment 编辑
     const handleSave = () => {
-        const base: UserCardValuation = initialValuation ? {...initialValuation} : emptyValuation();
-        base.customAdjustments = customAdjustments;
-        onSave?.(base);
+        const creditValuationResult = handleSaveCredit();
+        if (!creditValuationResult) {
+            return;
+        }
+
+        const newTotalValuation: UserCardValuation = {
+            ...(initialValuation ?? emptyValuation()),
+            creditValuations: creditValuationResult.creditValuations,
+            customAdjustments: customAdjustments,
+        };
+
+        onSave?.(newTotalValuation);
         onClose();
     };
 
@@ -845,15 +860,15 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                 )}
 
 
-                {sessionCredits.length > 0 && !singleCreditIdToEdit && <Divider sx={{my: 2}}/>}
+                {sessionCredits.length > 0 && !sessionSingleCreditId && <Divider sx={{my: 2}}/>}
 
-                {!singleCreditIdToEdit && (
+                {!sessionSingleCreditId && (
                     <>
                         <Box display="flex" alignItems="center" justifyContent="space-between" sx={{mb: 1}}>
                             <Typography variant="h6" component="div">
                                 自定义报销
                             </Typography>
-                            {!singleCustomAdjustmentIdToEdit &&
+                            {!sessionSingleCustomAdjustmentId &&
                                 <Button variant="outlined" onClick={handleAddCustomAdjustment}>
                                     添加自定义报销
                                 </Button>

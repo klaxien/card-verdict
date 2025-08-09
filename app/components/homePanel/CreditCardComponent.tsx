@@ -343,7 +343,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                         {customDisplayItems.length > 0 && (
                             <Box>
                                 <Typography variant="h6" component="div" gutterBottom sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
-                                    Custom
+                                    Additional
                                 </Typography>
                                 <Stack>
                                     {customDisplayItems.map((item) => (
