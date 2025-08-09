@@ -54,12 +54,8 @@ message UserCardValuation {
   // Key: cardverdict.v1.OtherBenefit.benefit_id
   map<string, CustomValue> other_benefit_valuations = 2;
 
-  // (可选) 用户对年费的自定义估值。
-  // 如果用户有办法通过特殊offer减免年费，可在此记录。
-  optional CustomValue annual_fee_valuation = 3;
-
   // (已更新) 一个列表，包含所有由用户手动添加的、非官方的财务调整项。
-  repeated CustomAdjustment custom_adjustments = 4;
+  repeated CustomAdjustment custom_adjustments = 3;
 }
 
 // ===================================================================
