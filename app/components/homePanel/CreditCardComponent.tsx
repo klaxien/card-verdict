@@ -203,8 +203,13 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                                     userVal?: uservaluation.v1.IUserCardValuation,
                                 ): string | undefined => {
                                     const creditId = credit.creditId ?? '';
+                                    const creditValuation = userVal?.creditValuations?.[creditId];
                                     const userNote = userVal?.creditValuations?.[creditId]?.explanation?.trim();
-                                    return userNote && userNote.length > 0 ? userNote : credit.defaultEffectiveValueExplanation ?? '';
+                                    if(userNote && userNote.length > 0) return userNote;
+
+                                    if(creditValuation?.cents || creditValuation?.proportion) return '自定义估值（未输入原因）';
+
+                                    return credit.defaultEffectiveValueExplanation ?? '';
                                 };
 
 

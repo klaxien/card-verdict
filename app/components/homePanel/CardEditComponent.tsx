@@ -14,6 +14,8 @@ import {
     Typography,
     Stack,
     Tooltip,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import { cardverdict, uservaluation } from '~/generated/bundle';
@@ -28,7 +30,6 @@ type LastEdited = 'dollars' | 'proportion' | undefined;
 type CardEditProps = {
     open: boolean;
     card: CreditCard;
-    // 使用外部传入的展示顺序，确保与卡片UI一致
     displayCredits?: Credit[];
     initialValuation?: UserCardValuation;
     onClose: () => void;
@@ -36,10 +37,12 @@ type CardEditProps = {
 };
 
 type RowState = {
-    dollarsInput: string; // 文本框字符串（美元）
-    proportionInput: string; // 文本框字符串（比例 0-1）
+    dollarsInput: string;
+    proportionInput: string;
     explanation: string;
     lastEdited: LastEdited;
+    dollarsError?: string | null;
+    proportionError?: string | null;
 };
 
 // ------------------------------
@@ -58,9 +61,6 @@ const periodsInYearFor = (
     frequency?: cardverdict.v1.CreditFrequency | null,
 ): number => (frequency == null ? 0 : PERIODS_PER_YEAR[frequency] ?? 0);
 
-/**
- * 计算“年度面值”（raw annual，未应用默认等效比例）, 以分为单位
- */
 const calculateRawAnnualCents = (credit: Credit): number => {
     const periods = periodsInYearFor(credit.frequency);
     if (!periods) return 0;
@@ -89,57 +89,89 @@ const emptyValuation = (): UserCardValuation => ({
     customAdjustments: [],
 });
 
+// 清洗规则：先去掉空白，再去掉前后的非数字字符（仅边界）
+const stripWhitespace = (s: string) => s.replace(/\s+/g, '');
+const stripEdgeNonDigits = (s: string) => s.replace(/^[^\d]+/, '').replace(/[^\d]+$/, '');
+const cleanEdge = (s: string) => stripEdgeNonDigits(stripWhitespace(s));
+
+const parseNumberFromInput = (raw: string): number | null => {
+    const cleaned = cleanEdge(raw);
+    if (cleaned === '') return null;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
+};
+
+// 保留两位小数，允许空字符串
 const normalizeDollarString = (input: string): string => {
-    if (input.trim() === '') return '';
-    const numberValue = Number(input.replace(/,/g, ''));
+    const cleaned = cleanEdge(input);
+    if (cleaned.trim() === '') return '';
+    const numberValue = Number(cleaned.replace(/,/g, ''));
     if (Number.isNaN(numberValue) || !Number.isFinite(numberValue)) return '';
     return numberValue.toFixed(2);
 };
 
+// 比例两位小数，截断到 [0,1]
 const normalizeProportionString = (input: string): string => {
-    if (input.trim() === '') return '';
-    const numberValue = Number(input);
+    const cleaned = cleanEdge(input);
+    if (cleaned.trim() === '') return '';
+    const numberValue = Number(cleaned);
     if (Number.isNaN(numberValue) || !Number.isFinite(numberValue)) return '';
     const clamped = Math.max(0, Math.min(1, numberValue));
-    return clamped.toFixed(2); // 改为仅保留两位小数
+    return clamped.toFixed(2);
 };
 
-/**
- * 基于来源字段联动另一字段
- */
+// 校验：美元（>=0，最多两位小数），允许空串
+const validateDollars = (raw: string): { ok: boolean; msg?: string; cleaned?: string } => {
+    if (raw.trim() === '') return { ok: true, cleaned: '' };
+    const cleaned = cleanEdge(raw);
+    if (cleaned === '') return { ok: false, msg: '请输入数字' };
+    // 必须是“纯数字+可选两位小数”，中间不能混字母
+    if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return { ok: false, msg: '最多两位小数，且不能包含字母' };
+    return { ok: true, cleaned };
+};
+
+// 校验：比例（0-1，最多两位小数），允许空串
+const validateProportion = (raw: string): { ok: boolean; msg?: string; cleaned?: string } => {
+    if (raw.trim() === '') return { ok: true, cleaned: '' };
+    const cleaned = cleanEdge(raw);
+    if (cleaned === '') return { ok: false, msg: '请输入数字' };
+    if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return { ok: false, msg: '最多两位小数，且不能包含字母' };
+    const num = Number(cleaned);
+    if (num < 0 || num > 1) return { ok: false, msg: '需在 0 到 1 之间' };
+    return { ok: true, cleaned };
+};
+
+// 仅在当前编辑字段有效时才联动另一字段；无效时不动联动字段，也不清空
 const syncLinkedFieldBySource = (
-    draftRow: RowState,
-    lastEditedSource: LastEdited,
-    annualFaceValueDollars: number,
+  draftRow: RowState,
+  lastEditedSource: LastEdited,
+  annualFaceValueDollars: number,
 ): RowState => {
-    const updated = { ...draftRow };
+  const updated = { ...draftRow };
 
-    if (lastEditedSource === 'dollars') {
-        const dollarsNumber = Number(updated.dollarsInput);
-        updated.proportionInput =
-            updated.dollarsInput === '' ||
-            Number.isNaN(dollarsNumber) ||
-            !Number.isFinite(dollarsNumber) ||
-            annualFaceValueDollars === 0
-                ? ''
-                : (dollarsNumber / annualFaceValueDollars).toFixed(2); // 两位小数
-        updated.lastEdited = 'dollars';
-    } else if (lastEditedSource === 'proportion') {
-        const proportionNumber = Number(updated.proportionInput);
-        updated.dollarsInput =
-            updated.proportionInput === '' ||
-            Number.isNaN(proportionNumber) ||
-            !Number.isFinite(proportionNumber)
-                ? ''
-                : (proportionNumber * annualFaceValueDollars).toFixed(2); // 两位小数
-        updated.lastEdited = 'proportion';
+  if (lastEditedSource === 'dollars') {
+    const v = validateDollars(updated.dollarsInput);
+    if (v.ok && v.cleaned && annualFaceValueDollars > 0) {
+      const dollarsNumber = Number(v.cleaned);
+      updated.proportionInput = (dollarsNumber / annualFaceValueDollars).toFixed(2);
     }
+    updated.lastEdited = 'dollars';
+  } else if (lastEditedSource === 'proportion') {
+    const v = validateProportion(updated.proportionInput);
+    if (v.ok && v.cleaned) {
+      const proportionNumber = Number(v.cleaned);
+      updated.dollarsInput = (proportionNumber * annualFaceValueDollars).toFixed(2);
+    }
+    updated.lastEdited = 'proportion';
+  }
 
-    return updated;
+  return updated;
 };
 
 /**
- * 失焦时的规范化与联动
+ * 失焦时的规范化与联动（两位小数）
+ * 如果输入有效，则格式化当前字段并联动更新另一字段。
+ * 如果输入无效，则不进行任何操作，以保留用户的原始输入和错误状态。
  */
 const normalizeRowOnBlur = (
     draftRow: RowState,
@@ -149,23 +181,35 @@ const normalizeRowOnBlur = (
     const updated = { ...draftRow };
 
     if (field === 'dollars') {
+        const validationResult = validateDollars(updated.dollarsInput);
+        if (!validationResult.ok) {
+            return updated; // 输入无效，保留原样，不进行联动
+        }
+
         const normalizedDollars = normalizeDollarString(updated.dollarsInput);
         updated.dollarsInput = normalizedDollars;
+        const n = normalizedDollars ? Number(normalizedDollars) : null;
         updated.proportionInput =
-            normalizedDollars && annualFaceValueDollars
-                ? (Number(normalizedDollars) / annualFaceValueDollars).toFixed(2) // 两位小数
+            n != null && annualFaceValueDollars > 0
+                ? (n / annualFaceValueDollars).toFixed(2)
                 : '';
         updated.lastEdited = 'dollars';
-        return updated;
+    } else { // field === 'proportion'
+        const validationResult = validateProportion(updated.proportionInput);
+        if (!validationResult.ok) {
+            return updated; // 输入无效，保留原样，不进行联动
+        }
+
+        const normalizedProportion = normalizeProportionString(updated.proportionInput);
+        updated.proportionInput = normalizedProportion;
+        const p = normalizedProportion ? Number(normalizedProportion) : null;
+        updated.dollarsInput =
+            p != null && annualFaceValueDollars > 0
+                ? (p * annualFaceValueDollars).toFixed(2)
+                : '';
+        updated.lastEdited = 'proportion';
     }
 
-    const normalizedProportion = normalizeProportionString(updated.proportionInput);
-    updated.proportionInput = normalizedProportion;
-    updated.dollarsInput =
-        normalizedProportion && annualFaceValueDollars
-            ? (Number(normalizedProportion) * annualFaceValueDollars).toFixed(2)
-            : '';
-    updated.lastEdited = 'proportion';
     return updated;
 };
 
@@ -178,7 +222,7 @@ type CreditRowProps = {
     row: RowState;
     faceDollars: number;
     hasProportionDefault: boolean;
-    isLastRow: boolean; // 用于控制分割线显示
+    isLastRow: boolean;
     onChange: (patch: Partial<RowState>, source?: LastEdited) => void;
     onBlur: (field: 'dollars' | 'proportion') => void;
     onClear: () => void;
@@ -197,6 +241,17 @@ const CreditRow: React.FC<CreditRowProps> = ({
     const creditId = credit.creditId ?? '';
     const showClear = (row.explanation?.trim().length ?? 0) > 0;
 
+    const theme = useTheme();
+    const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
+
+    const dollarsHelperText = row.dollarsError
+        ? row.dollarsError
+        : (isSmUp && row.proportionError ? ' ' : '');
+
+    const proportionHelperText = row.proportionError
+        ? row.proportionError
+        : (isSmUp && row.dollarsError ? ' ' : '');
+
     return (
         <Box key={creditId}>
             <Grid container alignItems="center" spacing={1}>
@@ -205,7 +260,8 @@ const CreditRow: React.FC<CreditRowProps> = ({
                         {credit.details || creditId || '未命名报销'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                        面值（年）约：${faceDollars.toFixed(2)}
+                        面值（年）约：$
+                        {Number.isInteger(faceDollars) ? faceDollars : faceDollars.toFixed(2)}
                         {hasProportionDefault &&
                             ` · 默认等效比例：${(credit.defaultEffectiveValueProportion as number).toFixed(2)}`}
                     </Typography>
@@ -218,10 +274,12 @@ const CreditRow: React.FC<CreditRowProps> = ({
                                 size="small"
                                 fullWidth
                                 label="美元（年）"
-                                placeholder="例如：123.45"
+                                placeholder={`(0 - ${Number.isInteger(faceDollars) ? faceDollars : faceDollars.toFixed(2)})`}
                                 value={row.dollarsInput}
                                 onChange={(e) => onChange({ dollarsInput: e.target.value }, 'dollars')}
                                 onBlur={() => onBlur('dollars')}
+                                error={!!row.dollarsError}
+                                helperText={dollarsHelperText}
                                 slotProps={{
                                     input: {
                                         startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -240,6 +298,8 @@ const CreditRow: React.FC<CreditRowProps> = ({
                                 value={row.proportionInput}
                                 onChange={(e) => onChange({ proportionInput: e.target.value }, 'proportion')}
                                 onBlur={() => onBlur('proportion')}
+                                error={!!row.proportionError}
+                                helperText={proportionHelperText}
                                 slotProps={{
                                     input: {
                                         inputMode: 'decimal',
@@ -253,7 +313,7 @@ const CreditRow: React.FC<CreditRowProps> = ({
                                 size="small"
                                 fullWidth
                                 label="说明（可选）"
-                                placeholder={`如${credit.defaultEffectiveValueExplanation ?? ''}`}
+                                placeholder={`如：${credit.defaultEffectiveValueExplanation ?? ''}`}
                                 value={row.explanation}
                                 onChange={(e) => onChange({ explanation: e.target.value })}
                                 slotProps={{
@@ -341,6 +401,8 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                     proportionInput: proportion,
                     explanation: userCreditValuation.explanation ?? '',
                     lastEdited: 'dollars',
+                    dollarsError: null,
+                    proportionError: null,
                 };
                 continue;
             }
@@ -354,6 +416,8 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                     proportionInput: Number(userCreditValuation.proportion).toFixed(2),
                     explanation: userCreditValuation.explanation ?? '',
                     lastEdited: 'proportion',
+                    dollarsError: null,
+                    proportionError: null,
                 };
                 continue;
             }
@@ -365,6 +429,8 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                     proportionInput: '',
                     explanation: userCreditValuation!.explanation ?? '',
                     lastEdited: undefined,
+                    dollarsError: null,
+                    proportionError: null,
                 };
                 continue;
             }
@@ -374,38 +440,18 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                 proportionInput: '',
                 explanation: '',
                 lastEdited: undefined,
+                dollarsError: null,
+                proportionError: null,
             };
         }
 
         setRowStateByCreditId(nextStateByCreditId);
 
-        // 2) 计算“已编辑”置顶：仅基于 initialValuation 判定，保证在本次打开期间顺序不随实时输入改变
-        const originalIndexById = new Map<string, number>();
-        credits.forEach((c, i) => originalIndexById.set(c.creditId ?? `__idx_${i}`, i));
-
-        const hasInitialEdited = (creditId: string): boolean => {
-            const v = initialUserValuation.creditValuations?.[creditId];
-            if (!v) return false;
-            if (v.cents != null || v.proportion != null) return true;
-            return (v.explanation?.trim()?.length ?? 0) > 0;
-        };
-
-        const sortedOnce = [...credits].sort((a, b) => {
-            const idA = a.creditId ?? `__idx_${originalIndexById.get(a.creditId ?? '') ?? 0}`;
-            const idB = b.creditId ?? `__idx_${originalIndexById.get(b.creditId ?? '') ?? 0}`;
-            const editedA = hasInitialEdited(idA) ? 1 : 0;
-            const editedB = hasInitialEdited(idB) ? 1 : 0;
-            if (editedB !== editedA) return editedB - editedA; // 已编辑优先
-            // 次级：保持原顺序
-            const idxA = originalIndexById.get(a.creditId ?? '') ?? 0;
-            const idxB = originalIndexById.get(b.creditId ?? '') ?? 0;
-            return idxA - idxB;
-        });
-
-        setSessionCredits(sortedOnce);
+        // 会话内渲染顺序直接采用父组件传入的顺序，不再做额外排序
+        setSessionCredits(credits);
     }, [open, credits, rawAnnualFaceCentsByCreditId, initialValuation]);
 
-    // 行级操作封装
+    // 行级操作：在变更时做校验并标红；联动仍然基于清洗后的数值
     const updateRow = React.useCallback(
         (creditId: string, patch: Partial<RowState>, source?: LastEdited) => {
             setRowStateByCreditId((previousState) => {
@@ -415,16 +461,31 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                         proportionInput: '',
                         explanation: '',
                         lastEdited: undefined,
+                        dollarsError: null,
+                        proportionError: null,
                     };
 
+                let next: RowState = { ...currentRowState, ...patch };
+
+                // 校验当前改动字段
+                if (source === 'dollars') {
+                    const res = validateDollars(next.dollarsInput);
+                    next.dollarsError = res.ok ? null : res.msg ?? '输入无效';
+                } else if (source === 'proportion') {
+                    const res = validateProportion(next.proportionInput);
+                    next.proportionError = res.ok ? null : res.msg ?? '输入无效';
+                }
+
                 const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
-                const merged = syncLinkedFieldBySource({ ...currentRowState, ...patch }, source, annualFaceValueDollars);
-                return { ...previousState, [creditId]: merged };
+                next = syncLinkedFieldBySource(next, source, annualFaceValueDollars);
+
+                return { ...previousState, [creditId]: next };
             });
         },
         [rawAnnualFaceCentsByCreditId],
     );
 
+    // 仅对当前编辑的字段做校验；联动字段不标红
     const handleBlurRow = React.useCallback(
         (creditId: string, field: 'dollars' | 'proportion') => {
             setRowStateByCreditId((previousState) => {
@@ -433,7 +494,20 @@ const CardEditComponent: React.FC<CardEditProps> = ({
 
                 const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
                 const normalized = normalizeRowOnBlur(currentRowState, field, annualFaceValueDollars);
-                return { ...previousState, [creditId]: normalized };
+
+                const next: RowState = { ...normalized };
+
+                if (field === 'dollars') {
+                    const dRes = validateDollars(next.dollarsInput);
+                    next.dollarsError = dRes.ok ? null : dRes.msg ?? '输入无效';
+                    // 不碰 proportionError，避免把错误显示在未编辑的框里
+                } else {
+                    const pRes = validateProportion(next.proportionInput);
+                    next.proportionError = pRes.ok ? null : pRes.msg ?? '输入无效';
+                    // 不碰 dollarsError
+                }
+
+                return { ...previousState, [creditId]: next };
             });
         },
         [rawAnnualFaceCentsByCreditId],
@@ -447,13 +521,23 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                 proportionInput: '',
                 explanation: '',
                 lastEdited: undefined,
+                dollarsError: null,
+                proportionError: null,
             },
         }));
     }, []);
 
-    // 保存：根据最后编辑字段写入 oneof（cents 或 proportion）
-    // 允许仅保存说明（即便没有估值更改）
+    // 表单是否存在错误
+    const hasAnyError = React.useMemo(() => {
+        return Object.values(rowStateByCreditId).some(
+            (r) => !!r.dollarsError || !!r.proportionError,
+        );
+    }, [rowStateByCreditId]);
+
+    // 保存：允许仅保存说明；若有错误则禁用保存
     const handleSave = React.useCallback(() => {
+        if (hasAnyError) return;
+
         const outputValuation: UserCardValuation = {
             creditValuations: {},
             otherBenefitValuations: {},
@@ -499,7 +583,7 @@ const CardEditComponent: React.FC<CardEditProps> = ({
 
         onSave?.(outputValuation);
         onClose();
-    }, [credits, rowStateByCreditId, onClose, onSave]);
+    }, [credits, rowStateByCreditId, onClose, onSave, hasAnyError]);
 
     // ------------------------------
     // Render
@@ -517,6 +601,8 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                                 proportionInput: '',
                                 explanation: '',
                                 lastEdited: undefined,
+                                dollarsError: null,
+                                proportionError: null,
                             };
 
                         const annualFaceValueDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
@@ -540,8 +626,11 @@ const CardEditComponent: React.FC<CardEditProps> = ({
                 </Stack>
             </DialogContent>
             <DialogActions>
+                <Typography variant="caption" color={hasAnyError ? 'error' : 'text.secondary'} sx={{ mr: 'auto' }}>
+                    {hasAnyError ? '存在无效输入，请修正后再保存' : ' '}
+                </Typography>
                 <Button onClick={onClose}>取消</Button>
-                <Button variant="contained" onClick={handleSave}>
+                <Button variant="contained" onClick={handleSave} disabled={hasAnyError}>
                     保存
                 </Button>
             </DialogActions>
