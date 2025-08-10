@@ -1,0 +1,36 @@
+# .github/workflows/test.yml
+
+name: Run Tests
+
+on:
+  # 触发条件1: 当有代码被 push 到任意分支时
+  push:
+
+  # 触发条件2: 当有新的 Pull Request，或已存在的 PR 有更新时
+  pull_request:
+
+jobs:
+  test:
+    name: Run Unit and Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install protoc via apt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          protoc --version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
