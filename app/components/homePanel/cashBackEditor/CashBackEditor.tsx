@@ -422,8 +422,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                     endAdornment: <InputAdornment position="end">¢/pt</InputAdornment>,
                                                 },
                                                 htmlInput: {
-                                                    step: 0.01,
-                                                    min: 0,
                                                     inputMode: 'decimal',
                                                 }
                                             }}
@@ -476,7 +474,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                                 },
                                                                 htmlInput: {
                                                                     min: 0,
-                                                                    step: "10",
                                                                 }
                                                             }}
                                                             size="small"
@@ -552,7 +549,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                 <DialogTitle>确认清空返现计算？</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        这将清除“{card.name}”的所有计划消费和自定义积分价值。此操作不可撤销。
+                        这将清除“{card.name}”的所有计划消费和自定义cpp，但不清除自定义估值。此操作不可撤销。
                     </Typography>
                 </DialogContent>
                 <DialogActions>

@@ -165,11 +165,22 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
     // 新增：清空当前卡片的所有自定义设置（credit + custom），直接从 map 中删除并持久化
     const handleConfirmClear = () => {
         try {
-            const db = loadActiveValuationProfile() ?? {cardValuations: {}, pointSystemValuations: {}};
-            if (card.cardId && db.cardValuations?.[card.cardId]) {
-                delete db.cardValuations[card.cardId];
-                saveValuationProfile(db);
+            const db = loadActiveValuationProfile();
+            if (!db || !card.cardId || !db.cardValuations?.[card.cardId]) {
+                // 如果没有估值，则无需任何操作
+                return;
             }
+
+            // 只清空其负责的字段
+            const cardValuation = db.cardValuations[card.cardId];
+            cardValuation.creditValuations = {};
+            cardValuation.otherBenefitValuations = {}; // 也清空 other benefits
+            cardValuation.customAdjustments = [];
+
+            // plannedSpending 字段被有意地保留了下来
+
+            saveValuationProfile(db);
+
         } catch (e) {
             console.error('Failed to clear card valuation:', e);
         } finally {
@@ -237,7 +248,7 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
             <Dialog open={confirmClearOpen} onClose={() => setConfirmClearOpen(false)} maxWidth="xs">
                 <DialogTitle>确认清空？</DialogTitle>
                 <DialogContent>
-                    <Typography>这将清除“{card.name}”的所有自定义设置（报销估值与自定义调整），此操作不可撤销。</Typography>
+                    <Typography>这将清除“{card.name}”的所有自定义估值，但不清空消费设置，此操作不可撤销。</Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmClearOpen(false)}>取消</Button>
