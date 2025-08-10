@@ -85,7 +85,7 @@ const getCategoryName = (category?: cardverdict.v1.EarningRate.SpendingCategory)
 
 const formatEarningRate = (rate: IEarningRate): string => {
     const {multiplier, category, channel, qualifyingMerchants, notes} = rate;
-    const categoryName = getCategoryName(category);
+    const categoryName = getCategoryName(category ?? undefined);
     let description = `${multiplier}x ${categoryName}`;
 
     if (channel === EarningRate.Channel.DIRECT) {
@@ -117,9 +117,17 @@ type FormValues = {
 };
 
 // --- 验证函数 ---
-const validateNonNegative = (value: string): true | string => {
+const validateCpp = (value: string): true | string => {
+    if (value === null || value === undefined || String(value).trim() === '') return '价值不能为空';
+    if (!/^\d*\.?\d{0,2}$/.test(value)) {
+        return '必须是正数，且最多两位小数';
+    }
+    return true;
+};
+
+const validateOptionalAmount = (value: string): true | string => {
     if (value === null || value === undefined || String(value).trim() === '') {
-        return true; // 允许空值，视为空消费
+        return true; // 允许空值
     }
     if (!/^\d*\.?\d{0,2}$/.test(value)) {
         return '必须是正数，最多两位小数';
@@ -158,11 +166,11 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
     const methods = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
-            cppInput: '0.00',
+            cppInput: '',
             spendings: [],
         },
     });
-    const {control, handleSubmit, watch, reset} = methods;
+    const {control, handleSubmit, watch, reset, formState: {isDirty, isValid}} = methods;
 
     const {fields} = useFieldArray({
         control,
@@ -177,9 +185,9 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
     useEffect(() => {
         if (open) {
             const systemId = card.pointSystemInfo?.systemId;
-            let cpp = card.pointSystemInfo?.defaultCentsPerPoint ?? 0;
+            let cppValue = card.pointSystemInfo?.defaultCentsPerPoint ?? 0;
             if (systemId && initialPointSystemValuations?.[systemId]?.cents != null) {
-                cpp = initialPointSystemValuations[systemId].cents!;
+                cppValue = initialPointSystemValuations[systemId].cents!;
             }
 
             const initialSpendings = sortedEarningRates.map(rate => {
@@ -189,7 +197,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
 
                 return {
                     earningRateId: earningRateId,
-                    amountInput: (amountCents / 100).toFixed(2),
+                    amountInput: amountCents === 0 ? '' : (amountCents / 100).toString(),
                     frequency: savedSpending?.frequency ?? CreditFrequency.ANNUAL,
                     notes: savedSpending?.notes ?? '',
                     _description: formatEarningRate(rate),
@@ -198,7 +206,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             });
 
             reset({
-                cppInput: (cpp / 100).toFixed(2),
+                cppInput: cppValue.toFixed(2),
                 spendings: initialSpendings,
             });
         }
@@ -231,23 +239,22 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             rewardsFromSpendCents += (annualAmountCents * multiplier * cpp) / 100;
         });
 
-
-        // 修正：当没有spendings时，也计算netWorth的影响
         const totalValueCents = rewardsFromSpendCents + netWorth;
-        if (totalAnnualSpendCents === 0) {
-            return {
-                totalAnnualSpend: 0,
-                totalReturnValue: totalValueCents / 100,
-                effectiveReturnRate: 0, // No spend, so rate is 0, but value can exist from net worth
-                spendReturnRate: 0,
-                netWorthEffectRate: 0,
-            };
+
+        let spendReturnRate = 0;
+        let netWorthEffectRate = 0;
+        let effectiveReturnRate = 0;
+
+        if (totalAnnualSpendCents > 0) {
+            spendReturnRate = (rewardsFromSpendCents / totalAnnualSpendCents) * 100;
+            netWorthEffectRate = (netWorth / totalAnnualSpendCents) * 100;
+            effectiveReturnRate = spendReturnRate + netWorthEffectRate;
+        } else if (netWorth > 0) {
+            // 当消费为0时，净值影响率 = 净值(美元) * 100
+            const netWorthDollars = netWorth / 100;
+            netWorthEffectRate = netWorthDollars * 100;
+            effectiveReturnRate = netWorthEffectRate;
         }
-
-
-        const effectiveReturnRate = (totalValueCents / totalAnnualSpendCents) * 100;
-        const spendReturnRate = (rewardsFromSpendCents / totalAnnualSpendCents) * 100;
-        const netWorthEffectRate = (netWorth / totalAnnualSpendCents) * 100;
 
         return {
             totalAnnualSpend: totalAnnualSpendCents / 100,
@@ -270,7 +277,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         const systemId = card.pointSystemInfo?.systemId;
         if (systemId) {
             newPointSystemValuations[systemId] = {
-                cents: Math.round(parsedCpp * 100)
+                cents: parsedCpp
             };
         }
 
@@ -346,14 +353,12 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                             <Divider/>
                             <Typography variant="caption" color="text.secondary" display="block"
                                         textAlign="center">
-                                总返现率 = 消费回报 {spendReturnRate.toFixed(2)}% +
-                                净值影响 {netWorthEffectRate.toFixed(2)}%
+                                总返现率 = 消费回报 {spendReturnRate.toFixed(2)}% + 净值影响 {netWorthEffectRate.toFixed(2)}%
                             </Typography>
                         </Stack>
                     </Alert>
                 </Box>
 
-                {/* 关键改动：form 只包裹 DialogContent，并通过 id 与外部按钮关联 */}
                 <DialogContent dividers sx={{
                     pt: 0,
                     pb: {xs: 'calc(72px + env(safe-area-inset-bottom))', sm: 2}
@@ -367,13 +372,18 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                 <Controller
                                     name="cppInput"
                                     control={control}
-                                    rules={{
-                                        required: '价值不能为空',
-                                        validate: validateNonNegative,
-                                    }}
+                                    rules={{validate: validateCpp}}
                                     render={({field, fieldState: {error}}) => (
                                         <TextField
                                             {...field}
+                                            onBlur={(e) => {
+                                                field.onBlur();
+                                                const num = parseFloat(e.target.value);
+                                                if (Number.isFinite(num)) {
+                                                    // 改动 2: 使用 toFixed(2) 解决浮点数精度问题
+                                                    field.onChange(num.toFixed(2));
+                                                }
+                                            }}
                                             fullWidth
                                             label="每点价值 (cpp)"
                                             type="number"
@@ -382,7 +392,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                     endAdornment: <InputAdornment position="end">¢/pt</InputAdornment>,
                                                 },
                                                 htmlInput: {
-                                                    step: 0.1,
+                                                    step: 0.01,
                                                     min: 0,
                                                     inputMode: 'decimal',
                                                 }
@@ -409,10 +419,22 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                 <Controller
                                                     name={`spendings.${index}.amountInput`}
                                                     control={control}
-                                                    rules={{validate: validateNonNegative}}
+                                                    rules={{validate: validateOptionalAmount}}
                                                     render={({field: controllerField, fieldState: {error}}) => (
                                                         <TextField
                                                             {...controllerField}
+                                                            onBlur={(e) => {
+                                                                controllerField.onBlur();
+                                                                const value = e.target.value.trim();
+                                                                if (value === '') {
+                                                                    controllerField.onChange('');
+                                                                    return;
+                                                                }
+                                                                const num = parseFloat(value);
+                                                                // 改动 2: 通过舍入解决浮点数精度问题
+                                                                const roundedNum = Math.round(num * 100) / 100;
+                                                                controllerField.onChange(isNaN(roundedNum) ? '' : roundedNum.toString());
+                                                            }}
                                                             fullWidth
                                                             label="计划消费额"
                                                             type="number"
@@ -489,8 +511,10 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                     justifyContent: 'flex-end',
                 }}>
                     <Button onClick={onClose}>取消</Button>
-                    {/* 关键改动：通过 form 属性关联表单 */}
-                    <Button variant="contained" type="submit" form="cash-back-form">保存</Button>
+                    <Button variant="contained" type="submit" form="cash-back-form"
+                            disabled={!isDirty || !isValid}>
+                        保存
+                    </Button>
                 </DialogActions>
             </Dialog>
         </FormProvider>
