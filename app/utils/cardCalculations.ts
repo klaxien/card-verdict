@@ -17,14 +17,14 @@ export const calcRawAnnualCents = (credit: cardverdict.v1.ICredit): number => {
     const periods = periodsInYearFor(frequency ?? undefined);
     if (!periods) return 0;
 
-    if (!overrides?.length) return defaultPeriodValueCents * periods;
+    if (!overrides?.length) return (defaultPeriodValueCents ?? 0) * periods;
 
     const map = new Map<number, number>();
     for (const ov of overrides) {
         if (ov.period != null && ov.valueCents != null) map.set(ov.period, ov.valueCents);
     }
     let total = 0;
-    for (let p = 1; p <= periods; p++) total += map.get(p) ?? defaultPeriodValueCents;
+    for (let p = 1; p <= periods; p++) total += map.get(p) ?? defaultPeriodValueCents ?? 0;
     return total;
 };
 
