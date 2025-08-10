@@ -32,6 +32,7 @@ import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 import CashBackEditor from "~/components/homePanel/cashBackEditor/CashBackEditor";
 import ShareValuation from "~/components/homePanel/shareDialog/ShareCardValuation";
+import IValuationProfile = userprofile.v1.IValuationProfile;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
 
@@ -110,8 +111,8 @@ const getTooltipForCredit = (
     const creditId = credit.creditId ?? '';
     const creditValuation = userVal?.creditValuations?.[creditId];
     const userNote = userVal?.creditValuations?.[creditId]?.explanation?.trim();
-    if(userNote && userNote.length > 0) return userNote;
-    if(creditValuation?.cents || creditValuation?.proportion) return '自定义估值（未输入原因）';
+    if (userNote && userNote.length > 0) return userNote;
+    if (creditValuation?.cents || creditValuation?.proportion) return '自定义估值（未输入原因）';
     return credit.defaultEffectiveValueExplanation ?? '';
 };
 
@@ -273,27 +274,54 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
         };
     });
 
-    // --- Handlers ---
+    // --- Unified Save Handler ---
 
-    const handleSaveValuation = (valuation: userprofile.v1.IUserCardValuation) => {
+    const handleSave = (updates: {
+        cardValuation?: userprofile.v1.IUserCardValuation,
+        pointSystemValuations?: IValuationProfile['pointSystemValuations']
+    }) => {
         if (!card.cardId) {
             console.error("Cannot save valuation for a card without a cardId.");
             return;
         }
-        setUserValuation(valuation);
-        const db = loadActiveValuationProfile() ?? {cardValuations: {}, pointSystemValuations: {}};
-        if (!db.cardValuations) {
-            db.cardValuations = {};
+
+        const profile = loadActiveValuationProfile() ?? {
+            profileId: crypto.randomUUID(), // Use UUID for new profiles as per proto spec
+            displayName: 'My Valuation',
+            cardValuations: {},
+            pointSystemValuations: {},
+        };
+
+        const updatedProfile: userprofile.v1.IValuationProfile = {
+            ...profile,
+            pointSystemValuations: updates.pointSystemValuations ?? profile.pointSystemValuations,
+            cardValuations: updates.cardValuation
+                ? {
+                    ...(profile.cardValuations ?? {}),
+                    [card.cardId]: updates.cardValuation,
+                }
+                : profile.cardValuations,
+        };
+
+        saveValuationProfile(updatedProfile);
+
+        if (updates.cardValuation) {
+            setUserValuation(updates.cardValuation);
+            onSaveValuation?.(updates.cardValuation, card);
         }
-        db.cardValuations[card.cardId] = valuation;
-        saveValuationProfile(db);
-        onSaveValuation?.(valuation, card);
     };
 
     // --- Render ---
 
     return (
-        <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4, position: 'relative'}}>
+        <Card sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: 2,
+            borderRadius: 4,
+            position: 'relative'
+        }}>
             <CardContent sx={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
                 <Box sx={{position: 'absolute', top: 8, right: 8, zIndex: 1}}>
                     <Tooltip title="更多">
@@ -316,19 +344,19 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                         anchorEl={menuAnchorEl}
                         open={!isMobile && menuOpen}
                         onClose={closeActions}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+                        transformOrigin={{vertical: 'top', horizontal: 'right'}}
                     >
                         <MenuItem onClick={handleEditValuation}>
-                            <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon><EditIcon fontSize="small"/></ListItemIcon>
                             <ListItemText>编辑估值</ListItemText>
                         </MenuItem>
                         <MenuItem onClick={handleCalculateCashback}>
-                            <ListItemIcon><CalculateIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon><CalculateIcon fontSize="small"/></ListItemIcon>
                             <ListItemText>计算返现</ListItemText>
                         </MenuItem>
                         <MenuItem onClick={handleShare}>
-                            <ListItemIcon><ShareIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon><ShareIcon fontSize="small"/></ListItemIcon>
                             <ListItemText>分享</ListItemText>
                         </MenuItem>
                     </Menu>
@@ -340,20 +368,20 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                         onOpen={() => setSheetOpen(true)}
                         onClose={closeActions}
                         disableDiscovery={false}
-                        PaperProps={{ sx: { borderTopLeftRadius: 12, borderTopRightRadius: 12 } }}
+                        PaperProps={{sx: {borderTopLeftRadius: 12, borderTopRightRadius: 12}}}
                     >
                         <List>
                             <ListItemButton onClick={handleEditValuation}>
-                                <ListItemIcon><EditIcon /></ListItemIcon>
-                                <ListItemText primary="编辑估值" />
+                                <ListItemIcon><EditIcon/></ListItemIcon>
+                                <ListItemText primary="编辑估值"/>
                             </ListItemButton>
                             <ListItemButton onClick={handleCalculateCashback}>
-                                <ListItemIcon><CalculateIcon /></ListItemIcon>
-                                <ListItemText primary="计算返现" />
+                                <ListItemIcon><CalculateIcon/></ListItemIcon>
+                                <ListItemText primary="计算返现"/>
                             </ListItemButton>
                             <ListItemButton onClick={handleShare}>
-                                <ListItemIcon><ShareIcon /></ListItemIcon>
-                                <ListItemText primary="分享" />
+                                <ListItemIcon><ShareIcon/></ListItemIcon>
+                                <ListItemText primary="分享"/>
                             </ListItemButton>
                         </List>
                     </SwipeableDrawer>
@@ -365,11 +393,18 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                             component="img"
                             image={`images/${card.imageName || genericImageName}`}
                             alt={`${card.name} card image`}
-                            sx={{width: 125, objectFit: 'fill', aspectRatio: '1.586/1', borderRadius: '4px', boxShadow: 3}}
+                            sx={{
+                                width: 125,
+                                objectFit: 'fill',
+                                aspectRatio: '1.586/1',
+                                borderRadius: '4px',
+                                boxShadow: 3
+                            }}
                         />
                     </Grid>
                     <Grid>
-                        <Typography variant="subtitle1" component="div" sx={{fontWeight: 'bold', wordBreak: 'break-word'}}>
+                        <Typography variant="subtitle1" component="div"
+                                    sx={{fontWeight: 'bold', wordBreak: 'break-word'}}>
                             {card.name}
                         </Typography>
                     </Grid>
@@ -384,7 +419,8 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                     </Grid>
                     <Grid size={{xs: 6}}>
                         <Typography variant="body2" color="text.secondary">净值</Typography>
-                        <Typography variant="h5" sx={{fontWeight: 'bold', color: roi >= 0 ? 'success.main' : 'error.main'}}>
+                        <Typography variant="h5"
+                                    sx={{fontWeight: 'bold', color: roi >= 0 ? 'success.main' : 'error.main'}}>
                             ${(roi / 100).toFixed(0)}
                         </Typography>
                     </Grid>
@@ -395,13 +431,17 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 <Box sx={{flexGrow: 1, overflowY: 'auto', minHeight: 0}}>
                     <Stack spacing={2}>
                         <Box>
-                            <Typography variant="h6" component="div" gutterBottom sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
+                            <Typography variant="h6" component="div" gutterBottom sx={{
+                                display: 'inline-block',
+                                borderBottom: '2px solid',
+                                borderColor: 'primary.main'
+                            }}>
                                 Credits
                             </Typography>
                             {creditDisplayItems.length > 0 ? (
                                 <Stack>
                                     {creditDisplayItems.map((item) => (
-                                        <ItemRow key={item.id} item={item} chipWidth={chipWidth} />
+                                        <ItemRow key={item.id} item={item} chipWidth={chipWidth}/>
                                     ))}
                                 </Stack>
                             ) : (
@@ -411,12 +451,16 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
 
                         {customDisplayItems.length > 0 && (
                             <Box>
-                                <Typography variant="h6" component="div" gutterBottom sx={{ display: 'inline-block', borderBottom: '2px solid', borderColor: 'primary.main' }}>
+                                <Typography variant="h6" component="div" gutterBottom sx={{
+                                    display: 'inline-block',
+                                    borderBottom: '2px solid',
+                                    borderColor: 'primary.main'
+                                }}>
                                     Additional
                                 </Typography>
                                 <Stack>
                                     {customDisplayItems.map((item) => (
-                                        <ItemRow key={item.id} item={item} chipWidth={chipWidth} />
+                                        <ItemRow key={item.id} item={item} chipWidth={chipWidth}/>
                                     ))}
                                 </Stack>
                             </Box>
@@ -433,7 +477,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 initialValuation={userValuation}
                 onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditOpen(false)}
-                onSave={handleSaveValuation}
+                onSave={(valuation) => handleSave({cardValuation: valuation})}
             />
             {/* 单个 credit 编辑对话框 */}
             <ValuationEditComponent
@@ -443,7 +487,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 initialValuation={userValuation}
                 onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditingCreditId(null)}
-                onSave={handleSaveValuation}
+                onSave={(valuation) => handleSave({cardValuation: valuation})}
                 singleCreditIdToEdit={editingCreditId ?? undefined}
             />
             {/* 单个 custom adjustment 编辑对话框 */}
@@ -454,7 +498,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 initialValuation={userValuation}
                 onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditingCustomAdjustmentId(null)}
-                onSave={handleSaveValuation}
+                onSave={(valuation) => handleSave({cardValuation: valuation})}
                 singleCustomAdjustmentIdToEdit={editingCustomAdjustmentId ?? undefined}
             />
 
@@ -463,6 +507,10 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 open={cashbackOpen}
                 onClose={() => setCashbackOpen(false)}
                 card={card}
+                initialCardValuation={userValuation}
+                initialPointSystemValuations={loadActiveValuationProfile()?.pointSystemValuations}
+                onSave={handleSave}
+                netWorthCents={roi}
             />
 
             {/* 分享估值弹窗 */}
