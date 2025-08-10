@@ -237,6 +237,29 @@ message CarRentalInsuranceBenefit {
 // ===================================================================
 
 message EarningRate {
+  // (核心新增) 唯一的、人类可读的返现规则标识符，在单张卡片内必须唯一。
+  // 这个ID应该在规则的生命周期内保持稳定，即使返现比例等细节发生变化。
+  // e.g., "amex-gold-dining", "amex-gold-grocery-us", "csp-travel-portal"
+  string earning_rate_id = 1;
+
+  // 累积乘数 (例如, 5.0 代表 5x 或 5% 返现)
+  float multiplier = 2;
+
+  // 消费类别
+  SpendingCategory category = 3;
+
+  // 消费渠道/限制
+  Channel channel = 4;
+
+  // 限定商户列表。
+  // 仅当 channel 为 SPECIFIC_MERCHANTS 时有效。
+  // e.g., ["Starbucks", "The Cheesecake Factory"]
+  repeated string qualifying_merchants = 5;
+
+  // 额外注解，用于说明人类易读的、无法结构化的使用条件。
+  // e.g., "每年仅限前$25,000消费", "仅限美国境内消费"
+  string notes = 6;
+
   // (新增) 定义标准的消费类别 (Spending Category)
   // 这个枚举定义消费的“本质”，不关心渠道。
   enum SpendingCategory {
@@ -267,25 +290,6 @@ message EarningRate {
     TRAVEL_PORTAL = 3;            // 通过发卡行的旅行门户 (e.g., Chase Travel, AmexTravel.com)
     SPECIFIC_MERCHANTS = 4;       // 仅限特定商户 (需配合 qualifying_merchants 字段使用)
   }
-
-
-  // 累积乘数 (例如, 5.0 代表 5x 或 5% 返现)
-  float multiplier = 1;
-
-  // 消费类别
-  SpendingCategory category = 3;
-
-  // 消费渠道/限制
-  Channel channel = 4;
-
-  // 限定商户列表。
-  // 仅当 channel 为 SPECIFIC_MERCHANTS 时有效。
-  // e.g., ["Starbucks", "The Cheesecake Factory"]
-  repeated string qualifying_merchants = 5;
-
-  // 额外注解，用于说明人类易读的、无法结构化的使用条件。
-  // e.g., "每年仅限前$25,000消费", "仅限美国境内消费"
-  string notes = 6;
 }
 
 

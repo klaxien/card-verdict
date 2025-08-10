@@ -45,6 +45,29 @@ message CustomAdjustment {
   string notes = 5;
 }
 
+// (新增) 代表用户针对某一个返现规则的计划支出
+message PlannedSpending {
+  // 支出的金额，以美分为单位。
+  int32 amount_cents = 1;
+
+  // 支出的频率 (每月/每季度/每年)。
+  cardverdict.v1.CreditFrequency frequency = 2;
+
+  // (核心设计) 当用户保存此条目时，从 cardverdict.v1.EarningRate 缓存的、
+  // 人类可读的描述。这个字段是处理“孤儿数据”的关键。即使原始的 EarningRate
+  // 被删除，我们仍然知道这个支出是关于什么的。
+  // e.g., "4x on Dining at U.S. Restaurants", "3x on Flights (booked directly)"
+  string last_known_rule_description = 3;
+
+  // 当用户保存此条目时，缓存的返现率。
+  // 用于在应用启动时检测返现率的变化 (e.g., from 4.0 to 3.0)。
+  float last_known_multiplier = 4;
+
+  // 用户的可选备注
+  // e.g., "家庭日常买菜", "每年回国机票"
+  string notes = 5;
+}
+
 // 存储用户对单张信用卡所有福利和年费的自定义估值
 message UserCardValuation {
   // 映射 credit_id 到用户的自定义价值。
@@ -57,6 +80,10 @@ message UserCardValuation {
 
   // 一个列表，包含所有由用户手动添加的、非官方的财务调整项。
   repeated CustomAdjustment custom_adjustments = 3;
+
+  // (核心新增) 映射 EarningRate ID 到用户的计划支出。
+  // Key: cardverdict.v1.EarningRate.earning_rate_id
+  map<string, PlannedSpending> planned_spending = 4;
 }
 
 // ===================================================================
