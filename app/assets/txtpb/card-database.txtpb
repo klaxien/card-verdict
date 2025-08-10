@@ -490,6 +490,7 @@ cards {
     credit_id: "free-night-award-85k"
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
+    default_period_value_cents: 30000
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
     default_effective_value_cents: 30000
     default_effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
@@ -641,6 +642,7 @@ cards {
     credit_id: "free-night-award"
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
+    default_period_value_cents: 35000
     details: "每年持卡赠送一张FN，消费达$60,000再送一张。"
     default_effective_value_cents: 35000
     default_effective_value_explanation: "希尔顿无上限房券价值极高，可轻松兑换出高价值，但假设持卡人不会真的出cash住，只是愿意多出点钱住好点的酒店，保守估计为$350。"
@@ -720,6 +722,7 @@ cards {
     credit_id: "dashpass-membership"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
+    default_period_value_cents: 9600
     qualifying_merchants: "DashPass"
     details: "免费的DashPass会员，需在2027年12月31日前激活。"
     default_effective_value_proportion: 0
@@ -847,8 +850,9 @@ cards {
     credit_id: "dashpass-membership"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
+    default_period_value_cents: 9600
     qualifying_merchants: "DashPass"
-    details: "Complimentary DashPass Membership"
+    details: "免费的DashPass会员，需在2027年12月31日前激活。"
     default_effective_value_proportion: 0
     default_effective_value_explanation: "会员报销非刚需，估值为0。"
   }
@@ -1130,6 +1134,7 @@ cards {
     credit_id: "united-club-membership"
     type: LOUNGE_MEMBERSHIP
     frequency: ANNUAL
+    default_period_value_cents: 75000
     qualifying_merchants: "United Club"
     details: "United Club Membership"
     default_effective_value_cents: 16000
@@ -1298,6 +1303,7 @@ cards {
     credit_id: "free-night-award-85k"
     type: FREE_NIGHT_AWARD
     frequency: ANNUAL
+    default_period_value_cents: 30000
     details: "每年续卡后赠送一张价值最高85,000万豪积分的FN。"
     default_effective_value_cents: 30000
     default_effective_value_explanation: "85k房券可用于高端酒店，但假设持卡人平时并不会住85k酒店，只是愿意多出点钱住好点的酒店，价值保守估计为$300。"
@@ -1400,6 +1406,7 @@ cards {
     credit_id: "points-bonus"
     type: POINTS_OR_MILES_BONUS
     frequency: ANNUAL
+    default_period_value_cents: 16000
     details: "10,000 anniversary bonus miles."
     default_effective_value_cents: 16000
     default_effective_value_explanation: "美卡博客估值1.6 cpp"
@@ -1867,6 +1874,7 @@ cards {
     credit_id: "admirals-club-membership"
     type: LOUNGE_MEMBERSHIP
     frequency: ANNUAL
+    default_period_value_cents: 85000
     qualifying_merchants: "Admirals Club"
     details: "Admirals Club会籍"
     default_effective_value_cents: 16000
