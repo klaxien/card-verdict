@@ -42,7 +42,7 @@ export const getDisplayEffectiveCents = (
 ): number => {
     const creditId = credit.creditId ?? '';
     const entry = userVal?.creditValuations?.[creditId];
-    if (entry?.cents != null) return entry.cents;
+    if (entry?.valueCents != null) return entry.valueCents;
     if (entry?.proportion != null) {
         return Math.round(calcRawAnnualCents(credit) * entry.proportion);
     }

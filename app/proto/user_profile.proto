@@ -10,19 +10,30 @@ import "cards.proto";
 // 1. 核心消息体 (Core Messages)
 // ===================================================================
 
-// 代表用户对单个项目的自定义价值
-message CustomValue {
+// (新) 专门用于积分体系的估值
+message PointSystemValue {
+  // 直接存储每点价值多少美分，例如 1.8 或 0.4。
+  // 使用 float (或 double 以获得更高精度) 是最直接、最正确的方式。
+  float cents_per_point = 1;
+
+  // 用户对该估值的解释
+  string explanation = 2;
+}
+
+// (新) 专门用于报销、福利等有固定票面价值的项目
+message PerkValue {
   // 用户设定的估值
   oneof value {
     // 价值比例 (e.g., 0.8 代表用户认为此福利只值票面价值的80%)
     float proportion = 1;
-    // 绝对价值 (以美分为单位, e.g., 用户认为$300的旅行报销对他只值$200, 或 1.8 cpp 的积分价值表示为 180)
-    int32 cents = 2;
+    // 绝对价值 (以整数美分为单位, e.g., 用户认为$300的旅行报销对他只值20000 cents)
+    int32 value_cents = 2;
   }
 
   // 用户对该估值的解释 (e.g., "这个航空报销太难用了，我只能用到一半")
   string explanation = 3;
 }
+
 
 // 代表用户自定义的财务调整项
 message CustomAdjustment {
@@ -72,11 +83,11 @@ message PlannedSpending {
 message UserCardValuation {
   // 映射 credit_id 到用户的自定义价值。
   // Key: cardverdict.v1.Credit.credit_id
-  map<string, CustomValue> credit_valuations = 1;
+  map<string, PerkValue> credit_valuations = 1;
 
   // 映射 benefit_id 到用户的自定义价值。
   // Key: cardverdict.v1.OtherBenefit.benefit_id
-  map<string, CustomValue> other_benefit_valuations = 2;
+  map<string, PerkValue> other_benefit_valuations = 2;
 
   // 一个列表，包含所有由用户手动添加的、非官方的财务调整项。
   repeated CustomAdjustment custom_adjustments = 3;
@@ -112,7 +123,7 @@ message ValuationProfile {
 
   // 用户对所有“全局”积分体系的自定义估值。
   // Key: cardverdict.v1.PointSystemInfo.system_id
-  map<string, CustomValue> point_system_valuations = 6;
+  map<string, PointSystemValue> point_system_valuations = 6;
 
   // [可扩展] Profile 级别的特定设置。
   ProfileSettings settings = 7;
@@ -123,7 +134,7 @@ message ProfileSettings {
   // 可以在此添加未来的设置，例如：
   // message ValuationOverride {
   //   string system_id = 1; // e.g., "amex_mr"
-  //   CustomValue value = 2;
+  //   PerkValue value = 2;
   // }
   // repeated ValuationOverride global_overrides = 1;
 }

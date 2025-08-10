@@ -32,7 +32,6 @@ import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/
 import CreditFrequency = cardverdict.v1.CreditFrequency;
 import CashBackEditor from "~/components/homePanel/cashBackEditor/CashBackEditor";
 import ShareValuation from "~/components/homePanel/shareDialog/ShareCardValuation";
-import IValuationProfile = userprofile.v1.IValuationProfile;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
 
@@ -112,7 +111,7 @@ const getTooltipForCredit = (
     const creditValuation = userVal?.creditValuations?.[creditId];
     const userNote = userVal?.creditValuations?.[creditId]?.explanation?.trim();
     if (userNote && userNote.length > 0) return userNote;
-    if (creditValuation?.cents || creditValuation?.proportion) return '自定义估值（未输入原因）';
+    if (creditValuation?.valueCents || creditValuation?.proportion) return '自定义估值（未输入原因）';
     return credit.defaultEffectiveValueExplanation ?? '';
 };
 
@@ -278,7 +277,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
 
     const handleSave = (updates: {
         cardValuation?: userprofile.v1.IUserCardValuation,
-        pointSystemValuations?: IValuationProfile['pointSystemValuations']
+        pointSystemValuations?: userprofile.v1.IValuationProfile['pointSystemValuations']
     }) => {
         if (!card.cardId) {
             console.error("Cannot save valuation for a card without a cardId.");

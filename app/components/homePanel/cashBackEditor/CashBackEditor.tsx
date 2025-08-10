@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import {cardverdict, userprofile} from '~/generated/bundle';
 import {FormProvider, useFieldArray, useForm, Controller} from 'react-hook-form';
+import {loadActiveValuationProfile} from "~/client/UserSettingsPersistence";
 
 // 为了方便访问，进行解构
 const {EarningRate, CreditFrequency} = cardverdict.v1;
@@ -163,6 +164,8 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
     const methods = useForm<FormValues>({
         mode: 'onChange',
         defaultValues: {
@@ -186,8 +189,9 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         if (open) {
             const systemId = card.pointSystemInfo?.systemId;
             let cppValue = card.pointSystemInfo?.defaultCentsPerPoint ?? 0;
-            if (systemId && initialPointSystemValuations?.[systemId]?.cents != null) {
-                cppValue = initialPointSystemValuations[systemId].cents!;
+            // 改动 1: 根据新 Proto 读取 centsPerPoint (float), 不再需要 /100
+            if (systemId && initialPointSystemValuations?.[systemId]?.centsPerPoint != null) {
+                cppValue = initialPointSystemValuations[systemId].centsPerPoint!;
             }
 
             const initialSpendings = sortedEarningRates.map(rate => {
@@ -250,7 +254,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             netWorthEffectRate = (netWorth / totalAnnualSpendCents) * 100;
             effectiveReturnRate = spendReturnRate + netWorthEffectRate;
         } else if (netWorth > 0) {
-            // 当消费为0时，净值影响率 = 净值(美元) * 100
             const netWorthDollars = netWorth / 100;
             netWorthEffectRate = netWorthDollars * 100;
             effectiveReturnRate = netWorthEffectRate;
@@ -276,8 +279,9 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         const newPointSystemValuations = {...(initialPointSystemValuations ?? {})};
         const systemId = card.pointSystemInfo?.systemId;
         if (systemId) {
+            // 改动 2: 根据新 Proto 保存为 PointSystemValue，直接存储 float，不再需要 *100
             newPointSystemValuations[systemId] = {
-                cents: parsedCpp
+                centsPerPoint: parsedCpp
             };
         }
 
@@ -302,6 +306,33 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             cardValuation: updatedCardValuation,
             pointSystemValuations: newPointSystemValuations
         });
+        onClose();
+    };
+
+    const handleConfirmClear = () => {
+        if (!card.cardId) {
+            console.error("Cannot clear spending for a card without a cardId.");
+            setConfirmClearOpen(false);
+            return;
+        }
+
+        const profile = loadActiveValuationProfile() ?? {cardValuations: {}, pointSystemValuations: {}};
+
+        const cardValuation = profile.cardValuations?.[card.cardId] ?? {};
+        cardValuation.plannedSpending = {};
+
+        const systemId = card.pointSystemInfo?.systemId;
+        const pointSystemValuations = profile.pointSystemValuations ?? {};
+        if (systemId && pointSystemValuations[systemId]) {
+            delete pointSystemValuations[systemId];
+        }
+
+        onSave({
+            cardValuation: cardValuation,
+            pointSystemValuations: pointSystemValuations,
+        });
+
+        setConfirmClearOpen(false);
         onClose();
     };
 
@@ -380,7 +411,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                 field.onBlur();
                                                 const num = parseFloat(e.target.value);
                                                 if (Number.isFinite(num)) {
-                                                    // 改动 2: 使用 toFixed(2) 解决浮点数精度问题
                                                     field.onChange(num.toFixed(2));
                                                 }
                                             }}
@@ -431,7 +461,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                                     return;
                                                                 }
                                                                 const num = parseFloat(value);
-                                                                // 改动 2: 通过舍入解决浮点数精度问题
                                                                 const roundedNum = Math.round(num * 100) / 100;
                                                                 controllerField.onChange(isNaN(roundedNum) ? '' : roundedNum.toString());
                                                             }}
@@ -508,13 +537,27 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                     pb: {xs: `max(16px, env(safe-area-inset-bottom))`, sm: 2},
                     pt: {xs: 2, sm: 2},
                     px: {xs: 2, sm: 3},
-                    justifyContent: 'flex-end',
                 }}>
+                    <Button color="error" variant="text" onClick={() => setConfirmClearOpen(true)}>清空</Button>
+                    <Box sx={{flexGrow: 1}}/>
                     <Button onClick={onClose}>取消</Button>
                     <Button variant="contained" type="submit" form="cash-back-form"
                             disabled={!isDirty || !isValid}>
                         保存
                     </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={confirmClearOpen} onClose={() => setConfirmClearOpen(false)} maxWidth="xs">
+                <DialogTitle>确认清空返现计算？</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        这将清除“{card.name}”的所有计划消费和自定义积分价值。此操作不可撤销。
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmClearOpen(false)}>取消</Button>
+                    <Button color="error" variant="contained" onClick={handleConfirmClear}>确认清空</Button>
                 </DialogActions>
             </Dialog>
         </FormProvider>

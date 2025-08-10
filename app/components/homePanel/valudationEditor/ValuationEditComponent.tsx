@@ -19,7 +19,7 @@ import {CreditRow} from './CreditRow';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
 
 // Type Definitions
-type CustomValue = userprofile.v1.ICustomValue;
+type PerkValue = userprofile.v1.IPerkValue;
 type UserCardValuation = userprofile.v1.IUserCardValuation;
 type Credit = cardverdict.v1.ICredit;
 type CreditCard = cardverdict.v1.ICreditCard;
@@ -106,9 +106,9 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
             let proportionInput = '';
             let lastEdited: LastEdited;
 
-            if (userVal?.cents != null) {
+            if (userVal?.valueCents != null) {
                 lastEdited = 'dollars';
-                dollarsInput = (userVal.cents / 100).toFixed(2);
+                dollarsInput = (userVal.valueCents / 100).toFixed(2);
                 if (faceDollars > 0) proportionInput = (Number(dollarsInput) / faceDollars).toFixed(2);
             } else if (userVal?.proportion != null) {
                 lastEdited = 'proportion';
@@ -141,7 +141,7 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
 
             if (row.lastEdited === 'dollars' && hasDollars) {
                 output.creditValuations![row.creditId] = {
-                    cents: Math.round(Number(row.dollarsInput) * 100),
+                    valueCents: Math.round(Number(row.dollarsInput) * 100),
                     explanation: row.explanation
                 };
                 saved = true;
