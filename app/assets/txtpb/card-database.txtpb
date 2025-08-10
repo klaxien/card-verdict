@@ -1138,7 +1138,7 @@ cards {
     qualifying_merchants: "United Club"
     details: "United Club Membership"
     default_effective_value_cents: 16000
-    default_effective_value_explanation: "可带1人，假设长持这张卡就是为了United Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
+    default_effective_value_explanation: "可带1人，假设长持这张卡就是为了United Club，一次带1人，一次相当于省一次机场餐厅$20*2，一年可用4次，休息室会籍估值为$40*4=160。"
   }
   credits {
     credit_id: "renowned-hotels-credit"
@@ -1878,7 +1878,7 @@ cards {
     qualifying_merchants: "Admirals Club"
     details: "Admirals Club会籍"
     default_effective_value_cents: 16000
-    default_effective_value_explanation: "可带2人，假设长持这张卡就是为了Admirals Club，一年可用4次，一次相当于省一次机场餐厅$20*2，休息室会籍估值为$160。"
+    default_effective_value_explanation: "可带2人，假设长持这张卡就是为了Admirals Club，一次带1人，一次相当于省一次机场餐厅$20*2，一年可用4次，休息室会籍估值为$40*4=160。"
   }
   credits {
     credit_id: "avis-budget-credit"
