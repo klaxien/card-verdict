@@ -53,22 +53,26 @@ cards {
     default_effective_value_explanation: "Resy平台使用场景受限，按40%估值。"
   }
   earning_rates {
+    earning_rate_id: "amex-gold-dining-general"
     multiplier: 4
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-gold-grocery-us"
     multiplier: 4
     category: GROCERY_STORES
     channel: GENERAL
     notes: "范围为美国境内"
   }
   earning_rates {
+    earning_rate_id: "amex-gold-flight-direct"
     multiplier: 3
     category: FLIGHT
     channel: DIRECT
   }
   earning_rates {
+    earning_rate_id: "amex-gold-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -175,23 +179,27 @@ cards {
     default_effective_value_explanation: "会员报销非刚需，估值为0。"
   }
   earning_rates {
+    earning_rate_id: "amex-platinum-flight-direct"
     multiplier: 5
     category: FLIGHT
     channel: DIRECT
     notes: "每年消费上限$500k。"
   }
   earning_rates {
+    earning_rate_id: "amex-platinum-flight-portal"
     multiplier: 5
     category: FLIGHT
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "amex-platinum-hotel-portal"
     multiplier: 5
     category: HOTEL
     channel: TRAVEL_PORTAL
     notes: "仅限prepaid酒店"
   }
   earning_rates {
+    earning_rate_id: "amex-platinum-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -277,27 +285,32 @@ cards {
     default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
   }
   earning_rates {
+    earning_rate_id: "amex-delta-platinum-hotel-general"
     multiplier: 3
     category: HOTEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-delta-platinum-flight-delta-direct"
     multiplier: 3
     category: FLIGHT
     channel: DIRECT
     qualifying_merchants: "Delta Air Lines"
   }
   earning_rates {
+    earning_rate_id: "amex-delta-platinum-dining-general"
     multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-delta-platinum-grocery-general"
     multiplier: 2
     category: GROCERY_STORES
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-delta-platinum-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -388,12 +401,14 @@ cards {
     default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
   }
   earning_rates {
+    earning_rate_id: "amex-delta-reserve-flight-delta-direct"
     multiplier: 3
     category: FLIGHT
     channel: DIRECT
     qualifying_merchants: "Delta Air Lines"
   }
   earning_rates {
+    earning_rate_id: "amex-delta-reserve-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -491,22 +506,26 @@ cards {
     default_effective_value_explanation: "特定rate限制较多，使用不灵活，估值为0。"
   }
   earning_rates {
+    earning_rate_id: "amex-marriott-bonvoy-brilliant-hotel-marriott"
     multiplier: 6
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Marriott"
   }
   earning_rates {
+    earning_rate_id: "amex-marriott-bonvoy-brilliant-dining-general"
     multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-marriott-bonvoy-brilliant-flight-general"
     multiplier: 3
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-marriott-bonvoy-brilliant-all-other"
     multiplier: 2
     category: ALL_OTHER
     channel: GENERAL
@@ -549,27 +568,32 @@ cards {
     default_effective_value_explanation: "假设一年只能用掉2次，按50%*90%估值。"
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-surpass-hotel-hilton"
     multiplier: 14
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Hilton"
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-surpass-dining-general"
     multiplier: 7
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-surpass-car-rental-general"
     multiplier: 7
     category: CAR_RENTAL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-surpass-flight-general"
     multiplier: 7
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-surpass-all-other"
     multiplier: 3
     category: ALL_OTHER
     channel: GENERAL
@@ -632,27 +656,32 @@ cards {
     default_effective_value_explanation: "会员报销非刚需，估值为0。"
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-aspire-hotel-hilton"
     multiplier: 14
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Hilton"
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-aspire-dining-general"
     multiplier: 7
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-aspire-car-rental-general"
     multiplier: 7
     category: CAR_RENTAL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-aspire-flight-general"
     multiplier: 7
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "amex-hilton-honors-aspire-all-other"
     multiplier: 3
     category: ALL_OTHER
     channel: GENERAL
@@ -707,32 +736,38 @@ cards {
     default_effective_value_explanation: "grocery按5折算"
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-preferred-travel-portal"
     multiplier: 5
     category: TRAVEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-preferred-dining-general"
     multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-preferred-streaming-general"
     multiplier: 3
     category: STREAMING_SERVICES
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-preferred-grocery-online"
     multiplier: 3
     category: GROCERY_STORES
     channel: GENERAL
     notes: "网上买菜 (Online Grocery)，不包括 Target, Walmart, Wholesale Clubs"
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-preferred-travel-general"
     multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-preferred-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -858,26 +893,31 @@ cards {
     default_effective_value_explanation: "假设平时不用，估值为0。"
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-reserve-travel-portal"
     multiplier: 8
     category: TRAVEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-reserve-flight-direct"
     multiplier: 4
     category: FLIGHT
     channel: DIRECT
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-reserve-hotel-direct"
     multiplier: 4
     category: HOTEL
     channel: DIRECT
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-reserve-dining-general"
     multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-sapphire-reserve-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -1004,27 +1044,32 @@ cards {
     default_effective_value_explanation: "应该不好用吧"
   }
   earning_rates {
+    earning_rate_id: "chase-united-quest-flight-united"
     multiplier: 3
     category: FLIGHT
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "United Airlines"
   }
   earning_rates {
+    earning_rate_id: "chase-united-quest-travel-general"
     multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-united-quest-dining-general"
     multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-united-quest-streaming-general"
     multiplier: 2
     category: STREAMING_SERVICES
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-united-quest-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -1145,27 +1190,32 @@ cards {
     default_effective_value_explanation: "应该不好用吧"
   }
   earning_rates {
+    earning_rate_id: "chase-united-club-infinite-flight-united"
     multiplier: 3
     category: FLIGHT
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "United Airlines"
   }
   earning_rates {
+    earning_rate_id: "chase-united-club-infinite-travel-general"
     multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-united-club-infinite-dining-general"
     multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-united-club-infinite-streaming-general"
     multiplier: 2
     category: STREAMING_SERVICES
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-united-club-infinite-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -1264,27 +1314,32 @@ cards {
     default_effective_value_explanation: "酒店内消费限制较多，使用不灵活，估值为0。"
   }
   earning_rates {
+    earning_rate_id: "chase-ritz-carlton-hotel-marriott"
     multiplier: 6
     category: HOTEL
     channel: SPECIFIC_MERCHANTS
     qualifying_merchants: "Marriott"
   }
   earning_rates {
+    earning_rate_id: "chase-ritz-carlton-dining-general"
     multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-ritz-carlton-flight-general"
     multiplier: 3
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-ritz-carlton-car-rental-general"
     multiplier: 3
     category: CAR_RENTAL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "chase-ritz-carlton-all-other"
     multiplier: 2
     category: ALL_OTHER
     channel: GENERAL
@@ -1350,21 +1405,25 @@ cards {
     default_effective_value_explanation: "美卡博客估值1.6 cpp"
   }
   earning_rates {
+    earning_rate_id: "capital-one-venture-x-hotel-portal"
     multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "capital-one-venture-x-car-rental-portal"
     multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "capital-one-venture-x-flight-portal"
     multiplier: 5
     category: FLIGHT
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "capital-one-venture-x-all-other"
     multiplier: 2
     category: ALL_OTHER
     channel: GENERAL
@@ -1414,22 +1473,26 @@ cards {
     default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。注意：这$325本身也算10x point，实际价值略高。"
   }
   earning_rates {
+    earning_rate_id: "us-bank-altitude-reserve-all-other-mobile-payment"
     multiplier: 3
     category: ALL_OTHER
     channel: GENERAL
     notes: "仅限移动支付"
   }
   earning_rates {
+    earning_rate_id: "us-bank-altitude-reserve-hotel-portal"
     multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "us-bank-altitude-reserve-car-rental-portal"
     multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "us-bank-altitude-reserve-flight-portal"
     multiplier: 5
     category: FLIGHT
     channel: TRAVEL_PORTAL
@@ -1488,18 +1551,21 @@ cards {
     default_effective_value_explanation: "会员报销非刚需且有高消费要求，估值为0。"
   }
   earning_rates {
+    earning_rate_id: "city-national-bank-crystal-travel-general"
     multiplier: 3
     category: TRAVEL
     channel: GENERAL
     notes: "包括机票、酒店、租车、火车、大巴、出租车等。"
   }
   earning_rates {
+    earning_rate_id: "city-national-bank-crystal-dining-general"
     multiplier: 3
     category: DINING
     channel: GENERAL
     notes: "包括餐厅、快餐、外卖等。"
   }
   earning_rates {
+    earning_rate_id: "city-national-bank-crystal-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -1543,26 +1609,31 @@ cards {
     default_effective_value_explanation: "通用旅行报销极其灵活，视为现金。"
   }
   earning_rates {
+    earning_rate_id: "citi-prestige-dining-general"
     multiplier: 5
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-prestige-flight-general"
     multiplier: 5
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-prestige-hotel-general"
     multiplier: 3
     category: HOTEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-prestige-cruise-general"
     multiplier: 3
     category: CRUISE
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-prestige-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -1613,42 +1684,50 @@ cards {
     default_effective_value_explanation: "需要在指定门户网站预订且单次消费需满$500，使用条件苛刻，按20%估值。"
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-hotel-portal"
     multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
     notes: "适用于酒店、租车、景点。"
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-car-rental-portal"
     multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-dining-general"
     multiplier: 3
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-grocery-general"
     multiplier: 3
     category: GROCERY_STORES
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-gas-general"
     multiplier: 3
     category: GAS_STATIONS
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-flight-general"
     multiplier: 3
     category: FLIGHT
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-hotel-general"
     multiplier: 3
     category: HOTEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-premier-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -1703,34 +1782,40 @@ cards {
     default_effective_value_explanation: "非亚洲难用，按1折算。"
   }
   earning_rates {
+    earning_rate_id: "citi-strata-elite-hotel-portal"
     multiplier: 12
     category: HOTEL
     channel: TRAVEL_PORTAL
     notes: "适用于酒店、租车、景点。"
   }
   earning_rates {
+    earning_rate_id: "citi-strata-elite-car-rental-portal"
     multiplier: 12
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-elite-flight-portal"
     multiplier: 6
     category: FLIGHT
     channel: TRAVEL_PORTAL
   }
   earning_rates {
+    earning_rate_id: "citi-strata-elite-dining-weekend-night"
     multiplier: 6
     category: DINING
     channel: SPECIFIC_MERCHANTS
     notes: "仅限周五/周六 6PM-6AM ET"
   }
   earning_rates {
+    earning_rate_id: "citi-strata-elite-dining-general"
     multiplier: 3
     category: DINING
     channel: GENERAL
     notes: "其他时间"
   }
   earning_rates {
+    earning_rate_id: "citi-strata-elite-all-other"
     multiplier: 1.5
     category: ALL_OTHER
     channel: GENERAL
@@ -1819,6 +1904,7 @@ cards {
     default_effective_value_explanation: "网约车礼品卡常有80%-90%折扣，假设1年只用得上6次，按45%估值。"
   }
   earning_rates {
+    earning_rate_id: "citi-aadvantage-executive-flight-aa"
     multiplier: 4
     category: FLIGHT
     channel: SPECIFIC_MERCHANTS
@@ -1826,18 +1912,21 @@ cards {
     notes: "每年消费满$150k后，此项消费可得 5x 里程。"
   }
   earning_rates {
+    earning_rate_id: "citi-aadvantage-executive-hotel-portal"
     multiplier: 10
     category: HOTEL
     channel: TRAVEL_PORTAL
     qualifying_merchants: "AA portal Hotels"
   }
   earning_rates {
+    earning_rate_id: "citi-aadvantage-executive-car-rental-portal"
     multiplier: 10
     category: CAR_RENTAL
     channel: TRAVEL_PORTAL
     qualifying_merchants: "AA portal Cars"
   }
   earning_rates {
+    earning_rate_id: "citi-aadvantage-executive-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
@@ -1894,16 +1983,19 @@ cards {
     default_effective_value_explanation: "同其他打车系，外卖系credit，按9折算。"
   }
   earning_rates {
+    earning_rate_id: "bofa-premium-rewards-elite-travel-general"
     multiplier: 2
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "bofa-premium-rewards-elite-dining-general"
     multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "bofa-premium-rewards-elite-all-other"
     multiplier: 1.5
     category: ALL_OTHER
     channel: GENERAL
@@ -1961,16 +2053,19 @@ cards {
     default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
   }
   earning_rates {
+    earning_rate_id: "hsbc-elite-travel-general"
     multiplier: 5
     category: TRAVEL
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "hsbc-elite-dining-general"
     multiplier: 2
     category: DINING
     channel: GENERAL
   }
   earning_rates {
+    earning_rate_id: "hsbc-elite-all-other"
     multiplier: 1
     category: ALL_OTHER
     channel: GENERAL
