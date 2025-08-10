@@ -1,6 +1,30 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {Box, Card, CardContent, Chip, Divider, Grid, CardMedia, Stack, Tooltip, Typography, IconButton} from '@mui/material';
+import {
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    Divider,
+    Grid,
+    CardMedia,
+    Stack,
+    Tooltip,
+    Typography,
+    IconButton,
+    Menu,
+    MenuItem,
+    SwipeableDrawer,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    useMediaQuery
+} from '@mui/material';
+import {useTheme} from '@mui/material/styles';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import ShareIcon from '@mui/icons-material/Share';
 import {cardverdict, userprofile} from '~/generated/bundle';
 import ValuationEditComponent from './valudationEditor/ValuationEditComponent';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
@@ -96,19 +120,81 @@ type CreditCardComponentProps = {
     card: cardverdict.v1.ICreditCard;
     onSaveValuation?: (valuation: userprofile.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
     initialValuation?: userprofile.v1.IUserCardValuation;
+    onCalculateCashback?: (card: cardverdict.v1.ICreditCard) => void;
+    onShare?: (card: cardverdict.v1.ICreditCard) => void;
 };
 
-const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
+const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation, onCalculateCashback, onShare}) => {
     const [editOpen, setEditOpen] = useState(false);
     const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
     const [editingCustomAdjustmentId, setEditingCustomAdjustmentId] = useState<string | null>(null);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    // desktop menu state
+    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const menuOpen = Boolean(menuAnchorEl);
+
+    // mobile bottom sheet state
+    const [sheetOpen, setSheetOpen] = useState(false);
+
+    const openActions = (e: React.MouseEvent<HTMLElement>) => {
+        if (isMobile) {
+            setSheetOpen(true);
+        } else {
+            setMenuAnchorEl(e.currentTarget);
+        }
+    };
+    const closeActions = () => {
+        setMenuAnchorEl(null);
+        setSheetOpen(false);
+    };
+
+    const handleEditValuation = () => {
+        setEditOpen(true);
+        closeActions();
+    };
+
+    const handleCalculateCashback = () => {
+        if (onCalculateCashback) {
+            onCalculateCashback(card);
+        } else {
+            console.info('计算返现: 请通过 onCalculateCashback prop 处理该动作。');
+        }
+        closeActions();
+    };
+
+    const handleShare = async () => {
+        if (onShare) {
+            onShare(card);
+            closeActions();
+            return;
+        }
+        try {
+            const shareData = {
+                title: card.name ?? '信用卡',
+                text: card.name ?? '信用卡',
+                url: window.location.href
+            };
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareData.url);
+                // 可根据需要加入轻提示
+            }
+        } catch (e) {
+            console.error('分享失败', e);
+        } finally {
+            closeActions();
+        }
+    };
 
     // This is the key state. It will be initialized from props, then updated from localStorage.
     const [userValuation, setUserValuation] = useState<userprofile.v1.IUserCardValuation | undefined>(initialValuation);
 
     // Effect for loading valuation from localStorage on component mount
     useEffect(() => {
-        // We only try to load from local storage if no initial valuation was provided via props.
         if (!initialValuation) {
             const db = loadActiveValuationProfile();
             if (db && card.cardId) {
@@ -230,16 +316,67 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
         <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 2, borderRadius: 4, position: 'relative'}}>
             <CardContent sx={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
                 <Box sx={{position: 'absolute', top: 8, right: 8, zIndex: 1}}>
-                    <Tooltip title="编辑">
+                    <Tooltip title="更多">
                         <IconButton
-                            aria-label="edit card"
+                            aria-label="more actions"
+                            aria-controls={menuOpen ? 'card-menu' : undefined}
+                            aria-haspopup="true"
+                            aria-expanded={menuOpen ? 'true' : undefined}
                             size="small"
                             color="primary"
-                            onClick={() => setEditOpen(true)}
+                            onClick={openActions}
                         >
-                            <EditIcon fontSize="small"/>
+                            <MoreVertIcon fontSize="small"/>
                         </IconButton>
                     </Tooltip>
+
+                    {/* Desktop menu */}
+                    <Menu
+                        id="card-menu"
+                        anchorEl={menuAnchorEl}
+                        open={!isMobile && menuOpen}
+                        onClose={closeActions}
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    >
+                        <MenuItem onClick={handleEditValuation}>
+                            <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                            <ListItemText>编辑估值</ListItemText>
+                        </MenuItem>
+                        <MenuItem onClick={handleCalculateCashback}>
+                            <ListItemIcon><CalculateIcon fontSize="small" /></ListItemIcon>
+                            <ListItemText>计算返现</ListItemText>
+                        </MenuItem>
+                        <MenuItem onClick={handleShare}>
+                            <ListItemIcon><ShareIcon fontSize="small" /></ListItemIcon>
+                            <ListItemText>分享</ListItemText>
+                        </MenuItem>
+                    </Menu>
+
+                    {/* Mobile bottom sheet */}
+                    <SwipeableDrawer
+                        anchor="bottom"
+                        open={isMobile && sheetOpen}
+                        onOpen={() => setSheetOpen(true)}
+                        onClose={closeActions}
+                        disableDiscovery={false}
+                        PaperProps={{ sx: { borderTopLeftRadius: 12, borderTopRightRadius: 12 } }}
+                    >
+                        <List>
+                            <ListItemButton onClick={handleEditValuation}>
+                                <ListItemIcon><EditIcon /></ListItemIcon>
+                                <ListItemText primary="编辑估值" />
+                            </ListItemButton>
+                            <ListItemButton onClick={handleCalculateCashback}>
+                                <ListItemIcon><CalculateIcon /></ListItemIcon>
+                                <ListItemText primary="计算返现" />
+                            </ListItemButton>
+                            <ListItemButton onClick={handleShare}>
+                                <ListItemIcon><ShareIcon /></ListItemIcon>
+                                <ListItemText primary="分享" />
+                            </ListItemButton>
+                        </List>
+                    </SwipeableDrawer>
                 </Box>
 
                 <Grid container spacing={2} alignItems="center" flexWrap="nowrap">
@@ -335,7 +472,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 card={card}
                 displayCredits={sortedCredits}
                 initialValuation={userValuation}
-                onCustomValuationClear={() => setUserValuation(undefined)} // 新增
+                onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditingCustomAdjustmentId(null)}
                 onSave={handleSaveValuation}
                 singleCustomAdjustmentIdToEdit={editingCustomAdjustmentId ?? undefined}
