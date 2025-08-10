@@ -3,7 +3,7 @@ import {
     Box,
     Button,
     FormControl,
-    Grid, // Grid V2
+    Grid,
     IconButton,
     InputAdornment,
     InputLabel,

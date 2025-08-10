@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -17,6 +17,7 @@ import {
     InputAdornment, Divider, Alert, useMediaQuery, useTheme,
 } from '@mui/material';
 import {cardverdict, userprofile} from '~/generated/bundle';
+import {FormProvider, useFieldArray, useForm, Controller} from 'react-hook-form';
 
 // 为了方便访问，进行解构
 const {EarningRate, CreditFrequency} = cardverdict.v1;
@@ -101,6 +102,32 @@ const formatEarningRate = (rate: IEarningRate): string => {
     return description;
 };
 
+// --- React Hook Form 型定义 ---
+type FormValues = {
+    cppInput: string;
+    spendings: Array<{
+        earningRateId: string;
+        amountInput: string;
+        frequency: cardverdict.v1.CreditFrequency;
+        notes: string;
+        // 静态数据，仅用于UI显示
+        _description: string;
+        _multiplier: number;
+    }>;
+};
+
+// --- 验证函数 ---
+const validateNonNegative = (value: string): true | string => {
+    if (value === null || value === undefined || String(value).trim() === '') {
+        return true; // 允许空值，视为空消费
+    }
+    if (!/^\d*\.?\d{0,2}$/.test(value)) {
+        return '必须是正数，最多两位小数';
+    }
+    return true;
+};
+
+
 // --- 组件 ---
 
 type CashBackEditorProps = {
@@ -127,34 +154,57 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                        }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [spendingMap, setSpendingMap] = useState<Record<string, IPlannedSpending>>({});
-    const [cppInput, setCppInput] = useState<string>('0.00');
+
+    const methods = useForm<FormValues>({
+        mode: 'onChange',
+        defaultValues: {
+            cppInput: '0.00',
+            spendings: [],
+        },
+    });
+    const {control, handleSubmit, watch, reset} = methods;
+
+    const {fields} = useFieldArray({
+        control,
+        name: 'spendings',
+    });
+
+    const sortedEarningRates = useMemo(() =>
+            [...(card.earningRates ?? [])].sort((a, b) => (b.multiplier ?? 0) - (a.multiplier ?? 0)),
+        [card.earningRates]);
+
 
     useEffect(() => {
         if (open) {
             const systemId = card.pointSystemInfo?.systemId;
             let cpp = card.pointSystemInfo?.defaultCentsPerPoint ?? 0;
             if (systemId && initialPointSystemValuations?.[systemId]?.cents != null) {
-                cpp = (initialPointSystemValuations[systemId].cents!) / 100.0;
+                cpp = initialPointSystemValuations[systemId].cents!;
             }
-            setCppInput(cpp.toFixed(2));
 
-            const initialMap = (card.earningRates ?? []).reduce((acc, rate) => {
-                if (rate.earningRateId) {
-                    const savedSpending = initialCardValuation?.plannedSpending?.[rate.earningRateId];
-                    acc[rate.earningRateId] = {
-                        lastKnownRuleDescription: formatEarningRate(rate),
-                        lastKnownMultiplier: rate.multiplier ?? 0,
-                        amountCents: savedSpending?.amountCents ?? 0,
-                        frequency: savedSpending?.frequency ?? CreditFrequency.ANNUAL,
-                        notes: savedSpending?.notes ?? '',
-                    };
-                }
-                return acc;
-            }, {} as Record<string, IPlannedSpending>);
-            setSpendingMap(initialMap);
+            const initialSpendings = sortedEarningRates.map(rate => {
+                const earningRateId = rate.earningRateId!;
+                const savedSpending = initialCardValuation?.plannedSpending?.[earningRateId];
+                const amountCents = savedSpending?.amountCents ?? 0;
+
+                return {
+                    earningRateId: earningRateId,
+                    amountInput: (amountCents / 100).toFixed(2),
+                    frequency: savedSpending?.frequency ?? CreditFrequency.ANNUAL,
+                    notes: savedSpending?.notes ?? '',
+                    _description: formatEarningRate(rate),
+                    _multiplier: rate.multiplier ?? 0,
+                };
+            });
+
+            reset({
+                cppInput: (cpp / 100).toFixed(2),
+                spendings: initialSpendings,
+            });
         }
-    }, [open, card, initialCardValuation, initialPointSystemValuations]);
+    }, [open, card, initialCardValuation, initialPointSystemValuations, sortedEarningRates, reset]);
+
+    const watchedValues = watch();
 
     const {
         totalAnnualSpend,
@@ -163,23 +213,24 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         spendReturnRate,
         netWorthEffectRate,
     } = useMemo(() => {
-        const cpp = parseFloat(cppInput) || 0;
+        const cpp = parseFloat(watchedValues.cppInput) || 0;
         const netWorth = netWorthCents || 0;
 
         let totalAnnualSpendCents = 0;
         let rewardsFromSpendCents = 0;
 
-        for (const earningRateId in spendingMap) {
-            const spending = spendingMap[earningRateId];
-            if (!spending) continue;
+        (watchedValues.spendings ?? []).forEach(spending => {
+            if (!spending) return;
 
             const periods = periodsInYearFor(spending.frequency);
-            const annualAmountCents = (spending.amountCents ?? 0) * periods;
-            const multiplier = spending.lastKnownMultiplier ?? 0;
+            const amountCents = Math.round((parseFloat(spending.amountInput) || 0) * 100);
+            const annualAmountCents = amountCents * periods;
+            const multiplier = spending._multiplier ?? 0;
 
             totalAnnualSpendCents += annualAmountCents;
             rewardsFromSpendCents += (annualAmountCents * multiplier * cpp) / 100;
-        }
+        });
+
 
         // 修正：当没有spendings时，也计算netWorth的影响
         const totalValueCents = rewardsFromSpendCents + netWorth;
@@ -187,9 +238,9 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             return {
                 totalAnnualSpend: 0,
                 totalReturnValue: totalValueCents / 100,
-                effectiveReturnRate: netWorth > 0 ? (netWorth / 100) * 100 : 0, //  只考虑networth带来的回报
+                effectiveReturnRate: 0, // No spend, so rate is 0, but value can exist from net worth
                 spendReturnRate: 0,
-                netWorthEffectRate: netWorth > 0 ? (netWorth / 100) * 100 : 0,  //  只考虑networth带来的回报
+                netWorthEffectRate: 0,
             };
         }
 
@@ -205,18 +256,11 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             spendReturnRate,
             netWorthEffectRate,
         };
-    }, [spendingMap, cppInput, netWorthCents]);
+    }, [watchedValues, netWorthCents]);
 
 
-    const handleUpdate = (earningRateId: string, patch: Partial<IPlannedSpending>) => {
-        setSpendingMap(prev => ({
-            ...prev,
-            [earningRateId]: {...(prev[earningRateId] as object), ...patch},
-        }));
-    };
-
-    const handleSave = () => {
-        const parsedCpp = parseFloat(cppInput);
+    const onSubmit = (data: FormValues) => {
+        const parsedCpp = parseFloat(data.cppInput);
         if (isNaN(parsedCpp)) {
             console.error("输入的每点价值 (cpp) 无效。");
             return;
@@ -230,11 +274,21 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             };
         }
 
+        const plannedSpendingResult: Record<string, IPlannedSpending> = {};
+        data.spendings.forEach(s => {
+            const amount = parseFloat(s.amountInput) || 0;
+            plannedSpendingResult[s.earningRateId] = {
+                lastKnownRuleDescription: s._description,
+                lastKnownMultiplier: s._multiplier,
+                amountCents: Math.round(amount * 100),
+                frequency: s.frequency,
+                notes: s.notes,
+            };
+        });
+
         const updatedCardValuation: IUserCardValuation = {
-            creditValuations: initialCardValuation?.creditValuations ?? {},
-            otherBenefitValuations: initialCardValuation?.otherBenefitValuations ?? {},
-            customAdjustments: initialCardValuation?.customAdjustments ?? [],
-            plannedSpending: spendingMap,
+            ...(initialCardValuation ?? {}),
+            plannedSpending: plannedSpendingResult,
         };
 
         onSave({
@@ -244,191 +298,202 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         onClose();
     };
 
-    const handleCppBlur = () => {
-        const parsed = parseFloat(cppInput);
-        if (Number.isFinite(parsed)) {
-            setCppInput(parsed.toFixed(2));
-        } else {
-            const initialCpp = card.pointSystemInfo?.defaultCentsPerPoint ?? 0;
-            setCppInput(initialCpp.toFixed(2));
-        }
-    };
-
-    const sortedEarningRates = [...(card.earningRates ?? [])].sort((a, b) => (b.multiplier ?? 0) - (a.multiplier ?? 0));
-
     return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            fullScreen={isMobile}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-                sx: {
-                    height: {sm: '90vh'},
-                    width: {sm: '100vw'},
-                }
-            }}
-        >
-            <DialogTitle>计算 {card.name} 返现</DialogTitle>
+        <FormProvider {...methods}>
+            <Dialog
+                open={open}
+                onClose={onClose}
+                fullScreen={isMobile}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        height: {sm: '90vh'},
+                        width: {sm: '100vw'},
+                    }
+                }}
+            >
+                <DialogTitle>计算 {card.name} 返现</DialogTitle>
 
-            <Box sx={{px: 3, mb: 2, mt: -1.5}}>
-                <Alert severity={effectiveReturnRate > 0 ? "success" : "warning"}
-                       sx={{py: 1.5, '& .MuiAlert-message': {width: '100%'}}}>
-                    <Stack spacing={1}>
-                        <Grid container alignItems="center" justifyContent="space-around" spacing={1}>
-                            <Grid size={4} textAlign="center">
-                                <Typography variant="caption" color="text.secondary" display="block">总消费</Typography>
-                                <Typography variant="h6" fontWeight="bold">${totalAnnualSpend.toFixed(0)}</Typography>
-                            </Grid>
-                            <Grid size={4} textAlign="center">
-                                <Typography variant="caption" color="text.secondary"
-                                            display="block">总返现率</Typography>
-                                <Typography variant="h6" fontWeight="bold"
-                                            sx={{color: effectiveReturnRate > 0 ? 'success.main' : 'error.main'}}>
-                                    {effectiveReturnRate.toFixed(2)}%
-                                </Typography>
-                            </Grid>
-                            <Grid size={4} textAlign="center">
-                                <Typography variant="caption" color="text.secondary" display="block">总返现</Typography>
-                                <Typography variant="h6" fontWeight="bold"
-                                            sx={{color: totalReturnValue >= 0 ? 'success.main' : 'error.main'}}>
-                                    ${totalReturnValue.toFixed(0)}
-                                </Typography>
-                            </Grid>
-                        </Grid>
-                        <Divider/>
-                        <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
-                            总返现率 = 消费回报 {spendReturnRate.toFixed(2)}% + 净值影响 {netWorthEffectRate.toFixed(2)}%
-                        </Typography>
-                    </Stack>
-                </Alert>
-            </Box>
-
-            <DialogContent dividers sx={{
-                pt: 0,
-                pb: {xs: 'calc(72px + env(safe-area-inset-bottom))', sm: 2}
-            }}>
-                <Stack>
-                    <Box sx={{py: 2}}>
-                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                            积分价值估算
-                        </Typography>
-                        <TextField
-                            fullWidth
-                            label="每点价值 (cpp)"
-                            type="number"
-                            value={cppInput}
-                            onChange={(e) => setCppInput(e.target.value)}
-                            onBlur={handleCppBlur}
-                            slotProps={{
-                                input: {
-                                    endAdornment: <InputAdornment position="end">¢/pt</InputAdornment>,
-                                },
-                                htmlInput: {
-                                    step: 0.1,
-                                    min: 0,
-                                    inputMode: 'decimal',
-                                }
-                            }}
-                            size="small"
-                            helperText={card.pointSystemInfo?.notes || '输入你认为的此卡积分价值，用于计算返现等效金额'}
-                        />
-                    </Box>
-
-                    {sortedEarningRates.length > 0 && <Divider/>}
-
-                    {sortedEarningRates.map((rate, index) => {
-                        const earningRateId = rate.earningRateId ?? '';
-                        if (!earningRateId) return null;
-
-                        const currentSpending = spendingMap[earningRateId];
-                        // if (!currentSpending) return null;  // 注释掉这行，确保即使没有spending也渲染，但是消费额默认为0
-
-                        return (
-                            <React.Fragment key={earningRateId}>
-                                <Box sx={{py: 2}}>
-                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                        {formatEarningRate(rate)}
+                <Box sx={{px: 3, mb: 2, mt: -1.5}}>
+                    <Alert severity={effectiveReturnRate > 0 ? "success" : "warning"}
+                           sx={{py: 1.5, '& .MuiAlert-message': {width: '100%'}}}>
+                        <Stack spacing={1}>
+                            <Grid container alignItems="center" justifyContent="space-around" spacing={1}>
+                                <Grid size={4} textAlign="center">
+                                    <Typography variant="caption" color="text.secondary"
+                                                display="block">总消费</Typography>
+                                    <Typography
+                                        variant="h6" fontWeight="bold">${totalAnnualSpend.toFixed(0)}</Typography>
+                                </Grid>
+                                <Grid size={4} textAlign="center">
+                                    <Typography variant="caption" color="text.secondary"
+                                                display="block">总返现率</Typography>
+                                    <Typography variant="h6" fontWeight="bold"
+                                                sx={{color: effectiveReturnRate > 0 ? 'success.main' : 'error.main'}}>
+                                        {effectiveReturnRate.toFixed(2)}%
                                     </Typography>
-                                    <Grid container spacing={{xs: 2, md: 3}} columns={{xs: 4, sm: 8, md: 12}}
-                                          alignItems="center">
-                                        <Grid size={{xs: 4, sm: 4, md: 4}}>
-                                            <TextField
-                                                fullWidth
-                                                label="计划消费额"
-                                                type="number"
-                                                value={((currentSpending?.amountCents ?? 0) / 100).toFixed(2)} // 确保显示两位小数，即使是0
-                                                onChange={(e) => {
-                                                    const value = parseFloat(e.target.value);
-                                                    handleUpdate(earningRateId, {amountCents: isNaN(value) ? 0 : Math.round(value * 100)});
-                                                }}
-                                                slotProps={{
-                                                    input: {
-                                                        startAdornment: <InputAdornment
-                                                            position="start">$</InputAdornment>,
-                                                    },
-                                                    htmlInput: {
-                                                        min: 0,
-                                                        step: "10",
-                                                    }
-                                                }}
-                                                size="small"
-                                            />
+                                </Grid>
+                                <Grid size={4} textAlign="center">
+                                    <Typography variant="caption" color="text.secondary"
+                                                display="block">总返现</Typography>
+                                    <Typography variant="h6" fontWeight="bold"
+                                                sx={{color: totalReturnValue >= 0 ? 'success.main' : 'error.main'}}>
+                                        ${totalReturnValue.toFixed(0)}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                            <Divider/>
+                            <Typography variant="caption" color="text.secondary" display="block"
+                                        textAlign="center">
+                                总返现率 = 消费回报 {spendReturnRate.toFixed(2)}% +
+                                净值影响 {netWorthEffectRate.toFixed(2)}%
+                            </Typography>
+                        </Stack>
+                    </Alert>
+                </Box>
+
+                {/* 关键改动：form 只包裹 DialogContent，并通过 id 与外部按钮关联 */}
+                <DialogContent dividers sx={{
+                    pt: 0,
+                    pb: {xs: 'calc(72px + env(safe-area-inset-bottom))', sm: 2}
+                }}>
+                    <form id="cash-back-form" onSubmit={handleSubmit(onSubmit)}>
+                        <Stack>
+                            <Box sx={{py: 2}}>
+                                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                    积分价值估算
+                                </Typography>
+                                <Controller
+                                    name="cppInput"
+                                    control={control}
+                                    rules={{
+                                        required: '价值不能为空',
+                                        validate: validateNonNegative,
+                                    }}
+                                    render={({field, fieldState: {error}}) => (
+                                        <TextField
+                                            {...field}
+                                            fullWidth
+                                            label="每点价值 (cpp)"
+                                            type="number"
+                                            slotProps={{
+                                                input: {
+                                                    endAdornment: <InputAdornment position="end">¢/pt</InputAdornment>,
+                                                },
+                                                htmlInput: {
+                                                    step: 0.1,
+                                                    min: 0,
+                                                    inputMode: 'decimal',
+                                                }
+                                            }}
+                                            size="small"
+                                            error={!!error}
+                                            helperText={error?.message || card.pointSystemInfo?.notes || '输入你认为的此卡积分价值，用于计算返现等效金额'}
+                                        />
+                                    )}
+                                />
+                            </Box>
+
+                            {fields.length > 0 && <Divider/>}
+
+                            {fields.map((field, index) => (
+                                <React.Fragment key={field.id}>
+                                    <Box sx={{py: 2}}>
+                                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                            {field._description}
+                                        </Typography>
+                                        <Grid container spacing={{xs: 2, md: 3}} columns={{xs: 4, sm: 8, md: 12}}
+                                              alignItems="flex-start">
+                                            <Grid size={{xs: 4, sm: 4, md: 4}}>
+                                                <Controller
+                                                    name={`spendings.${index}.amountInput`}
+                                                    control={control}
+                                                    rules={{validate: validateNonNegative}}
+                                                    render={({field: controllerField, fieldState: {error}}) => (
+                                                        <TextField
+                                                            {...controllerField}
+                                                            fullWidth
+                                                            label="计划消费额"
+                                                            type="number"
+                                                            error={!!error}
+                                                            helperText={error?.message || ' '}
+                                                            slotProps={{
+                                                                input: {
+                                                                    startAdornment: <InputAdornment
+                                                                        position="start">$</InputAdornment>,
+                                                                },
+                                                                htmlInput: {
+                                                                    min: 0,
+                                                                    step: "10",
+                                                                }
+                                                            }}
+                                                            size="small"
+                                                        />
+                                                    )}
+                                                />
+                                            </Grid>
+                                            <Grid size={{xs: 4, sm: 4, md: 4}}>
+                                                <Controller
+                                                    name={`spendings.${index}.frequency`}
+                                                    control={control}
+                                                    render={({field: controllerField}) => (
+                                                        <FormControl fullWidth size="small">
+                                                            <InputLabel
+                                                                id={`freq-label-${field.id}`}>频率</InputLabel>
+                                                            <Select
+                                                                {...controllerField}
+                                                                labelId={`freq-label-${field.id}`}
+                                                                label="频率"
+                                                            >
+                                                                {frequencyOptions.map(opt => (
+                                                                    <MenuItem key={opt.value} value={opt.value}>
+                                                                        {opt.label}
+                                                                    </MenuItem>
+                                                                ))}
+                                                            </Select>
+                                                        </FormControl>
+                                                    )}
+                                                />
+                                            </Grid>
+                                            <Grid size={{xs: 4, sm: 8, md: 4}}>
+                                                <Controller
+                                                    name={`spendings.${index}.notes`}
+                                                    control={control}
+                                                    render={({field: controllerField}) => (
+                                                        <TextField
+                                                            {...controllerField}
+                                                            fullWidth
+                                                            label="备注 (可选)"
+                                                            size="small"
+                                                        />
+                                                    )}
+                                                />
+                                            </Grid>
                                         </Grid>
-                                        <Grid size={{xs: 4, sm: 4, md: 4}}>
-                                            <FormControl fullWidth size="small">
-                                                <InputLabel id={`freq-label-${earningRateId}`}>频率</InputLabel>
-                                                <Select
-                                                    labelId={`freq-label-${earningRateId}`}
-                                                    label="频率"
-                                                    value={currentSpending?.frequency ?? CreditFrequency.ANNUAL} // 使用可选链和默认值
-                                                    onChange={(e) =>
-                                                        handleUpdate(
-                                                            earningRateId,
-                                                            {frequency: Number(e.target.value) as cardverdict.v1.CreditFrequency},
-                                                        )
-                                                    }
-                                                >
-                                                    {frequencyOptions.map(opt => (
-                                                        <MenuItem key={opt.value} value={opt.value}>
-                                                            {opt.label}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
-                                        <Grid size={{xs: 4, sm: 8, md: 4}}>
-                                            <TextField
-                                                fullWidth
-                                                label="备注 (可选)"
-                                                value={currentSpending?.notes ?? ''}  // 使用可选链和默认值
-                                                onChange={(e) => handleUpdate(earningRateId, {notes: e.target.value})}
-                                                size="small"
-                                            />
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                                {index < sortedEarningRates.length - 1 && <Divider/>}
-                            </React.Fragment>
-                        );
-                    })}
-                </Stack>
-            </DialogContent>
-            <DialogActions sx={{
-                position: {xs: 'sticky', sm: 'static'},
-                bottom: 0,
-                bgcolor: 'background.paper',
-                borderTop: (t) => ({xs: `1px solid ${t.palette.divider}`, sm: 'none'}),
-                pb: {xs: `max(16px, env(safe-area-inset-bottom))`, sm: 2},
-                pt: {xs: 2, sm: 2},
-                px: {xs: 2, sm: 3},
-                justifyContent: 'flex-end',
-            }}>
-                <Button onClick={onClose}>取消</Button>
-                <Button variant="contained" onClick={handleSave}>保存</Button>
-            </DialogActions>
-        </Dialog>
+                                    </Box>
+                                    {index < fields.length - 1 && <Divider/>}
+                                </React.Fragment>
+                            ))}
+                        </Stack>
+                    </form>
+                </DialogContent>
+                <DialogActions sx={{
+                    position: {xs: 'sticky', sm: 'static'},
+                    bottom: 0,
+                    bgcolor: 'background.paper',
+                    borderTop: (t) => ({xs: `1px solid ${t.palette.divider}`, sm: 'none'}),
+                    pb: {xs: `max(16px, env(safe-area-inset-bottom))`, sm: 2},
+                    pt: {xs: 2, sm: 2},
+                    px: {xs: 2, sm: 3},
+                    justifyContent: 'flex-end',
+                }}>
+                    <Button onClick={onClose}>取消</Button>
+                    {/* 关键改动：通过 form 属性关联表单 */}
+                    <Button variant="contained" type="submit" form="cash-back-form">保存</Button>
+                </DialogActions>
+            </Dialog>
+        </FormProvider>
     );
 };
 
