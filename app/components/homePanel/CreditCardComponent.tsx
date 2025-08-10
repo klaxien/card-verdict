@@ -30,6 +30,8 @@ import ValuationEditComponent from './valudationEditor/ValuationEditComponent';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
 import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
 import CreditFrequency = cardverdict.v1.CreditFrequency;
+import CashBackEditor from "~/components/homePanel/cashBackEditor/CashBackEditor";
+import ShareValuation from "~/components/homePanel/shareDialog/ShareCardValuation";
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
 
@@ -120,14 +122,16 @@ type CreditCardComponentProps = {
     card: cardverdict.v1.ICreditCard;
     onSaveValuation?: (valuation: userprofile.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
     initialValuation?: userprofile.v1.IUserCardValuation;
-    onCalculateCashback?: (card: cardverdict.v1.ICreditCard) => void;
-    onShare?: (card: cardverdict.v1.ICreditCard) => void;
 };
 
-const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation, onCalculateCashback, onShare}) => {
+const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
     const [editOpen, setEditOpen] = useState(false);
     const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
     const [editingCustomAdjustmentId, setEditingCustomAdjustmentId] = useState<string | null>(null);
+
+    // New dialog states
+    const [cashbackOpen, setCashbackOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -157,37 +161,13 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
     };
 
     const handleCalculateCashback = () => {
-        if (onCalculateCashback) {
-            onCalculateCashback(card);
-        } else {
-            console.info('计算返现: 请通过 onCalculateCashback prop 处理该动作。');
-        }
+        setCashbackOpen(true);
         closeActions();
     };
 
-    const handleShare = async () => {
-        if (onShare) {
-            onShare(card);
-            closeActions();
-            return;
-        }
-        try {
-            const shareData = {
-                title: card.name ?? '信用卡',
-                text: card.name ?? '信用卡',
-                url: window.location.href
-            };
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else if (navigator.clipboard?.writeText) {
-                await navigator.clipboard.writeText(shareData.url);
-                // 可根据需要加入轻提示
-            }
-        } catch (e) {
-            console.error('分享失败', e);
-        } finally {
-            closeActions();
-        }
+    const handleShare = () => {
+        setShareOpen(true);
+        closeActions();
     };
 
     // This is the key state. It will be initialized from props, then updated from localStorage.
@@ -445,7 +425,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 </Box>
             </CardContent>
 
-            {/* 把最新的用户估值作为 initialValuation 回传，保证二次打开能回显 */}
+            {/* 估值编辑 */}
             <ValuationEditComponent
                 open={editOpen}
                 card={card}
@@ -476,6 +456,21 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 onClose={() => setEditingCustomAdjustmentId(null)}
                 onSave={handleSaveValuation}
                 singleCustomAdjustmentIdToEdit={editingCustomAdjustmentId ?? undefined}
+            />
+
+            {/* 计算返现弹窗 */}
+            <CashBackEditor
+                open={cashbackOpen}
+                onClose={() => setCashbackOpen(false)}
+                card={card}
+            />
+
+            {/* 分享估值弹窗 */}
+            <ShareValuation
+                open={shareOpen}
+                onClose={() => setShareOpen(false)}
+                card={card}
+                valuation={userValuation}
             />
         </Card>
     );
