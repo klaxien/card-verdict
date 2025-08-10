@@ -181,17 +181,19 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             rewardsFromSpendCents += (annualAmountCents * multiplier * cpp) / 100;
         }
 
+        // 修正：当没有spendings时，也计算netWorth的影响
+        const totalValueCents = rewardsFromSpendCents + netWorth;
         if (totalAnnualSpendCents === 0) {
             return {
                 totalAnnualSpend: 0,
-                totalReturnValue: netWorth / 100,
-                effectiveReturnRate: 0,
+                totalReturnValue: totalValueCents / 100,
+                effectiveReturnRate: netWorth > 0 ? (netWorth / 100) * 100 : 0, //  只考虑networth带来的回报
                 spendReturnRate: 0,
-                netWorthEffectRate: 0,
+                netWorthEffectRate: netWorth > 0 ? (netWorth / 100) * 100 : 0,  //  只考虑networth带来的回报
             };
         }
 
-        const totalValueCents = rewardsFromSpendCents + netWorth;
+
         const effectiveReturnRate = (totalValueCents / totalAnnualSpendCents) * 100;
         const spendReturnRate = (rewardsFromSpendCents / totalAnnualSpendCents) * 100;
         const netWorthEffectRate = (netWorth / totalAnnualSpendCents) * 100;
@@ -341,7 +343,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                         if (!earningRateId) return null;
 
                         const currentSpending = spendingMap[earningRateId];
-                        if (!currentSpending) return null;
+                        // if (!currentSpending) return null;  // 注释掉这行，确保即使没有spending也渲染，但是消费额默认为0
 
                         return (
                             <React.Fragment key={earningRateId}>
@@ -356,7 +358,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                 fullWidth
                                                 label="计划消费额"
                                                 type="number"
-                                                value={(currentSpending.amountCents ?? 0) / 100}
+                                                value={((currentSpending?.amountCents ?? 0) / 100).toFixed(2)} // 确保显示两位小数，即使是0
                                                 onChange={(e) => {
                                                     const value = parseFloat(e.target.value);
                                                     handleUpdate(earningRateId, {amountCents: isNaN(value) ? 0 : Math.round(value * 100)});
@@ -365,9 +367,11 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                     input: {
                                                         startAdornment: <InputAdornment
                                                             position="start">$</InputAdornment>,
+                                                    },
+                                                    htmlInput: {
                                                         min: 0,
                                                         step: "10",
-                                                    },
+                                                    }
                                                 }}
                                                 size="small"
                                             />
@@ -378,7 +382,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                 <Select
                                                     labelId={`freq-label-${earningRateId}`}
                                                     label="频率"
-                                                    value={currentSpending.frequency ?? CreditFrequency.ANNUAL}
+                                                    value={currentSpending?.frequency ?? CreditFrequency.ANNUAL} // 使用可选链和默认值
                                                     onChange={(e) =>
                                                         handleUpdate(
                                                             earningRateId,
@@ -398,7 +402,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                             <TextField
                                                 fullWidth
                                                 label="备注 (可选)"
-                                                value={currentSpending.notes ?? ''}
+                                                value={currentSpending?.notes ?? ''}  // 使用可选链和默认值
                                                 onChange={(e) => handleUpdate(earningRateId, {notes: e.target.value})}
                                                 size="small"
                                             />

@@ -3,7 +3,7 @@ import {
     Box,
     Button,
     FormControl,
-    Grid,
+    Grid, // Grid V2
     IconButton,
     InputAdornment,
     InputLabel,
@@ -15,128 +15,73 @@ import {
     Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {cardverdict, userprofile} from '~/generated/bundle';
+import { cardverdict, userprofile } from '~/generated/bundle';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
+import type { FormValues } from './ValuationEditComponent';
 
 type CustomAdjustment = userprofile.v1.ICustomAdjustment;
-const {CreditFrequency} = cardverdict.v1;
+const { CreditFrequency } = cardverdict.v1;
 
 const frequencyOptions: Array<{ label: string; value: cardverdict.v1.CreditFrequency }> = [
-    {label: '每年一次', value: cardverdict.v1.CreditFrequency.ANNUAL},
-    {label: '每半年一次', value: cardverdict.v1.CreditFrequency.SEMI_ANNUAL},
-    {label: '每季度一次', value: cardverdict.v1.CreditFrequency.QUARTERLY},
-    {label: '每月一次', value: cardverdict.v1.CreditFrequency.MONTHLY},
+    { label: '每年一次', value: CreditFrequency.ANNUAL },
+    { label: '每半年一次', value: CreditFrequency.SEMI_ANNUAL },
+    { label: '每季度一次', value: CreditFrequency.QUARTERLY },
+    { label: '每月一次', value: CreditFrequency.MONTHLY },
 ];
 
-// 允许正负的美元值（最多两位小数），用于自定义报销
-const validateSignedDollars = (raw: string): { ok: boolean; msg?: string; cleaned?: string } => {
-    const stripWhitespace = (s: string) => s.replace(/\s+/g, '');
-    const stripEdgeNonDigits = (s: string) => s.replace(/^[^\d\-\.]+/, '').replace(/[^\d]+$/, '');
-    const cleanEdge = (s: string) => stripEdgeNonDigits(stripWhitespace(s));
-
-    if (raw.trim() === '') return {ok: false, msg: '请输入金额（可为负数）'};
-    const cleaned = cleanEdge(raw);
-    if (cleaned === '') return {ok: false, msg: '请输入数字'};
-    if (!/^-?\d+(\.\d{1,2})?$/.test(cleaned)) return {ok: false, msg: '最多两位小数，可加负号'};
-    return {ok: true, cleaned};
+// The 'any' type is used here to safely handle various inputs from react-hook-form.
+// The logic inside ensures type-safe handling of string, number, null, and undefined.
+const validateSignedDollars = (value: any): true | string => {
+    if (value === null || value === undefined || String(value).trim() === '') {
+        return '请输入金额';
+    }
+    // Convert the value to its string representation for validation.
+    // If it's a number (i.e., in cents), it's converted back to dollars first.
+    const s = typeof value === 'number' ? (value / 100).toString() : String(value);
+    if (!/^-?\d+(\.\d{1,2})?$/.test(s)) {
+        return '最多两位小数，可为负';
+    }
+    return true;
 };
+
+const newCustomAdjustment = (): CustomAdjustment => ({
+    customAdjustmentId: (globalThis.crypto?.randomUUID?.() ?? `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+    description: '',
+    frequency: CreditFrequency.ANNUAL,
+    valueCents: 0,
+    notes: '',
+});
 
 type CustomAdjustmentsEditorProps = {
-    customAdjustments: CustomAdjustment[];
-    onAdd: () => void;
-    onUpdate: (id: string, patch: Partial<CustomAdjustment>) => void;
-    onDelete: (id: string) => void;
     sessionSingleCustomAdjustmentId?: string;
-    // 上报当前组件内是否存在错误，以便外层禁用保存
-    onValidityChange?: (hasError: boolean) => void;
-};
-
-type AmountFieldState = {
-    input: string;        // 原始显示值（未必通过校验）
-    error?: string | null;
 };
 
 export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = ({
-                                                                                    customAdjustments,
-                                                                                    onAdd,
-                                                                                    onUpdate,
-                                                                                    onDelete,
                                                                                     sessionSingleCustomAdjustmentId,
-                                                                                    onValidityChange,
                                                                                 }) => {
+    const { control } = useFormContext<FormValues>();
+
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: 'customAdjustments',
+        keyName: 'key',
+    });
+
     const adjustmentsToRender = sessionSingleCustomAdjustmentId
-        ? customAdjustments.filter(item => item.customAdjustmentId === sessionSingleCustomAdjustmentId)
-        : customAdjustments;
-
-    // 本地“显示值”与错误态，按 id 存
-    const [amountFieldById, setAmountFieldById] = React.useState<Record<string, AmountFieldState>>({});
-
-    // 同步初始化/外部变更
-    React.useEffect(() => {
-        setAmountFieldById((previousMap) => {
-            const nextMap: Record<string, AmountFieldState> = {};
-            for (const item of adjustmentsToRender) {
-                const id = item.customAdjustmentId ?? '';
-                const dollars = (item.valueCents ?? 0) / 100;
-                const initialDisplay = Number.isFinite(dollars) ? dollars.toFixed(2) : '0.00';
-                // 已存在则保留正在编辑的输入；否则以当前 cents 的格式化值作为初始显示
-                nextMap[id] = previousMap[id] ?? {input: initialDisplay, error: null};
-            }
-            return nextMap;
-        });
-    }, [adjustmentsToRender]);
-
-    // 上报是否有错误
-    React.useEffect(() => {
-        const hasError = Object.values(amountFieldById).some(state => !!state.error);
-        onValidityChange?.(hasError);
-    }, [amountFieldById, onValidityChange]);
-
-    const handleAmountChange = (id: string, rawInput: string, currentItem: CustomAdjustment) => {
-        setAmountFieldById((previousMap) => {
-            const validationResult = validateSignedDollars(rawInput);
-            const nextFieldState: AmountFieldState = {
-                input: rawInput,                          // 始终回显用户输入
-                error: validationResult.ok ? null : (validationResult.msg ?? '输入无效'),
-            };
-
-            // 输入有效则更新分值；无效则保持父级不变，避免跳动
-            if (validationResult.ok && validationResult.cleaned != null) {
-                const numeric = Number(validationResult.cleaned);
-                onUpdate(id, {valueCents: Math.round(numeric * 100)});
-            } else {
-                onUpdate(id, {valueCents: currentItem.valueCents});
-            }
-
-            return {...previousMap, [id]: nextFieldState};
-        });
-    };
-
-    const handleAmountBlur = (id: string) => {
-        setAmountFieldById((previousMap) => {
-            const currentField = previousMap[id];
-            if (!currentField) return previousMap;
-            const validationResult = validateSignedDollars(currentField.input);
-            if (validationResult.ok && validationResult.cleaned != null) {
-                const numeric = Number(validationResult.cleaned);
-                // 失焦时规范化为两位小数
-                return {...previousMap, [id]: {input: numeric.toFixed(2), error: null}};
-            }
-            // 保留错误与原样显示
-            return previousMap;
-        });
-    };
+        ? fields.filter(item => item.customAdjustmentId === sessionSingleCustomAdjustmentId)
+        : fields;
 
     return (
         <>
-            <Box display="flex" alignItems="center" justifyContent="space-between" sx={{mb: 1}}>
+            <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                 <Typography variant="h6" component="div">
                     自定义报销
                 </Typography>
-                {!sessionSingleCustomAdjustmentId &&
-                    <Button variant="outlined" onClick={onAdd}>
+                {!sessionSingleCustomAdjustmentId && (
+                    <Button variant="outlined" onClick={() => append(newCustomAdjustment())}>
                         添加自定义报销
                     </Button>
-                }
+                )}
             </Box>
 
             {adjustmentsToRender.length === 0 ? (
@@ -145,98 +90,91 @@ export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = (
                 </Typography>
             ) : (
                 <Stack spacing={2}>
-                    {adjustmentsToRender.map((item) => {
-                        const id = item.customAdjustmentId ?? '';
-                        const fieldState = amountFieldById[id];
-
-                        // @ts-ignore wrong identification?
-                        const frequency = item.frequency && item.frequency !== CreditFrequency.FREQUENCY_UNSPECIFIED
-                            ? item.frequency
-                            : CreditFrequency.ANNUAL;
-
-                        const fallbackDisplay = Number.isFinite((item.valueCents ?? 0) / 100)
-                            ? ((item.valueCents ?? 0) / 100).toFixed(2)
-                            : '0.00';
+                    {adjustmentsToRender.map((field, index) => {
+                        const originalIndex = fields.findIndex(f => f.key === field.key);
 
                         return (
-                            <Box key={id} sx={{p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider'}}>
-                                <Grid container spacing={2} alignItems="center">
-                                    <Grid size={{xs: 12, sm: 6}}>
-                                        <TextField
-                                            fullWidth
-                                            label="描述"
-                                            value={item.description ?? ''}
-                                            onChange={(e) =>
-                                                onUpdate(id, {description: e.target.value})
-                                            }
-                                            size="small"
+                            <Box key={field.key} sx={{ p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                <Grid container spacing={2} alignItems="flex-start">
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                        <Controller
+                                            name={`customAdjustments.${originalIndex}.description`}
+                                            control={control}
+                                            rules={{ required: '描述不能为空' }}
+                                            render={({ field, fieldState: { error } }) => (
+                                                <TextField {...field} fullWidth label="描述" size="small" autoComplete="off" error={!!error} helperText={error?.message ?? ' '} />
+                                            )}
                                         />
                                     </Grid>
-
-                                    <Grid size={{xs: 12, sm: 3}}>
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel id={`freq-${id}`}>频率</InputLabel>
-                                            <Select
-                                                labelId={`freq-${id}`}
-                                                label="频率"
-                                                value={frequency}
-                                                onChange={(e) =>
-                                                    onUpdate(
-                                                        id,
-                                                        {frequency: Number(e.target.value) as cardverdict.v1.CreditFrequency},
-                                                    )
-                                                }
-                                            >
-                                                {frequencyOptions.map(opt => (
-                                                    <MenuItem key={opt.value} value={opt.value}>
-                                                        {opt.label}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-
-                                    <Grid size={{xs: 12, sm: 3}}>
-                                        <TextField
-                                            fullWidth
-                                            label="金额（美元，可为负）"
-                                            value={fieldState?.input ?? fallbackDisplay}
-                                            onChange={(e) => handleAmountChange(id, e.target.value, item)}
-                                            onBlur={() => handleAmountBlur(id)}
-                                            error={!!fieldState?.error}
-                                            helperText={fieldState?.error ?? ''}
-                                            slotProps={{
-                                                input: {
-                                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                                },
-                                            }}
-                                            size="small"
+                                    <Grid size={{ xs: 12, sm: 3 }}>
+                                        <Controller
+                                            name={`customAdjustments.${originalIndex}.frequency`}
+                                            control={control}
+                                            defaultValue={CreditFrequency.ANNUAL}
+                                            render={({ field }) => (
+                                                <FormControl fullWidth size="small">
+                                                    <InputLabel>频率</InputLabel>
+                                                    <Select {...field} label="频率">
+                                                        {frequencyOptions.map(opt => (
+                                                            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            )}
                                         />
                                     </Grid>
-
-                                    <Grid size={{xs: 12}}>
-                                        <TextField
-                                            fullWidth
-                                            label="备注（可选）"
-                                            value={item.notes ?? ''}
-                                            onChange={(e) =>
-                                                onUpdate(id, {notes: e.target.value})
-                                            }
-                                            size="small"
-                                            multiline
-                                            minRows={1}
-                                            maxRows={4}
+                                    <Grid size={{ xs: 12, sm: 3 }}>
+                                        <Controller
+                                            name={`customAdjustments.${originalIndex}.valueCents`}
+                                            control={control}
+                                            rules={{ validate: validateSignedDollars }}
+                                            render={({ field, fieldState: { error } }) => (
+                                                <TextField
+                                                    {...field}
+                                                    fullWidth
+                                                    label="金额"
+                                                    size="small"
+                                                    autoComplete="off"
+                                                    onBlur={() => {
+                                                        // FIX: Only convert to cents if the value is a string from user input.
+                                                        if (typeof field.value === 'string') {
+                                                            const num = parseFloat(field.value);
+                                                            field.onChange(isNaN(num) ? null : Math.round(num * 100));
+                                                        }
+                                                    }}
+                                                    onChange={(e) => {
+                                                        field.onChange(e.target.value);
+                                                    }}
+                                                    // Handle different value types for display
+                                                    value={
+                                                        field.value === null || field.value === undefined
+                                                            ? ''
+                                                            : typeof field.value === 'number'
+                                                                // If number, it's cents; convert to dollars
+                                                                ? (field.value / 100).toString()
+                                                                // Otherwise, it's a string from user input; display as-is
+                                                                : field.value
+                                                    }
+                                                    error={!!error}
+                                                    helperText={error?.message ?? ' '}
+                                                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                                                />
+                                            )}
                                         />
                                     </Grid>
-
-                                    <Grid size={{xs: 12}} display="flex" justifyContent="flex-end">
+                                    <Grid size={12}>
+                                        <Controller
+                                            name={`customAdjustments.${originalIndex}.notes`}
+                                            control={control}
+                                            render={({ field }) => (
+                                                <TextField {...field} fullWidth autoComplete="off" label="备注（可选）" size="small" multiline minRows={1}/>
+                                            )}
+                                        />
+                                    </Grid>
+                                    <Grid size={12} display="flex" justifyContent="flex-end">
                                         <Tooltip title="删除此自定义报销">
-                                            <IconButton
-                                                color="error"
-                                                onClick={() => onDelete(id)}
-                                                size="small"
-                                            >
-                                                <DeleteIcon fontSize="small"/>
+                                            <IconButton color="error" onClick={() => remove(originalIndex)} size="small">
+                                                <DeleteIcon fontSize="small" />
                                             </IconButton>
                                         </Tooltip>
                                     </Grid>
