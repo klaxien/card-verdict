@@ -1,4 +1,4 @@
-import { userprofile } from '~/generated/bundle';
+import {userprofile} from '~/generated/bundle';
 
 const LOCAL_STORAGE_KEY = 'userAccountData';
 

@@ -16,7 +16,7 @@ import {cardverdict, userprofile} from '~/generated/bundle';
 import {calcRawAnnualCents} from '~/utils/cardCalculations';
 import {CustomAdjustmentsEditor} from './CustomAdjustmentsEditor';
 import {CreditRow} from './CreditRow';
-import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
+import {loadActiveValuationProfile, saveValuationProfile} from '~/client/userSettingsPersistence';
 
 // Type Definitions
 type PerkValue = userprofile.v1.IPerkValue;

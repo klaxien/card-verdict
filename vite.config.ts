@@ -1,19 +1,10 @@
-import { reactRouter } from "@react-router/dev/vite";
-import tailwindcss from "@tailwindcss/vite";
+import {reactRouter} from "@react-router/dev/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { defineConfig } from 'vite';
-import type { ViteDevServer } from "vite";
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import {
-    mkdirSync,
-    existsSync,
-    readdirSync,
-    statSync,
-    openSync,
-    readSync,
-    closeSync
-} from 'fs';
+import type {ViteDevServer} from "vite";
+import {defineConfig} from 'vite';
+import {exec} from 'child_process';
+import {promisify} from 'util';
+import {closeSync, existsSync, mkdirSync, openSync, readdirSync, readSync, statSync} from 'fs';
 import path from 'path';
 
 const execAsync = promisify(exec);
@@ -198,4 +189,15 @@ export default defineConfig({
         protobufjsPlugin(),
         textProtoToBinaryPlugin(),
     ],
+    resolve: {
+        alias: {
+            // hack on https://github.com/mswjs/msw/issues/2545
+            'msw/node': path.resolve(__dirname, './node_modules/msw/lib/node/index.mjs')
+        }
+    },
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './app/test/setup.ts',
+    },
 });

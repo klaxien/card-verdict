@@ -5,7 +5,12 @@ const base = import.meta.env.BASE_URL ?? '/';
 
 export async function getCardDatabase(): Promise<cardverdict.v1.CreditCardDatabase> {
     try {
-        const response = await fetch(`${base}pb/card-database.pb`);
+        const isNode = typeof window === 'undefined';
+        const url = isNode
+            ? new URL(`${base}pb/card-database.pb`, 'http://localhost').toString()
+            : `${base}pb/card-database.pb`;
+
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Failed to fetch card database: ${response.statusText}`);
         }

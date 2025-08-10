@@ -1,20 +1,20 @@
-import React, {useEffect, useState, useMemo} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
-    Typography,
-    Grid,
-    CircularProgress,
     Alert,
     Box,
+    CircularProgress,
     FormControl,
+    Grid,
     InputLabel,
-    Select,
     MenuItem,
+    Select,
     type SelectChangeEvent,
+    Typography,
 } from '@mui/material';
-import {getCardDatabase} from "~/client/CardDetailsFetcher";
+import {getCardDatabase} from "~/client/cardDetailsFetcher";
 import {cardverdict, userprofile} from "~/generated/bundle";
 import CreditCardComponent from "~/components/homePanel/CreditCardComponent";
-import {loadActiveValuationProfile} from "~/client/UserSettingsPersistence";
+import {loadActiveValuationProfile} from "~/client/userSettingsPersistence";
 import {calculateNetWorth} from "~/utils/cardCalculations";
 
 // --- Type definitions ---

@@ -3,21 +3,21 @@ import {
     Box,
     Card,
     CardContent,
+    CardMedia,
     Chip,
     Divider,
     Grid,
-    CardMedia,
-    Stack,
-    Tooltip,
-    Typography,
     IconButton,
-    Menu,
-    MenuItem,
-    SwipeableDrawer,
     List,
     ListItemButton,
     ListItemIcon,
     ListItemText,
+    Menu,
+    MenuItem,
+    Stack,
+    SwipeableDrawer,
+    Tooltip,
+    Typography,
     useMediaQuery
 } from '@mui/material';
 import {useTheme} from '@mui/material/styles';
@@ -27,9 +27,8 @@ import CalculateIcon from '@mui/icons-material/Calculate';
 import ShareIcon from '@mui/icons-material/Share';
 import {cardverdict, userprofile} from '~/generated/bundle';
 import ValuationEditComponent from './valudationEditor/ValuationEditComponent';
-import {loadActiveValuationProfile, saveValuationProfile} from '~/client/UserSettingsPersistence';
+import {loadActiveValuationProfile, saveValuationProfile} from '~/client/userSettingsPersistence';
 import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
-import CreditFrequency = cardverdict.v1.CreditFrequency;
 import CashBackEditor from "~/components/homePanel/cashBackEditor/CashBackEditor";
 import ShareValuation from "~/components/homePanel/shareDialog/ShareCardValuation";
 
