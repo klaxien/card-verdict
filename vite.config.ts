@@ -13,7 +13,6 @@ const execAsync = promisify(exec);
 // =================================================================
 // 1. 共享配置与常量 (Shared Configuration & Constants)
 // =================================================================
-// 将所有路径和常量集中管理，提高可读性和可维护性
 const SHARED_CONFIG = {
     protoDir: 'app/proto',
     generatedDir: 'app/generated',
@@ -21,7 +20,6 @@ const SHARED_CONFIG = {
     binaryOutputDir: 'public/pb',
     cacheFilePath: path.join('node_modules', '.vite-plugin-cache', 'proto-build-cache.json'),
 };
-// 生成最终文件路径
 const JS_OUTPUT_FILE = path.resolve(SHARED_CONFIG.generatedDir, 'bundle.js');
 const TS_OUTPUT_FILE = path.resolve(SHARED_CONFIG.generatedDir, 'bundle.d.ts');
 
@@ -29,7 +27,6 @@ const TS_OUTPUT_FILE = path.resolve(SHARED_CONFIG.generatedDir, 'bundle.d.ts');
 // =================================================================
 // 2. 专业的缓存管理器 (Production-Ready Cache Manager)
 // =================================================================
-// 将所有缓存读写逻辑封装到一个类中，使插件代码更干净
 class CacheManager {
     private cache: {
         protoSourceHash: string | null;
@@ -51,7 +48,7 @@ class CacheManager {
             const data = readFileSync(this.cachePath, 'utf-8');
             this.cache = JSON.parse(data);
             console.log('[CacheManager] Successfully loaded build cache from disk.');
-        } catch (e) {
+        } catch (e: unknown) { // Type-safe error handling
             console.error('[CacheManager] Error reading cache file. A new one will be created.', e);
             this.cache = {protoSourceHash: null, txtpbSourceHashes: {}};
         }
@@ -86,10 +83,8 @@ class CacheManager {
     }
 }
 
-// 单例缓存实例 (Singleton cache instance)
 const cacheManager = new CacheManager(SHARED_CONFIG.cacheFilePath);
 
-// 辅助函数: 计算文件哈希
 function getFileHash(filePath: string): string | null {
     if (!existsSync(filePath)) return null;
     return createHash('sha256').update(readFileSync(filePath)).digest('hex');
@@ -118,8 +113,6 @@ function protobufjsPlugin() {
         console.log('[protobufjsPlugin] Checking for build...');
         const currentHash = getProtosHash();
         const cachedHash = cacheManager.getProtoHash();
-
-        // 核心逻辑: 如果哈希值相同且输出文件已存在，则跳过
         if (currentHash === cachedHash && existsSync(JS_OUTPUT_FILE)) {
             console.log('[protobufjsPlugin] Source files unchanged and output exists. Skipping build.');
             return;
@@ -139,9 +132,13 @@ function protobufjsPlugin() {
             cacheManager.setProtoHash(currentHash);
             cacheManager.save();
             console.log('Protobuf JS/TS files built successfully.');
-        } catch (e) {
-            console.error('Error building protobuf JS/TS files:', e);
-            cacheManager.setProtoHash(null); // 失败时使缓存失效
+        } catch (e: unknown) { // Type-safe error handling
+            if (e && typeof e === 'object' && 'stderr' in e) {
+                console.error('Error building protobuf JS/TS files:', (e as { stderr: string }).stderr);
+            } else {
+                console.error('Error building protobuf JS/TS files:', e);
+            }
+            cacheManager.setProtoHash(null);
             cacheManager.save();
         }
     }
@@ -159,7 +156,7 @@ function protobufjsPlugin() {
                 }
             });
         },
-        transform(code, id) {
+        transform(code: string, id: string) {
             if (id === JS_OUTPUT_FILE) {
                 console.log(`Transforming ${path.basename(id)} for Vite compatibility...`);
                 return {
@@ -208,7 +205,7 @@ function textProtoToBinaryPlugin() {
         const outputFile = path.join(SHARED_CONFIG.binaryOutputDir, `${baseName}.pb`);
 
         if (currentHash && currentHash === cachedHash && existsSync(outputFile)) {
-            return false; // 无需转换
+            return false;
         }
 
         const header = parseProtoHeader(filePath);
@@ -226,8 +223,15 @@ function textProtoToBinaryPlugin() {
             if (currentHash) cacheManager.setTxtpbHash(filePath, currentHash);
             console.log(`[CONVERTED] ${baseName}.txtpb`);
             return true; // 已转换
-        } catch (e) {
-            console.error(`[ERROR] Failed to convert ${baseName}:\n`, e.stderr || e);
+        } catch (e: unknown) { // 修正: Type-safe error handling for 'e'
+            let errorOutput = String(e); // Default to string representation
+            // The error from `execAsync` is an object with stderr/stdout
+            if (e && typeof e === 'object' && 'stderr' in e) {
+                errorOutput = String((e as { stderr: string }).stderr);
+            } else if (e instanceof Error) {
+                errorOutput = e.message;
+            }
+            console.error(`[ERROR] Failed to convert ${baseName}:\n`, errorOutput);
             return true; // 发生错误也视为“变化”，以触发重载
         }
     }
