@@ -23,6 +23,7 @@ import {
 import {cardverdict, userprofile} from '~/generated/bundle';
 import {Controller, FormProvider, useFieldArray, useForm} from 'react-hook-form';
 import {loadActiveValuationProfile} from "~/client/userSettingsPersistence";
+import {createLengthValidator} from "~/components/common/validators";
 
 // 为了方便访问，进行解构
 const {EarningRate, CreditFrequency} = cardverdict.v1;
@@ -420,7 +421,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                             }}
                                             fullWidth
                                             label="每点价值 (cpp)"
-                                            type="number"
                                             slotProps={{
                                                 input: {
                                                     endAdornment: <InputAdornment position="end">¢/pt</InputAdornment>,
@@ -468,7 +468,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                             }}
                                                             fullWidth
                                                             label="计划消费额"
-                                                            type="number"
                                                             error={!!error}
                                                             helperText={error?.message || ' '}
                                                             slotProps={{
@@ -512,12 +511,15 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                 <Controller
                                                     name={`spendings.${index}.notes`}
                                                     control={control}
-                                                    render={({field: controllerField}) => (
+                                                    rules={{validate: createLengthValidator(50, '备注')}}
+                                                    render={({field: controllerField, fieldState: {error}}) => (
                                                         <TextField
                                                             {...controllerField}
                                                             fullWidth
                                                             label="备注 (可选)"
                                                             size="small"
+                                                            error={!!error}
+                                                            helperText={error?.message || ''}
                                                         />
                                                     )}
                                                 />

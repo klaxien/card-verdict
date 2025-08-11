@@ -15,9 +15,10 @@ import {
     Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { cardverdict, userprofile } from '~/generated/bundle';
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
-import type { FormValues } from './ValuationEditComponent';
+import {cardverdict, userprofile} from '~/generated/bundle';
+import {Controller, useFieldArray, useFormContext} from 'react-hook-form';
+import type {FormValues} from './ValuationEditComponent';
+import {createLengthValidator} from "~/components/common/validators";
 
 type CustomAdjustment = userprofile.v1.ICustomAdjustment;
 const { CreditFrequency } = cardverdict.v1;
@@ -100,9 +101,15 @@ export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = (
                                         <Controller
                                             name={`customAdjustments.${originalIndex}.description`}
                                             control={control}
-                                            rules={{ required: '描述不能为空' }}
+                                            rules={{
+                                                required: '描述不能为空',
+                                                validate: createLengthValidator(30, '描述')
+                                            }}
                                             render={({ field, fieldState: { error } }) => (
-                                                <TextField {...field} fullWidth label="描述" size="small" autoComplete="off" error={!!error} helperText={error?.message ?? ' '} />
+                                                <TextField {...field} fullWidth
+                                                           label="描述"
+                                                           size="small" autoComplete="off"
+                                                           error={!!error} helperText={error?.message ?? ' '}/>
                                             )}
                                         />
                                     </Grid>
@@ -166,8 +173,17 @@ export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = (
                                         <Controller
                                             name={`customAdjustments.${originalIndex}.notes`}
                                             control={control}
-                                            render={({ field }) => (
-                                                <TextField {...field} fullWidth autoComplete="off" label="备注（可选）" size="small" multiline minRows={1}/>
+                                            rules={{validate: createLengthValidator(50, '备注')}}
+                                            render={({field, fieldState: {error}}) => (
+                                                <TextField {...field}
+                                                           fullWidth
+                                                           autoComplete="off"
+                                                           label="备注（可选）"
+                                                           size="small"
+                                                           multiline
+                                                           minRows={1}
+                                                           error={!!error}
+                                                           helperText={error?.message || ''}/>
                                             )}
                                         />
                                     </Grid>

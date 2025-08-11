@@ -1,18 +1,10 @@
 import React from 'react';
-import {
-    Box,
-    Divider,
-    Grid, // Grid V2
-    IconButton,
-    InputAdornment,
-    TextField,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import {Box, Divider, Grid, IconButton, InputAdornment, TextField, Tooltip, Typography,} from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import {cardverdict} from '~/generated/bundle';
 import {Controller, useFormContext} from 'react-hook-form';
 import type {FormValues} from './ValuationEditComponent';
+import {createLengthValidator} from "~/components/common/validators";
 
 type Credit = cardverdict.v1.ICredit;
 
@@ -124,10 +116,13 @@ export const CreditRow: React.FC<CreditRowProps> = ({credit, index, faceDollars,
                             <Controller
                                 name={`credits.${index}.explanation`}
                                 control={control}
-                                render={({field}) => (
+                                rules={{validate: createLengthValidator(50, '说明')}}
+                                render={({field, fieldState: {error}}) => (
                                     <TextField
                                         {...field} size="small" fullWidth label="说明（可选）"
                                         autoComplete="off"
+                                        error={!!error}
+                                        helperText={error?.message || ''}
                                         placeholder={`默认：${credit.defaultEffectiveValueExplanation ?? ''}`}
                                         slotProps={{
                                             input: showClear
