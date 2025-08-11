@@ -136,3 +136,104 @@ export function loadActiveValuationProfile(): userprofile.v1.IValuationProfile |
         return null;
     }
 }
+
+/**
+ * 生成带有当前时间戳的备份文件名。
+ * @returns {string} e.g., "card-verdict-backup-20231027053000.json"
+ */
+function generateBackupFilename(): string {
+    const now = new Date();
+    const YYYY = now.getFullYear();
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const DD = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    return `card-verdict-backup-${YYYY}${MM}${DD}${hh}${mm}${ss}.json`;
+}
+
+
+/**
+ * [新增] 准备用于备份的数据。
+ * 此函数从 localStorage 读取、解码，并构建包含两份数据的备份结构。
+ * @returns 一个包含文件名和 JSON 内容的对象，如果没有数据则返回 null。
+ */
+export function getBackupData(): { filename: string; content: string } | null {
+    const base64String = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!base64String) {
+        return null;
+    }
+
+    try {
+        const buffer = fromBase64(base64String);
+        const decodedMessage = userprofile.v1.UserAccountData.decode(buffer);
+        const readableData = userprofile.v1.UserAccountData.toObject(decodedMessage, {
+            longs: String,
+            enums: String,
+            defaults: true,
+        });
+
+        const backupObject = {
+            metadata: {
+                fileFormatVersion: "1.0",
+                appName: "CardVerdict",
+                exportDate: new Date().toISOString(),
+                description: "CardVerdict backup file. The 'backupData' field is used for restoration. 'readableData' is for reference only.",
+            },
+            readableData: readableData,
+            backupData: base64String,
+        };
+
+        const jsonString = JSON.stringify(backupObject, null, 2);
+
+        return {
+            filename: generateBackupFilename(),
+            content: jsonString,
+        };
+
+    } catch (error) {
+        console.error("Failed to prepare backup data:", error);
+        return null;
+    }
+}
+
+/**
+ * [新增] 从 JSON 文件内容中恢复数据。
+ * 此函数负责解析、验证并写入 localStorage。
+ * @param jsonContent 从上传的 .json 文件中读取的字符串内容。
+ * @returns 一个包含操作结果的对象。
+ */
+export function restoreDataFromJson(jsonContent: string): { success: boolean; error?: string } {
+    try {
+        const parsedJson = JSON.parse(jsonContent);
+        const backupDataString = parsedJson?.backupData;
+
+        if (typeof backupDataString !== 'string' || backupDataString.length === 0) {
+            return {success: false, error: "JSON 文件中未找到有效的 'backupData' 字段。"};
+        }
+
+        // 验证 base64 和 protobuf 结构
+        const buffer = fromBase64(backupDataString);
+        userprofile.v1.UserAccountData.decode(buffer); // 如果解码失败，会抛出异常
+
+        // 写入存储
+        localStorage.setItem(LOCAL_STORAGE_KEY, backupDataString);
+        return {success: true};
+
+    } catch (error) {
+        console.error("Restore failed:", error);
+        const errorMessage = error instanceof Error ? error.message : "未知错误";
+        return {success: false, error: `文件格式无效或已损坏。(${errorMessage})`};
+    }
+}
+
+export function clearAllData(): void {
+    try {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch (error) {
+        // 虽然罕见，但仍需处理可能的存储错误 (例如在某些隐私模式下)
+        console.error("Failed to clear data from localStorage:", error);
+    }
+}
+
+
