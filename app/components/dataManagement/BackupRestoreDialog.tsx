@@ -154,7 +154,7 @@ const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({open, onClose,
                                             color="text.secondary">上次修改于: {formatTimestamp(activeProfile.updatedAt)}</Typography>
                             </>
                         ) : (
-                            <Typography variant="body2" color="text.secondary">无可用数据。</Typography>
+                            <Typography variant="body2" color="text.secondary">当前无数据。</Typography>
                         )}
                     </Box>
 
@@ -164,7 +164,7 @@ const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({open, onClose,
                     <Box sx={{mb: 2}}>
                         <Typography variant="h6" gutterBottom>备份数据</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{mb: 1.5}}>
-                            将您的所有配置打包成一个 `.json` 文件。此文件包含用于恢复的精确数据和一份可读的参考版本。
+                            将您的所有配置打包成一个 <code>.json</code> 文件。此文件包含用于恢复的精确数据和一份可读的参考版本。
                         </Typography>
                         <Button variant="contained" onClick={handleBackup} disabled={!activeProfile}>下载 .json
                             备份文件</Button>
@@ -176,7 +176,7 @@ const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({open, onClose,
                     <Box>
                         <Typography variant="h6" gutterBottom>恢复数据</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{mb: 1.5}}>
-                            请选择您之前下载的 `.json` 备份文件进行恢复。
+                            请选择您之前下载的 <code>.json</code> 备份文件进行恢复。
                             <br/><strong>注意：这将覆盖您当前的所有数据。</strong>
                         </Typography>
                         <Button variant="outlined" color="primary" onClick={handleRestoreClick}>选择 .json
@@ -201,7 +201,7 @@ const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({open, onClose,
                             onClick={handleOpenClearConfirm}
                             disabled={!activeProfile}
                         >
-                            清空所有数据
+                            {!!activeProfile ? '清空所有数据' : '当前无数据'}
                         </Button>
                     </Box>
                 </DialogContent>
