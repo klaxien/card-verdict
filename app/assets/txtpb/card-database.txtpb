@@ -215,15 +215,28 @@ cards {
     lounge_access {
       network: AMEX_CENTURION
       guest_count: 0
-      notes: "除非年消费满$75,000，否则不可免费带人。"
+      notes: "除非年消费满$75,000，否则不可免费带人"
     }
   }
   other_benefits {
     benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_count: 0
-      notes: "不可用于餐厅。"
+      guest_count: 2
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-marriott-gold"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "Marriott Gold 会籍"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-hilton-gold"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "Hilton Gold 会籍"
     }
   }
   other_benefits {
@@ -331,7 +344,6 @@ cards {
     benefit_id: "baggage-benefit"
     baggage {
       free_checked_bags_count: 1
-      details: "Delta执飞的飞机，第一件托运行李免费。"
     }
   }
   other_benefits {
@@ -429,7 +441,6 @@ cards {
     benefit_id: "baggage-benefit"
     baggage {
       free_checked_bags_count: 1
-      details: "Delta执飞的飞机，第一件托运行李免费。"
     }
   }
   other_benefits {
@@ -444,7 +455,7 @@ cards {
     lounge_access {
       network: DELTA_SKY_CLUB
       guest_count: 0
-      notes: "每年15次准入。guest需付费进入。"
+      notes: "每年15次准入"
     }
   }
   other_benefits {
@@ -452,7 +463,7 @@ cards {
     lounge_access {
       network: AMEX_CENTURION
       guest_count: 0
-      notes: "仅限搭乘用此卡购买的Delta航班时进入。guest需付费进入。"
+      notes: "仅限搭乘用此卡购买的Delta航班时进入"
     }
   }
   other_benefits {
@@ -467,7 +478,6 @@ cards {
     fee_reimbursement {
       programs: GLOBAL_ENTRY
       programs: TSA_PRECHECK
-      details: "Global Entry、TSA Pre 报销。"
     }
   }
 }
@@ -542,7 +552,13 @@ cards {
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
-      notes: "不可用于餐厅。"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-marriott-platinum"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "Marriott Platinum 会籍"
     }
   }
   other_benefits {
@@ -609,7 +625,7 @@ cards {
     benefit_id: "travel-status-hilton-gold"
     travel_status {
       type: HOTEL_ELITE_STATUS
-      description: "赠送 Hilton Honors Gold 会员"
+      description: "Hilton Gold 会籍"
     }
   }
 }
@@ -698,7 +714,7 @@ cards {
     benefit_id: "travel-status-hilton-diamond"
     travel_status {
       type: HOTEL_ELITE_STATUS
-      description: "Hilton Honors Diamond Status"
+      description: "Hilton Diamond 会籍"
     }
   }
 }
@@ -950,7 +966,6 @@ cards {
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
-      included_services: RESTAURANT
     }
   }
   other_benefits {
@@ -1260,7 +1275,7 @@ cards {
     benefit_id: "travel-status-ihg-platinum"
     travel_status {
       type: HOTEL_ELITE_STATUS
-      description: "赠送IHG Platinum 会籍"
+      description: "IHG Platinum 会籍"
     }
   }
   other_benefits {
@@ -1367,9 +1382,14 @@ cards {
     benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_count: 2
-      included_services: RESTAURANT
-      notes: "可携带无限宾客。"
+      guest_count: -1
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-marriott-gold"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "Marriott Gold 会籍"
     }
   }
   other_benefits {
@@ -1447,6 +1467,7 @@ cards {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
       included_services: RESTAURANT
+      notes: '2026.2.1起带人收费'
     }
   }
   other_benefits {
@@ -1521,7 +1542,7 @@ cards {
     benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_count: 8
+      guest_count: 7
       included_services: RESTAURANT
       notes: "每年总共8次免费准入，一次带7人就全用光"
     }
@@ -1596,7 +1617,6 @@ cards {
       network: PRIORITY_PASS_SELECT
       guest_count: 0
       included_services: RESTAURANT
-      notes: "同行宾客需付费进入。"
     }
   }
   other_benefits {
@@ -1670,7 +1690,7 @@ cards {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
       included_services: RESTAURANT
-      notes: "或可携带直系亲属。"
+      notes: "直系亲属不受带人限制"
     }
   }
   other_benefits {
@@ -1845,7 +1865,6 @@ cards {
     lounge_access {
       network: PRIORITY_PASS_SELECT
       guest_count: 2
-      notes: "不可用于餐厅。"
     }
   }
   other_benefits {
@@ -1853,7 +1872,7 @@ cards {
     lounge_access {
       network: AA_ADMIRALS_CLUB
       guest_count: 0
-      notes: "每年4次准入。"
+      notes: "每年4次准入"
     }
   }
   other_benefits {
@@ -2025,7 +2044,7 @@ cards {
     benefit_id: "lounge-access-priority-pass"
     lounge_access {
       network: PRIORITY_PASS_SELECT
-      guest_count: 2
+      guest_count: -1
       included_services: RESTAURANT
     }
   }

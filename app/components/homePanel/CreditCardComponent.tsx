@@ -31,6 +31,9 @@ import {loadActiveValuationProfile, saveValuationProfile} from '~/client/userSet
 import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
 import CashBackEditor from "~/components/homePanel/cashBackEditor/CashBackEditor";
 import ShareValuation from "~/components/homePanel/shareDialog/ShareCardValuation";
+import CoverageType = cardverdict.v1.CarRentalInsuranceBenefit.CoverageType;
+import TravelStatusBenefit = cardverdict.v1.TravelStatusBenefit;
+import CarRentalInsuranceBenefit = cardverdict.v1.CarRentalInsuranceBenefit;
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
 
@@ -90,6 +93,62 @@ const getCreditChipColor = (
     if (proportion >= 0.2) return 'warning';
     return 'error';
 };
+
+const getBenefitDisplayDetails = (benefit: cardverdict.v1.IOtherBenefit): string => {
+    if (benefit.genericBenefitDescription) {
+        return benefit.genericBenefitDescription;
+    }
+    if (benefit.travelStatus?.description) {
+        return benefit.travelStatus.description;
+    }
+    if (benefit.pointPerk?.description) {
+        return benefit.pointPerk.description;
+    }
+    if (benefit.carRentalInsurance) {
+        const carRentalInsurance = benefit.carRentalInsurance;
+        const type = carRentalInsurance.coverageType === CoverageType.PRIMARY ? 'Primary' : 'Secondary';
+        return `${type}租车险${carRentalInsurance.notes ? `，${carRentalInsurance.notes}` : ''}`;
+    }
+    if (benefit.loungeAccess) {
+        const {LoungeNetwork, AdditionalService} = cardverdict.v1.LoungeAccessBenefit;
+        const networkNumber = benefit.loungeAccess.network ?? LoungeNetwork.NETWORK_UNSPECIFIED;
+        const networkEnumKey = LoungeNetwork[networkNumber];
+
+        let loungeName = '[未知Lounge]';
+        if (networkEnumKey && networkNumber !== LoungeNetwork.NETWORK_UNSPECIFIED) {
+            loungeName = networkEnumKey
+                .toLowerCase()
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        const detailsParts = [`可进${loungeName}`];
+
+        const guestCount = benefit.loungeAccess.guestCount ?? 0;
+        if (guestCount < 0) {
+            detailsParts.push('可无限带人');
+        } else if (guestCount >= 0) {
+            detailsParts.push(`可带${guestCount}人`);
+        }
+
+        if (benefit.loungeAccess.network === LoungeNetwork.PRIORITY_PASS_SELECT) {
+            const hasRestaurant = benefit.loungeAccess.includedServices?.includes(AdditionalService.RESTAURANT);
+            detailsParts.push(hasRestaurant ? '可进餐厅' : '不可进餐厅');
+        }
+
+        return [...detailsParts, ...(benefit.loungeAccess.notes ?? [])].join('，');
+    }
+    if (benefit.feeReimbursement?.details) {
+        return `Fee Reimbursement (${benefit.feeReimbursement.details})`;
+    }
+    if (benefit.baggage) {
+        return `航司执飞航班，${benefit.baggage.freeCheckedBagsCount || ''}件托运行李免费`.trim();
+    }
+    // Fallback using the ID, converting it to title case.
+    return benefit.benefitId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) ?? 'Unnamed Benefit';
+};
+
 
 const getCustomAdjustmentChipColor = (annualValueCents: number): 'success' | 'error' | 'primary' => {
     if (annualValueCents > 0) return 'success';
@@ -215,6 +274,17 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
         });
     }, [card.credits, userValuation]);
 
+    const sortedBenefits = useMemo(() => {
+        // userValuation is not used here because otherBenefits are not currently user-editable.
+        const benefits = card.otherBenefits ?? [];
+        return [...benefits].sort((a, b) => {
+            const aVal = a.defaultEffectiveValueCents ?? 0;
+            const bVal = b.defaultEffectiveValueCents ?? 0;
+            return bVal - aVal;
+        });
+    }, [card.otherBenefits]);
+
+
     const sortedCustomAdjustments = useMemo(() => {
         const adjustments = userValuation?.customAdjustments ?? [];
         if (!adjustments) return [];
@@ -255,6 +325,27 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
         isLast: index === sortedCredits.length - 1,
         onClick: () => setEditingCreditId(credit.creditId ?? null),
     }));
+
+    const benefitDisplayItems: DisplayItem[] = sortedBenefits
+        .filter(benefit => {
+            if (benefit.feeReimbursement || benefit.pointPerk) return false;
+            if (benefit.travelStatus && benefit.travelStatus.type !== TravelStatusBenefit.StatusType.HOTEL_ELITE_STATUS) return false;
+            if (benefit.carRentalInsurance) {
+                if (benefit.carRentalInsurance.coverageType == CarRentalInsuranceBenefit.CoverageType.PRIMARY) return true;
+                return !!benefit.carRentalInsurance.notes;
+            }
+
+            return true;
+        })
+        .map((benefit, index) => ({
+            id: benefit.benefitId ?? `benefit-${index}`,
+            details: getBenefitDisplayDetails(benefit),
+            valueCents: benefit.defaultEffectiveValueCents ?? 0,
+            tooltip: benefit.defaultEffectiveValueExplanation ?? 'Default valuation.',
+            chipColor: (benefit.defaultEffectiveValueCents ?? 0) > 0 ? 'success' : 'primary',
+            isLast: index === sortedBenefits.length - 1,
+            onClick: undefined, // Not editable in this component
+        }));
 
     const customDisplayItems: DisplayItem[] = sortedCustomAdjustments.map((adj, index) => {
         const annualValue = (adj.valueCents ?? 0) * periodsInYearFor(adj.frequency);
@@ -318,7 +409,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
             position: 'relative'
         }}>
             <CardContent sx={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
-                <Box sx={{position: 'absolute', top: 8, right: 8, zIndex: 1}}>
+                <Box sx={{position: 'absolute', top: 6, right: 6, zIndex: 1}}>
                     <Tooltip title="更多">
                         <IconButton
                             aria-label="more actions"
@@ -443,6 +534,23 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
                                 <Typography variant="body2">No credits available.</Typography>
                             )}
                         </Box>
+
+                        {benefitDisplayItems.length > 0 && (
+                            <Box>
+                                <Typography variant="h6" component="div" gutterBottom sx={{
+                                    display: 'inline-block',
+                                    borderBottom: '2px solid',
+                                    borderColor: 'primary.main'
+                                }}>
+                                    Benefits
+                                </Typography>
+                                <Stack>
+                                    {benefitDisplayItems.map((item) => (
+                                        <ItemRow key={item.id} item={item} chipWidth={chipWidth}/>
+                                    ))}
+                                </Stack>
+                            </Box>
+                        )}
 
                         {customDisplayItems.length > 0 && (
                             <Box>
