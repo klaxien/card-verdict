@@ -164,7 +164,7 @@ const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({open, onClose,
                     <Box sx={{mb: 2}}>
                         <Typography variant="h6" gutterBottom>备份数据</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{mb: 1.5}}>
-                            将您的所有配置打包成一个 <code>.json</code> 文件。此文件包含用于恢复的精确数据和一份可读的参考版本。
+                            将您的所有配置打包成一个 <code>.json</code> 文件用于恢复数据。
                         </Typography>
                         <Button variant="contained" onClick={handleBackup} disabled={!activeProfile}>下载 .json
                             备份文件</Button>
