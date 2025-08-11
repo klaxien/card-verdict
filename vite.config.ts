@@ -173,7 +173,6 @@ function protobufjsPlugin() {
 // --- 插件2---
 function textProtoToBinaryPlugin() {
     function parseProtoHeader(filePath: string) {
-        // ... 此函数内部逻辑无需修改 ...
         const buffer = Buffer.alloc(1024);
         const fd = openSync(filePath, 'r');
         try {
@@ -206,8 +205,7 @@ function textProtoToBinaryPlugin() {
         const baseName = path.basename(absoluteFilePath, '.txtpb');
         const outputFile = path.join(SHARED_CONFIG.binaryOutputDir, `${baseName}.pb`);
 
-        // ############ 关键修复点 ############
-        // 现在，我们同时检查源文件的哈希值和输出文件是否存在。
+        // 同时检查源文件的哈希值和输出文件是否存在。
         // 只有在这两个条件都满足时，才跳过转换。
         if (currentHash && currentHash === cachedHash && existsSync(outputFile)) {
             return false;
