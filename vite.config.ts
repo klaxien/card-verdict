@@ -11,21 +11,21 @@ import {createHash} from 'crypto';
 const execAsync = promisify(exec);
 
 // =================================================================
-// 1. 共享配置与常量 (Shared Configuration & Constants)
+// 1. 共享配置与常量
 // =================================================================
 const SHARED_CONFIG = {
     protoDir: 'app/proto',
     generatedDir: 'app/generated',
     textProtoInputDir: 'app/assets/txtpb',
     binaryOutputDir: 'public/pb',
-    cacheFilePath: path.join('node_modules', '.vite-plugin-cache', 'proto-build-cache.json'),
+    cacheFilePath: path.join('node_modules', '.vite-plugin-cache', 'card-verdict-hash.proto-plugins.json'),
 };
 const JS_OUTPUT_FILE = path.resolve(SHARED_CONFIG.generatedDir, 'bundle.js');
 const TS_OUTPUT_FILE = path.resolve(SHARED_CONFIG.generatedDir, 'bundle.d.ts');
 
 
 // =================================================================
-// 2. 专业的缓存管理器 (Production-Ready Cache Manager)
+// 2. 专业的缓存管理器
 // =================================================================
 class CacheManager {
     private cache: {
@@ -48,7 +48,7 @@ class CacheManager {
             const data = readFileSync(this.cachePath, 'utf-8');
             this.cache = JSON.parse(data);
             console.log('[CacheManager] Successfully loaded build cache from disk.');
-        } catch (e: unknown) { // Type-safe error handling
+        } catch (e: unknown) {
             console.error('[CacheManager] Error reading cache file. A new one will be created.', e);
             this.cache = {protoSourceHash: null, txtpbSourceHashes: {}};
         }
@@ -95,7 +95,7 @@ function getFileHash(filePath: string): string | null {
 // 3. 插件实现 (Plugin Implementations)
 // =================================================================
 
-// --- 插件1: 编译 .proto 为 JS (已重构) ---
+// --- 插件1 ---
 function protobufjsPlugin() {
     function getProtosHash(): string {
         const protoFiles = readdirSync(SHARED_CONFIG.protoDir, {withFileTypes: true})
@@ -132,7 +132,7 @@ function protobufjsPlugin() {
             cacheManager.setProtoHash(currentHash);
             cacheManager.save();
             console.log('Protobuf JS/TS files built successfully.');
-        } catch (e: unknown) { // Type-safe error handling
+        } catch (e: unknown) {
             if (e && typeof e === 'object' && 'stderr' in e) {
                 console.error('Error building protobuf JS/TS files:', (e as { stderr: string }).stderr);
             } else {
@@ -170,7 +170,7 @@ function protobufjsPlugin() {
 }
 
 
-// --- 插件2: 智能转换 .txtpb 为 .pb (已重构) ---
+// --- 插件2---
 function textProtoToBinaryPlugin() {
     function parseProtoHeader(filePath: string) {
         // ... 此函数内部逻辑无需修改 ...
@@ -197,42 +197,50 @@ function textProtoToBinaryPlugin() {
     }
 
     async function convertFile(filePath: string): Promise<boolean> {
-        if (!filePath.endsWith('.txtpb')) return false;
+        const absoluteFilePath = path.resolve(filePath);
 
-        const currentHash = getFileHash(filePath);
-        const cachedHash = cacheManager.getTxtpbHash(filePath);
-        const baseName = path.basename(filePath, '.txtpb');
+        if (!absoluteFilePath.endsWith('.txtpb')) return false;
+
+        const currentHash = getFileHash(absoluteFilePath);
+        const cachedHash = cacheManager.getTxtpbHash(absoluteFilePath);
+        const baseName = path.basename(absoluteFilePath, '.txtpb');
         const outputFile = path.join(SHARED_CONFIG.binaryOutputDir, `${baseName}.pb`);
 
+        // ############ 关键修复点 ############
+        // 现在，我们同时检查源文件的哈希值和输出文件是否存在。
+        // 只有在这两个条件都满足时，才跳过转换。
         if (currentHash && currentHash === cachedHash && existsSync(outputFile)) {
             return false;
         }
 
-        const header = parseProtoHeader(filePath);
+        const header = parseProtoHeader(absoluteFilePath);
         if (!header) {
             console.warn(`[SKIPPING] File ${baseName} is missing header.`);
             return false;
         }
 
-        const command = `protoc --proto_path=${SHARED_CONFIG.protoDir} --encode=${header.messageType} ${header.protoFile} < ${filePath} > ${outputFile}`;
+        const command = `protoc --proto_path=${SHARED_CONFIG.protoDir} --encode=${header.messageType} ${header.protoFile} < ${absoluteFilePath} > ${outputFile}`;
 
         try {
             console.log(`[CONVERTING] ${baseName}.txtpb (using ${header.messageType})`);
             const {stderr} = await execAsync(command);
             if (stderr) console.log(`[protoc info for ${baseName}.pb]:\n${stderr}`);
-            if (currentHash) cacheManager.setTxtpbHash(filePath, currentHash);
+
+            if (currentHash) cacheManager.setTxtpbHash(absoluteFilePath, currentHash);
             console.log(`[CONVERTED] ${baseName}.txtpb`);
-            return true; // 已转换
-        } catch (e: unknown) { // 修正: Type-safe error handling for 'e'
-            let errorOutput = String(e); // Default to string representation
-            // The error from `execAsync` is an object with stderr/stdout
+            return true;
+        } catch (e: unknown) {
+            let errorOutput = String(e);
             if (e && typeof e === 'object' && 'stderr' in e) {
                 errorOutput = String((e as { stderr: string }).stderr);
             } else if (e instanceof Error) {
                 errorOutput = e.message;
             }
-            console.error(`[ERROR] Failed to convert ${baseName}:\n`, errorOutput);
-            return true; // 发生错误也视为“变化”，以触发重载
+            console.error(`[ERROR] Failed to convert ${baseName}. Output file may be corrupt.\n`, errorOutput);
+
+            if (currentHash) cacheManager.setTxtpbHash(absoluteFilePath, currentHash);
+
+            return true;
         }
     }
 
@@ -243,7 +251,8 @@ function textProtoToBinaryPlugin() {
 
         const files = readdirSync(SHARED_CONFIG.textProtoInputDir);
         for (const file of files) {
-            await convertFile(path.join(SHARED_CONFIG.textProtoInputDir, file));
+            const absolutePath = path.resolve(SHARED_CONFIG.textProtoInputDir, file);
+            await convertFile(absolutePath);
         }
         cacheManager.save();
     }
@@ -278,7 +287,7 @@ function textProtoToBinaryPlugin() {
 
 
 // =================================================================
-// 4. Vite 主配置 (Main Vite Config)
+// 4. Vite 主配置
 // =================================================================
 export default defineConfig({
     base: '/card-verdict/',
