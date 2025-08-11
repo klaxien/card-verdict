@@ -125,9 +125,8 @@ const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({open, onClose,
         <React.Fragment>
             <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
                 <DialogTitle>备份、恢复与重置</DialogTitle>
+                {feedback && <Alert severity={feedback.type} sx={{mb: 2}}>{feedback.message}</Alert>}
                 <DialogContent>
-                    {/* 反馈信息区域 */}
-                    {feedback && <Alert severity={feedback.type} sx={{mb: 2}}>{feedback.message}</Alert>}
 
                     {/* 当前数据状态区域 */}
                     <Box sx={{mb: 2}}>

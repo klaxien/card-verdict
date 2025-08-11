@@ -83,7 +83,7 @@ const CardVerdictNavBar = () => {
             <Toolbar />
             <BackupRestoreDialog open={dialogOpen}
                                  onClose={handleDialogClose}
-                                 onRestoreSuccess={handleRestoreSuccess}/>
+                                 onActionSuccess={handleRestoreSuccess}/>
         </React.Fragment>
     );
 };
