@@ -326,26 +326,33 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
         onClick: () => setEditingCreditId(credit.creditId ?? null),
     }));
 
-    const benefitDisplayItems: DisplayItem[] = sortedBenefits
-        .filter(benefit => {
-            if (benefit.feeReimbursement || benefit.pointPerk) return false;
-            if (benefit.travelStatus && benefit.travelStatus.type !== TravelStatusBenefit.StatusType.HOTEL_ELITE_STATUS) return false;
-            if (benefit.carRentalInsurance) {
-                if (benefit.carRentalInsurance.coverageType == CarRentalInsuranceBenefit.CoverageType.PRIMARY) return true;
-                return !!benefit.carRentalInsurance.notes;
-            }
+    const benefitDisplayItems: DisplayItem[] = useMemo(() => {
+        const filtered = sortedBenefits
+            .filter(benefit => {
+                console.log(!!benefit.defaultEffectiveValueExplanation);
 
-            return true;
-        })
-        .map((benefit, index) => ({
+                if (benefit.feeReimbursement || benefit.pointPerk) return false;
+                if (benefit.travelStatus && benefit.travelStatus.type !== TravelStatusBenefit.StatusType.HOTEL_ELITE_STATUS) return false;
+                if (benefit.carRentalInsurance) {
+                    if (benefit.carRentalInsurance.coverageType == CarRentalInsuranceBenefit.CoverageType.PRIMARY) return true;
+                    return !!benefit.carRentalInsurance.notes;
+                }
+                return true;
+            });
+        const getBenefitChipColor = (benefit: cardverdict.v1.IOtherBenefit): 'success' | 'primary' => {
+            return (benefit.defaultEffectiveValueCents ?? 0) > 0 ? 'success' : 'primary';
+        };
+
+        return filtered.map((benefit, index) => ({
             id: benefit.benefitId ?? `benefit-${index}`,
             details: getBenefitDisplayDetails(benefit),
             valueCents: benefit.defaultEffectiveValueCents ?? 0,
-            tooltip: benefit.defaultEffectiveValueExplanation ?? 'Default valuation.',
-            chipColor: (benefit.defaultEffectiveValueCents ?? 0) > 0 ? 'success' : 'primary',
-            isLast: index === sortedBenefits.length - 1,
+            tooltip: !!benefit.defaultEffectiveValueExplanation ? benefit.defaultEffectiveValueExplanation : 'benefit因人而异，默认无估值',
+            chipColor: getBenefitChipColor(benefit),
+            isLast: index === filtered.length - 1,
             onClick: undefined, // Not editable in this component
         }));
+    }, [sortedBenefits]);
 
     const customDisplayItems: DisplayItem[] = sortedCustomAdjustments.map((adj, index) => {
         const annualValue = (adj.valueCents ?? 0) * periodsInYearFor(adj.frequency);
