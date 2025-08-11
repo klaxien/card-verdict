@@ -107,7 +107,7 @@ const getBenefitChipColor = (
     userVal?: userprofile.v1.IUserCardValuation,
 ): 'success' | 'warning' | 'error' | 'primary' => {
     const effective = getDisplayEffectiveCentsForBenefit(benefit, userVal);
-    if (effective === 0) return 'error';
+    if (effective === 0) return 'primary';
 
     const raw = benefit.defaultEffectiveValueCents ?? 0;
     if (raw === 0) {
