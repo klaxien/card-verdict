@@ -3,6 +3,21 @@ import {userprofile} from '~/generated/bundle';
 const LOCAL_STORAGE_KEY = 'userAccountData';
 
 /**
+ * 自定义异常类，专用于数据损坏的情况。
+ * 它携带了原始的、可能已损坏的 Base64 数据，以便进行紧急备份。
+ */
+export class DataCorruptionError extends Error {
+    public readonly name = 'DataCorruptionError';
+    public readonly corruptedData: string | null;
+
+    constructor(message: string) {
+        super(message);
+        // 直接从 localStorage 获取损坏的数据并附加到异常实例上
+        this.corruptedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    }
+}
+
+/**
  * 将 Uint8Array 编码为 Base64 字符串。
  * 这是一个在浏览器环境中安全的实现，使用 btoa。
  * @param bytes 要编码的字节数组。
@@ -103,37 +118,33 @@ export function saveValuationProfile(profileToSave: userprofile.v1.IValuationPro
  * 根据“暂不考虑多profile支持”的简化逻辑，此函数会加载整个`UserAccountData`，
  * 并简单地返回 `profiles` map中的第一个画像。
  *
- * @returns 第一个可用的用户估值画像，如果没有任何画像则返回 `null`。
+ * @returns 第一个可用的用户估值画像。
+ * @throws {DataCorruptionError} 如果 localStorage 中的数据已损坏或无法解析，则抛出此异常。
+ * @returns {null} 如果没有存储任何数据，或数据中没有画像，则返回 null。
  */
 export function loadActiveValuationProfile(): userprofile.v1.IValuationProfile | null {
-    try {
-        const base64String = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (!base64String) {
-            return null;
-        }
+    const base64String = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!base64String) {
+        return null; // 正常情况：无数据
+    }
 
+    try {
         const buffer = fromBase64(base64String);
         const decodedMessage = userprofile.v1.UserAccountData.decode(buffer);
         const accountData = userprofile.v1.UserAccountData.toObject(decodedMessage);
 
-        if (!accountData.profiles) {
-            return null;
-        }
-
-        const profileIds = Object.keys(accountData.profiles);
+        const profileIds = accountData.profiles ? Object.keys(accountData.profiles) : [];
         if (profileIds.length === 0) {
-            return null;
+            return null; // 正常情况：有结构但无画像
         }
 
-        // 展示不考虑多用户支持，我们直接返回第一个 profile
         const firstProfileId = profileIds[0];
         return accountData.profiles[firstProfileId];
 
     } catch (error) {
-        console.error("Failed to load valuation profile from localStorage:", error);
-        // 如果数据损坏或解析失败，清除它
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
-        return null;
+        const errorMessage = error instanceof Error ? error.message : "未知解析错误";
+        // 抛出我们自定义的、信息丰富的异常
+        throw new DataCorruptionError(`本地数据已损坏，无法读取。错误: ${errorMessage}`);
     }
 }
 

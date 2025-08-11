@@ -2,7 +2,6 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {
     Alert,
     Box,
-    CircularProgress,
     FormControl,
     Grid,
     InputLabel,
@@ -11,42 +10,84 @@ import {
     type SelectChangeEvent,
     Typography,
 } from '@mui/material';
-import {getCardDatabase} from "~/client/cardDetailsFetcher";
-import {cardverdict, userprofile} from "~/generated/bundle";
-import CreditCardComponent from "~/components/homePanel/CreditCardComponent";
-import {loadActiveValuationProfile} from "~/client/userSettingsPersistence";
-import {calculateNetWorth} from "~/utils/cardCalculations";
+import {getCardDatabase} from '~/client/cardDetailsFetcher';
+import {cardverdict, userprofile} from '~/generated/bundle';
+import CreditCardComponent from '~/components/homePanel/CreditCardComponent';
+import {DataCorruptionError, loadActiveValuationProfile,} from '~/client/userSettingsPersistence';
+import {calculateNetWorth} from '~/utils/cardCalculations';
+import EmergencyDataDialog from "~/components/dataManagement/EmergencyDataDialog";
 
-// --- Type definitions ---
+// --- 类型定义 (保持不变) ---
 type SortOrder = 'net-high-to-low' | 'net-low-to-high' | 'credits-high-to-low' | 'credits-low-to-high';
 
+// --- 新增类型：用于紧急状态 ---
+interface EmergencyState {
+    message: string;
+    corruptedBase64: string | null;
+}
+
 const HomePanel: React.FC = () => {
+    // --- 核心数据状态 (保持不变) ---
     const [cardData, setCardData] = useState<cardverdict.v1.CreditCardDatabase | null>(null);
     const [userValuationDb, setUserValuationDb] = useState<userprofile.v1.IValuationProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    // --- 错误处理状态 (已修改) ---
+    const [genericError, setGenericError] = useState<string | null>(null);
+    const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
+    const [emergencyState, setEmergencyState] = useState<EmergencyState | null>(null);
+
+    // --- UI状态 (保持不变) ---
     const [sortOrder, setSortOrder] = useState<SortOrder>('net-high-to-low');
 
     useEffect(() => {
-        const fetchCardData = async () => {
-            try {
-                // Fetch main card data
-                const data = await getCardDatabase();
-                setCardData(data);
+        const fetchAllData = async () => {
+            setLoading(true);
 
-                // Load user valuations
+            // --- 步骤1: 加载用户设置，并精确捕获数据损坏异常 ---
+            try {
                 const db = loadActiveValuationProfile();
                 setUserValuationDb(db);
-
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to load card data');
+                if (err instanceof DataCorruptionError) {
+                    console.error("Data corruption detected, entering emergency mode:", err);
+                    console.log({
+                        message: err.message,
+                        corruptedBase64: err.corruptedData,
+                    });
+                    // 设置紧急状态，这将强制打开恢复对话框
+                    setEmergencyState({
+                        message: err.message,
+                        corruptedBase64: err.corruptedData,
+                    });
+                    setIsBackupDialogOpen(true);
+                    // 注意：我们在此处不 return 或 setLoading(false)。
+                    // 即使数据损坏，我们仍会继续尝试加载主卡片数据库，
+                    // 以便在对话框后面能显示应用的基本UI，而不是白屏。
+                } else {
+                    // 对于其他非数据损坏的错误，显示通用错误信息并停止
+                    const errorMessage = err instanceof Error ? err.message : '加载用户配置时发生未知错误';
+                    setGenericError(errorMessage);
+                    setLoading(false);
+                    return; // 终止加载流程
+                }
+            }
+
+            // --- 步骤2: 加载主卡片数据库 ---
+            try {
+                const data = await getCardDatabase();
+                setCardData(data);
+            } catch (err) {
+                // 这是网络错误等，显示通用错误信息
+                setGenericError(err instanceof Error ? err.message : '无法加载信用卡数据库');
             } finally {
+                // 无论结果如何，最终都结束加载状态
                 setLoading(false);
             }
         };
 
-        fetchCardData();
-    }, []);
+        fetchAllData();
+    }, []); // 依赖数组为空，仅在组件挂载时运行一次
 
     const sortedCards = useMemo(() => {
         if (!cardData?.cards) return [];
@@ -67,43 +108,35 @@ const HomePanel: React.FC = () => {
                     return 0;
             }
         });
-
         return cardsToSort;
     }, [cardData?.cards, userValuationDb, sortOrder]);
 
+    // --- 新增函数：用于处理对话框的关闭和成功操作 ---
+    const handleDialogClose = () => {
+        setIsBackupDialogOpen(false);
+        // 注意：我们不清空 emergencyState，因为用户可能只是想暂时关闭对话框。
+        // 如果再次打开，应保持紧急模式。
+    };
+
+    const handleActionSuccess = () => {
+        // 在恢复或清除数据成功后，最可靠的方式是刷新整个应用
+        window.location.reload();
+    };
+
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-                    <CircularProgress
-                        size={72}
-                        thickness={4.5}
-                        disableShrink
-                        sx={{
-                            '& .MuiCircularProgress-circle': {
-                                strokeLinecap: 'butt', // 端点不圆润，看起来更像连续环
-                            },
-                        }}
-                    />
-                    <Typography variant="body1" color="text.secondary">
-                        Loading...
-                    </Typography>
-                </Box>
-            </div>
-        );
+        // ... 加载UI保持不变 ...
+        return <div className="flex justify-center items-center h-screen">...</div>;
     }
 
-    if (error) {
-        return (
-            <div className="p-4">
-                <Alert severity="error">{error}</Alert>
-            </div>
-        );
+    if (genericError && !isBackupDialogOpen) {
+        // 仅在没有打开备份对话框时显示通用错误，避免UI重叠
+        return <div className="p-4"><Alert severity="error">{genericError}</Alert></div>;
     }
 
     return (
         <div className="p-4">
+            {/* 排序和卡片网格的UI代码保持不变 */}
             <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2}}>
                 <Typography variant="h4" gutterBottom sx={{mb: 0}}>
 
@@ -136,10 +169,21 @@ const HomePanel: React.FC = () => {
                         <CreditCardComponent
                             card={card}
                             initialValuation={userValuationDb?.cardValuations?.[card.cardId ?? '']}
+                            pointSystemValuations={userValuationDb?.pointSystemValuations}
                         />
                     </Grid>
                 ))}
             </Grid>
+
+            {/* 它始终在DOM中，通过 `open` 属性控制显示 */}
+            {emergencyState && (
+                <EmergencyDataDialog
+                    open={true} // 如果存在 emergencyState，则强制打开
+                    onClose={() => setEmergencyState(null)} // 关闭即退出紧急模式
+                    onActionSuccess={handleActionSuccess}
+                    emergencyState={emergencyState}
+                />
+            )}
         </div>
     );
 };

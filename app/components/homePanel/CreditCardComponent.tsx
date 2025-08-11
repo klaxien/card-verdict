@@ -121,9 +121,15 @@ type CreditCardComponentProps = {
     card: cardverdict.v1.ICreditCard;
     onSaveValuation?: (valuation: userprofile.v1.IUserCardValuation, card: cardverdict.v1.ICreditCard) => void;
     initialValuation?: userprofile.v1.IUserCardValuation;
+    pointSystemValuations?: userprofile.v1.IValuationProfile['pointSystemValuations'];
 };
 
-const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveValuation, initialValuation}) => {
+const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
+                                                                     card,
+                                                                     onSaveValuation,
+                                                                     initialValuation,
+                                                                     pointSystemValuations
+                                                                 }) => {
     const [editOpen, setEditOpen] = useState(false);
     const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
     const [editingCustomAdjustmentId, setEditingCustomAdjustmentId] = useState<string | null>(null);
@@ -172,18 +178,9 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
     // This is the key state. It will be initialized from props, then updated from localStorage.
     const [userValuation, setUserValuation] = useState<userprofile.v1.IUserCardValuation | undefined>(initialValuation);
 
-    // Effect for loading valuation from localStorage on component mount
     useEffect(() => {
-        if (!initialValuation) {
-            const db = loadActiveValuationProfile();
-            if (db && card.cardId) {
-                const cardValuation = db.cardValuations?.[card.cardId];
-                if (cardValuation) {
-                    setUserValuation(cardValuation);
-                }
-            }
-        }
-    }, [card.cardId, initialValuation]);
+        setUserValuation(initialValuation);
+    }, [initialValuation]);
 
     // --- Calculations ---
 
@@ -506,7 +503,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({card, onSaveVa
                 onClose={() => setCashbackOpen(false)}
                 card={card}
                 initialCardValuation={userValuation}
-                initialPointSystemValuations={loadActiveValuationProfile()?.pointSystemValuations}
+                initialPointSystemValuations={pointSystemValuations}
                 onSave={handleSave}
                 netWorthCents={roi}
             />
