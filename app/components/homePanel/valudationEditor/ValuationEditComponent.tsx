@@ -1,5 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {
+    Box,
     Button,
     Dialog,
     DialogActions,
@@ -235,6 +236,7 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
                         pt: 1,
                     }}>
                         <Button color="error" variant="text" onClick={() => setConfirmClearOpen(true)}>清空</Button>
+                        <Box sx={{flexGrow: 1}}/>
                         <Typography variant="caption" color={hasAnyError ? 'error' : 'text.secondary'}
                                     sx={{ml: 'auto'}}>
                             {hasAnyError ? '存在无效输入，请修正后再保存' : ' '}
