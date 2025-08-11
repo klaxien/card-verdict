@@ -360,7 +360,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
 
                 <Box sx={{px: 3, mb: 2, mt: -1.5}}>
                     <Alert severity={effectiveReturnRate > 0 ? "success" : "warning"}
-                           sx={{py: 1.5, '& .MuiAlert-message': {width: '100%'}}}>
+                           sx={{pb: 0, '& .MuiAlert-message': {width: '100%'}}}>
                         <Stack spacing={1}>
                             <Grid container alignItems="center" justifyContent="space-around" spacing={1}>
                                 <Grid size={4} textAlign="center">
