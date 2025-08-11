@@ -28,7 +28,13 @@ import ShareIcon from '@mui/icons-material/Share';
 import {cardverdict, userprofile} from '~/generated/bundle';
 import ValuationEditComponent from './valudationEditor/ValuationEditComponent';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/userSettingsPersistence';
-import {calcRawAnnualCents, getDisplayEffectiveCents, periodsInYearFor} from "~/utils/cardCalculations";
+import {
+    calcRawAnnualCents,
+    calculateNetWorth,
+    getDisplayEffectiveCents,
+    getDisplayEffectiveCentsForBenefit,
+    periodsInYearFor
+} from "~/utils/cardCalculations";
 import CashBackEditor from "~/components/homePanel/cashBackEditor/CashBackEditor";
 import ShareValuation from "~/components/homePanel/shareDialog/ShareCardValuation";
 import CoverageType = cardverdict.v1.CarRentalInsuranceBenefit.CoverageType;
@@ -94,7 +100,27 @@ const getCreditChipColor = (
     return 'error';
 };
 
-const getBenefitDisplayDetails = (benefit: cardverdict.v1.IOtherBenefit): string => {
+
+// 根据有效价值决定 Benefit Chip 的颜色
+const getBenefitChipColor = (
+    benefit: cardverdict.v1.IOtherBenefit,
+    userVal?: userprofile.v1.IUserCardValuation,
+): 'success' | 'warning' | 'error' | 'primary' => {
+    const effective = getDisplayEffectiveCentsForBenefit(benefit, userVal);
+    if (effective === 0) return 'error';
+
+    const raw = benefit.defaultEffectiveValueCents ?? 0;
+    if (raw === 0) {
+        return effective > 0 ? 'success' : 'error';
+    }
+
+    const proportion = effective / raw;
+    if (proportion >= 0.8) return 'success';
+    if (proportion >= 0.2) return 'warning';
+    return 'error';
+};
+
+export const getBenefitDisplayDetails = (benefit: cardverdict.v1.IOtherBenefit): string => {
     if (benefit.genericBenefitDescription) {
         return benefit.genericBenefitDescription;
     }
@@ -149,6 +175,33 @@ const getBenefitDisplayDetails = (benefit: cardverdict.v1.IOtherBenefit): string
     return benefit.benefitId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) ?? 'Unnamed Benefit';
 };
 
+const getTooltipForBenefit = (
+    benefit: cardverdict.v1.IOtherBenefit,
+    userVal?: userprofile.v1.IUserCardValuation,
+): string => {
+    const benefitId = benefit.benefitId ?? '';
+    const userNote = userVal?.otherBenefitValuations?.[benefitId]?.explanation?.trim();
+    if (userNote) return userNote; // 优先显示用户备注
+
+    const userBenefitVal = userVal?.otherBenefitValuations?.[benefitId];
+    if (userBenefitVal?.valueCents != null || userBenefitVal?.proportion != null) {
+        return '自定义估值（未输入原因）';
+    }
+    // 回退到默认解释
+    return benefit.defaultEffectiveValueExplanation ?? getBenefitDisplayDetails(benefit);
+};
+
+export function shouldHideBenefit(benefit: cardverdict.v1.IOtherBenefit): boolean {
+
+    if (benefit.feeReimbursement || benefit.pointPerk) return false;
+    if (benefit.travelStatus && benefit.travelStatus.type !== TravelStatusBenefit.StatusType.HOTEL_ELITE_STATUS) return false;
+    if (benefit.carRentalInsurance) {
+        if (benefit.carRentalInsurance.coverageType == CarRentalInsuranceBenefit.CoverageType.PRIMARY) return true;
+        return !!benefit.carRentalInsurance.notes;
+    }
+    return true;
+}
+
 
 const getCustomAdjustmentChipColor = (annualValueCents: number): 'success' | 'error' | 'primary' => {
     if (annualValueCents > 0) return 'success';
@@ -191,6 +244,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
                                                                  }) => {
     const [editOpen, setEditOpen] = useState(false);
     const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
+    const [editingBenefitId, setEditingBenefitId] = useState<string | null>(null);
     const [editingCustomAdjustmentId, setEditingCustomAdjustmentId] = useState<string | null>(null);
 
     // New dialog states
@@ -243,23 +297,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
 
     // --- Calculations ---
 
-    const totalCreditsValue = useMemo(() => {
-        const credits = card.credits ?? [];
-        return credits.reduce((sum, c) => sum + getDisplayEffectiveCents(c, userValuation), 0);
-    }, [card.credits, userValuation]);
-
-    const totalCustomAdjustmentsValue = useMemo(() => {
-        const adjustments = userValuation?.customAdjustments ?? [];
-        if (!adjustments) return 0;
-        return adjustments.reduce((sum, adj) => {
-            const periods = periodsInYearFor(adj.frequency ?? undefined);
-            const annualValue = (adj.valueCents ?? 0) * periods;
-            return sum + annualValue;
-        }, 0);
-    }, [userValuation?.customAdjustments]);
-
-    const annualFee = card.annualFeeCents || 0;
-    const roi = totalCreditsValue + totalCustomAdjustmentsValue - annualFee;
+    const roi = calculateNetWorth(card, userValuation);
 
     // --- Display Data Preparation ---
 
@@ -277,7 +315,9 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
     const sortedBenefits = useMemo(() => {
         // userValuation is not used here because otherBenefits are not currently user-editable.
         const benefits = card.otherBenefits ?? [];
-        return [...benefits].sort((a, b) => {
+        return [...benefits]
+            .filter(shouldHideBenefit)
+            .sort((a, b) => {
             const aVal = a.defaultEffectiveValueCents ?? 0;
             const bVal = b.defaultEffectiveValueCents ?? 0;
             return bVal - aVal;
@@ -327,30 +367,14 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
     }));
 
     const benefitDisplayItems: DisplayItem[] = useMemo(() => {
-        const filtered = sortedBenefits
-            .filter(benefit => {
-                console.log(!!benefit.defaultEffectiveValueExplanation);
-
-                if (benefit.feeReimbursement || benefit.pointPerk) return false;
-                if (benefit.travelStatus && benefit.travelStatus.type !== TravelStatusBenefit.StatusType.HOTEL_ELITE_STATUS) return false;
-                if (benefit.carRentalInsurance) {
-                    if (benefit.carRentalInsurance.coverageType == CarRentalInsuranceBenefit.CoverageType.PRIMARY) return true;
-                    return !!benefit.carRentalInsurance.notes;
-                }
-                return true;
-            });
-        const getBenefitChipColor = (benefit: cardverdict.v1.IOtherBenefit): 'success' | 'primary' => {
-            return (benefit.defaultEffectiveValueCents ?? 0) > 0 ? 'success' : 'primary';
-        };
-
-        return filtered.map((benefit, index) => ({
+        return sortedBenefits.map((benefit, index) => ({
             id: benefit.benefitId ?? `benefit-${index}`,
             details: getBenefitDisplayDetails(benefit),
-            valueCents: benefit.defaultEffectiveValueCents ?? 0,
-            tooltip: !!benefit.defaultEffectiveValueExplanation ? benefit.defaultEffectiveValueExplanation : 'benefit因人而异，默认无估值',
-            chipColor: getBenefitChipColor(benefit),
-            isLast: index === filtered.length - 1,
-            onClick: undefined, // Not editable in this component
+            valueCents: getDisplayEffectiveCentsForBenefit(benefit, userValuation),
+            tooltip: getTooltipForBenefit(benefit, userValuation),
+            chipColor: getBenefitChipColor(benefit, userValuation),
+            isLast: index === sortedBenefits.length - 1,
+            onClick: () => setEditingBenefitId(benefit.benefitId ?? null),
         }));
     }, [sortedBenefits]);
 
@@ -584,21 +608,31 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
                 open={editOpen}
                 card={card}
                 displayCredits={sortedCredits}
+                displayBenefits={sortedBenefits} // 新增：传入 benefits
                 initialValuation={userValuation}
                 onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditOpen(false)}
                 onSave={(valuation) => handleSave({cardValuation: valuation})}
             />
-            {/* 单个 credit 编辑对话框 */}
+            {/* 单个 credit 编辑弹窗 */}
             <ValuationEditComponent
                 open={!!editingCreditId}
                 card={card}
-                displayCredits={sortedCredits}
                 initialValuation={userValuation}
                 onCustomValuationClear={() => setUserValuation(undefined)}
                 onClose={() => setEditingCreditId(null)}
                 onSave={(valuation) => handleSave({cardValuation: valuation})}
                 singleCreditIdToEdit={editingCreditId ?? undefined}
+            />
+            {/* 单个 benefit 编辑弹窗 */}
+            <ValuationEditComponent
+                open={!!editingBenefitId}
+                card={card}
+                initialValuation={userValuation}
+                onCustomValuationClear={() => setUserValuation(undefined)}
+                onClose={() => setEditingBenefitId(null)}
+                onSave={(valuation) => handleSave({cardValuation: valuation})}
+                singleBenefitIdToEdit={editingBenefitId ?? undefined}
             />
             {/* 单个 custom adjustment 编辑对话框 */}
             <ValuationEditComponent

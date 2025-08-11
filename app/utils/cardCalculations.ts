@@ -49,18 +49,59 @@ export const getDisplayEffectiveCents = (
     return defaultEffectiveCents(credit);
 };
 
+/**
+ * 计算单个 OtherBenefit 的最终显示价值（考虑用户自定义估值）。
+ * @param benefit - 福利对象。
+ * @param userVal - 当前用户的卡片估值。
+ * @returns 最终价值（以美分为单位）。
+ */
+export const getDisplayEffectiveCentsForBenefit = (
+    benefit: cardverdict.v1.IOtherBenefit,
+    userVal?: userprofile.v1.IUserCardValuation,
+): number => {
+    const benefitId = benefit.benefitId ?? '';
+    // 1. 优先检查用户自定义估值
+    const entry = userVal?.otherBenefitValuations?.[benefitId];
+
+    if (entry) {
+        if (entry.valueCents != null) {
+            return entry.valueCents;
+        }
+        if (entry.proportion != null) {
+            // 福利的“面值”就是其默认价值
+            const rawValue = benefit.defaultEffectiveValueCents ?? 0;
+            return Math.round(rawValue * entry.proportion);
+        }
+    }
+    // 2. 如果没有用户估值，则回退到默认价值
+    return benefit.defaultEffectiveValueCents ?? 0;
+};
+
+/**
+ * 计算信用卡的年度净值（ROI）。
+ * 现在会综合考虑 Credits、OtherBenefits 和 CustomAdjustments 的价值。
+ * @param card - 信用卡对象。
+ * @param userValuation - 包含所有用户估值的数据库对象。
+ * @returns 净值（以美分为单位）。
+ */
 export const calculateNetWorth = (
     card: cardverdict.v1.ICreditCard,
-    userDb: userprofile.v1.IValuationProfile | null
+    userValuation: userprofile.v1.IUserCardValuation | undefined
 ): number => {
-    const cardId = card.cardId ?? '';
-    const userValuation = userDb?.cardValuations?.[cardId];
 
+    // 计算所有 Credits 的总价值
     const totalCreditsValue = (card.credits ?? []).reduce(
         (sum, c) => sum + getDisplayEffectiveCents(c, userValuation),
         0
     );
 
+    // 计算所有 OtherBenefits 的总价值
+    const totalBenefitsValue = (card.otherBenefits ?? []).reduce(
+        (sum, b) => sum + getDisplayEffectiveCentsForBenefit(b, userValuation),
+        0
+    );
+
+    // 计算所有 CustomAdjustments 的总价值
     const totalCustomAdjustmentsValue = (userValuation?.customAdjustments ?? []).reduce((sum, adj) => {
         const periods = periodsInYearFor(adj.frequency ?? undefined);
         const annualValue = (adj.valueCents ?? 0) * periods;
@@ -68,5 +109,6 @@ export const calculateNetWorth = (
     }, 0);
 
     const annualFee = card.annualFeeCents || 0;
-    return totalCreditsValue + totalCustomAdjustmentsValue - annualFee;
+    // 返回包含所有部分的总净值
+    return totalCreditsValue + totalBenefitsValue + totalCustomAdjustmentsValue - annualFee;
 };

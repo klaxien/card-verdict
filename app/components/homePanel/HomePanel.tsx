@@ -94,12 +94,17 @@ const HomePanel: React.FC = () => {
 
         const cardsToSort = [...cardData.cards];
 
+        const getUserValuation = (card: cardverdict.v1.ICreditCard, valuationDb: userprofile.v1.IValuationProfile | null) => {
+            if (!valuationDb) return undefined;
+
+            return valuationDb.cardValuations?.[card.cardId ?? ''];
+        };
         cardsToSort.sort((a, b) => {
             switch (sortOrder) {
                 case 'net-high-to-low':
-                    return calculateNetWorth(b, userValuationDb) - calculateNetWorth(a, userValuationDb);
+                    return calculateNetWorth(b, getUserValuation(b, userValuationDb)) - calculateNetWorth(a, getUserValuation(a, userValuationDb));
                 case 'net-low-to-high':
-                    return calculateNetWorth(a, userValuationDb) - calculateNetWorth(b, userValuationDb);
+                    return calculateNetWorth(a, getUserValuation(a, userValuationDb)) - calculateNetWorth(b, getUserValuation(b, userValuationDb));
                 case 'credits-high-to-low':
                     return (b.credits?.length ?? 0) - (a.credits?.length ?? 0);
                 case 'credits-low-to-high':

@@ -16,13 +16,16 @@ import {FormProvider, useFieldArray, useForm} from 'react-hook-form';
 import {cardverdict, userprofile} from '~/generated/bundle';
 import {calcRawAnnualCents} from '~/utils/cardCalculations';
 import {CustomAdjustmentsEditor} from './CustomAdjustmentsEditor';
-import {CreditRow} from './CreditRow';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/userSettingsPersistence';
+import {shouldHideBenefit} from "~/components/homePanel/CreditCardComponent"; // Assuming helper is exported
+import {BenefitRow} from "./BenefitRow";
+import {CreditRow} from "./CreditRow";
 
 // Type Definitions
 type PerkValue = userprofile.v1.IPerkValue;
 type UserCardValuation = userprofile.v1.IUserCardValuation;
 type Credit = cardverdict.v1.ICredit;
+type OtherBenefit = cardverdict.v1.IOtherBenefit;
 type CreditCard = cardverdict.v1.ICreditCard;
 type CustomAdjustment = userprofile.v1.ICustomAdjustment;
 type LastEdited = 'dollars' | 'proportion' | undefined;
@@ -31,11 +34,13 @@ type CardEditProps = {
     open: boolean;
     card: CreditCard;
     displayCredits?: Credit[];
+    displayBenefits?: OtherBenefit[];
     initialValuation?: UserCardValuation;
     onCustomValuationClear?: () => void;
     onClose: () => void;
     onSave?: (valuation: UserCardValuation) => void;
     singleCreditIdToEdit?: string;
+    singleBenefitIdToEdit?: string;
     singleCustomAdjustmentIdToEdit?: string;
 };
 
@@ -43,6 +48,13 @@ type CardEditProps = {
 export type FormValues = {
     credits: Array<{
         creditId: string;
+        dollarsInput: string;
+        proportionInput: string;
+        explanation: string;
+        lastEdited: LastEdited;
+    }>;
+    benefits: Array<{ // New
+        benefitId: string;
         dollarsInput: string;
         proportionInput: string;
         explanation: string;
@@ -59,8 +71,8 @@ const emptyValuation = (): UserCardValuation => ({
 
 const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
     const {
-        open, card, displayCredits, initialValuation, onCustomValuationClear,
-        onClose, onSave, singleCreditIdToEdit, singleCustomAdjustmentIdToEdit,
+        open, card, displayCredits, displayBenefits, initialValuation, onCustomValuationClear,
+        onClose, onSave, singleCreditIdToEdit, singleBenefitIdToEdit, singleCustomAdjustmentIdToEdit,
     } = props;
 
     const theme = useTheme();
@@ -74,15 +86,22 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
     });
     const {handleSubmit, reset, formState: {errors, isDirty}} = methods;
 
-    // 用于渲染的顺序（由父组件传入），对话框会基于该顺序进行“置顶”，但在一次打开会话中不再实时变动
+    // Determine which credits/benefits to show in the dialog session
     const sessionCredits = useMemo(() => {
         const allCredits = (displayCredits && displayCredits.length ? displayCredits : card.credits ?? []);
         if (singleCreditIdToEdit) return allCredits.filter(c => c.creditId === singleCreditIdToEdit);
-        if (singleCustomAdjustmentIdToEdit) return [];
+        if (singleBenefitIdToEdit || singleCustomAdjustmentIdToEdit) return [];
         return allCredits;
-    }, [open, card.credits, displayCredits, singleCreditIdToEdit, singleCustomAdjustmentIdToEdit]);
+    }, [open, card.credits, displayCredits, singleCreditIdToEdit, singleBenefitIdToEdit, singleCustomAdjustmentIdToEdit]);
 
-    // 预先计算每个 credit 的年度面值（分）
+    const sessionBenefits = useMemo(() => {
+        const allBenefits = (displayBenefits && displayBenefits.length ? displayBenefits : card.otherBenefits ?? []).filter(shouldHideBenefit);
+        if (singleBenefitIdToEdit) return allBenefits.filter(b => b.benefitId === singleBenefitIdToEdit);
+        if (singleCreditIdToEdit || singleCustomAdjustmentIdToEdit) return [];
+        return allBenefits;
+    }, [open, card.otherBenefits, displayBenefits, singleBenefitIdToEdit, singleCreditIdToEdit, singleCustomAdjustmentIdToEdit]);
+
+    // Pre-calculate face values
     const rawAnnualFaceCentsByCreditId = useMemo(() => {
         const result = new Map<string, number>();
         sessionCredits.forEach(credit => {
@@ -93,95 +112,115 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
         return result;
     }, [sessionCredits]);
 
-    // 初始化/重置表单
+    const rawAnnualFaceCentsByBenefitId = useMemo(() => {
+        const result = new Map<string, number>();
+        sessionBenefits.forEach(benefit => {
+            if (benefit.benefitId) {
+                result.set(benefit.benefitId, benefit.defaultEffectiveValueCents ?? 0);
+            }
+        });
+        return result;
+    }, [sessionBenefits]);
+
+
+    // Initialize/reset form
     useEffect(() => {
         if (!open) return;
 
         const val = initialValuation ?? emptyValuation();
-        const creditDefaults = sessionCredits.map(credit => {
-            const creditId = credit.creditId!;
-            const userVal = val.creditValuations?.[creditId];
-            const faceDollars = (rawAnnualFaceCentsByCreditId.get(creditId) ?? 0) / 100;
+        const createPerkDefaults = (perks: any[], idKey: string, valKey: string, faceValueMap: Map<string, number>) => {
+            return perks.map(perk => {
+                const perkId = perk[idKey]!;
+                const userVal = (val as any)[valKey]?.[perkId];
+                const faceDollars = (faceValueMap.get(perkId) ?? 0) / 100;
 
-            let dollarsInput = '';
-            let proportionInput = '';
-            let lastEdited: LastEdited;
+                let dollarsInput = '';
+                let proportionInput = '';
+                let lastEdited: LastEdited;
 
-            if (userVal?.valueCents != null) {
-                lastEdited = 'dollars';
-                dollarsInput = (userVal.valueCents / 100).toFixed(2);
-                if (faceDollars > 0) proportionInput = (Number(dollarsInput) / faceDollars).toFixed(2);
-            } else if (userVal?.proportion != null) {
-                lastEdited = 'proportion';
-                proportionInput = Number(userVal.proportion).toFixed(2);
-                if (faceDollars > 0) dollarsInput = (Number(proportionInput) * faceDollars).toFixed(2);
-            }
+                if (userVal?.valueCents != null) {
+                    lastEdited = 'dollars';
+                    dollarsInput = (userVal.valueCents / 100).toFixed(2);
+                    if (faceDollars > 0) proportionInput = (Number(dollarsInput) / faceDollars).toFixed(2);
+                } else if (userVal?.proportion != null) {
+                    lastEdited = 'proportion';
+                    proportionInput = Number(userVal.proportion).toFixed(2);
+                    if (faceDollars > 0) dollarsInput = (Number(proportionInput) * faceDollars).toFixed(2);
+                }
 
-            return {creditId, dollarsInput, proportionInput, explanation: userVal?.explanation ?? '', lastEdited};
-        });
+                return {
+                    [idKey]: perkId,
+                    dollarsInput,
+                    proportionInput,
+                    explanation: userVal?.explanation ?? '',
+                    lastEdited
+                };
+            });
+        };
+
+        const creditDefaults = createPerkDefaults(sessionCredits, 'creditId', 'creditValuations', rawAnnualFaceCentsByCreditId);
+        const benefitDefaults = createPerkDefaults(sessionBenefits, 'benefitId', 'otherBenefitValuations', rawAnnualFaceCentsByBenefitId);
 
         reset({
             credits: creditDefaults,
+            benefits: benefitDefaults,
             customAdjustments: val.customAdjustments ?? [],
         });
-    }, [open, initialValuation, sessionCredits, rawAnnualFaceCentsByCreditId, reset]);
+    }, [open, initialValuation, sessionCredits, sessionBenefits, rawAnnualFaceCentsByCreditId, rawAnnualFaceCentsByBenefitId, reset]);
 
     const {fields: creditFields} = useFieldArray({control: methods.control, name: "credits", keyName: "key"});
+    const {fields: benefitFields} = useFieldArray({control: methods.control, name: "benefits", keyName: "key"});
 
     const onSubmit = (data: FormValues) => {
         const output: UserCardValuation = {
             ...(initialValuation ?? emptyValuation()),
             creditValuations: {},
+            otherBenefitValuations: {},
             customAdjustments: data.customAdjustments,
         };
 
-        data.credits.forEach(row => {
-            let saved = false;
-            const hasDollars = row.dollarsInput.trim() !== '';
-            const hasProportion = row.proportionInput.trim() !== '';
+        const processPerkData = (perks: any[], idKey: string, outputMap: userprofile.v1.IUserCardValuation['creditValuations']) => {
+            perks.forEach(row => {
+                let saved = false;
+                const hasDollars = row.dollarsInput.trim() !== '';
+                const hasProportion = row.proportionInput.trim() !== '';
+                const perkId = row[idKey];
 
-            if (row.lastEdited === 'dollars' && hasDollars) {
-                output.creditValuations![row.creditId] = {
-                    valueCents: Math.round(Number(row.dollarsInput) * 100),
-                    explanation: row.explanation
-                };
-                saved = true;
-            } else if (row.lastEdited === 'proportion' && hasProportion) {
-                output.creditValuations![row.creditId] = {
-                    proportion: Number(row.proportionInput),
-                    explanation: row.explanation
-                };
-                saved = true;
-            }
+                if (row.lastEdited === 'dollars' && hasDollars) {
+                    outputMap![perkId] = {
+                        valueCents: Math.round(Number(row.dollarsInput) * 100),
+                        explanation: row.explanation
+                    };
+                    saved = true;
+                } else if (row.lastEdited === 'proportion' && hasProportion) {
+                    outputMap![perkId] = {proportion: Number(row.proportionInput), explanation: row.explanation};
+                    saved = true;
+                }
 
-            if (!saved && row.explanation?.trim()) {
-                output.creditValuations![row.creditId] = {explanation: row.explanation};
-            }
-        });
+                if (!saved && row.explanation?.trim()) {
+                    outputMap![perkId] = {explanation: row.explanation};
+                }
+            });
+        };
+
+        processPerkData(data.credits, 'creditId', output.creditValuations!);
+        processPerkData(data.benefits, 'benefitId', output.otherBenefitValuations!);
 
         onSave?.(output);
         onClose();
     };
 
-    // 新增：清空当前卡片的所有自定义设置（credit + custom），直接从 map 中删除并持久化
     const handleConfirmClear = () => {
         try {
             const db = loadActiveValuationProfile();
             if (!db || !card.cardId || !db.cardValuations?.[card.cardId]) {
-                // 如果没有估值，则无需任何操作
                 return;
             }
-
-            // 只清空其负责的字段
             const cardValuation = db.cardValuations[card.cardId];
             cardValuation.creditValuations = {};
-            cardValuation.otherBenefitValuations = {}; // 也清空 other benefits
+            cardValuation.otherBenefitValuations = {};
             cardValuation.customAdjustments = [];
-
-            // plannedSpending 字段被有意地保留了下来
-
             saveValuationProfile(db);
-
         } catch (e) {
             console.error('Failed to clear card valuation:', e);
         } finally {
@@ -191,11 +230,12 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
         }
     };
 
-    // 会话内冻结的标题，防止关闭动画期间因 props 变化造成闪动
     const sessionTitle = useMemo(() => {
+        if (singleCreditIdToEdit) return `编辑报销估值 — ${card.name}`;
+        if (singleBenefitIdToEdit) return `编辑福利估值 — ${card.name}`;
         if (singleCustomAdjustmentIdToEdit) return `编辑自定义调整 — ${card.name}`;
-        return `编辑${singleCreditIdToEdit ? '单项' : ''}报销估值 — ${card.name}`;
-    }, [card.name, singleCreditIdToEdit, singleCustomAdjustmentIdToEdit]);
+        return `编辑估值 — ${card.name}`;
+    }, [card.name, singleCreditIdToEdit, singleBenefitIdToEdit, singleCustomAdjustmentIdToEdit]);
 
     const hasAnyError = Object.keys(errors).length > 0;
 
@@ -219,9 +259,27 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
                             </Stack>
                         )}
 
-                        {creditFields.length > 0 && !singleCreditIdToEdit && <Divider sx={{my: 2}}/>}
+                        {creditFields.length > 0 && (benefitFields.length > 0 || !singleCreditIdToEdit) &&
+                            <Divider sx={{my: 2}}/>}
 
-                        {!singleCreditIdToEdit &&
+                        {benefitFields.length > 0 && (
+                            <Stack spacing={2}>
+                                {benefitFields.map((field, index) => (
+                                    <BenefitRow
+                                        key={field.key}
+                                        benefit={sessionBenefits[index]}
+                                        index={index}
+                                        faceDollars={(rawAnnualFaceCentsByBenefitId.get(sessionBenefits[index].benefitId!) ?? 0) / 100}
+                                        isLastRow={index === benefitFields.length - 1}
+                                    />
+                                ))}
+                            </Stack>
+                        )}
+
+                        {benefitFields.length > 0 && !singleBenefitIdToEdit && !singleCreditIdToEdit &&
+                            <Divider sx={{my: 2}}/>}
+
+                        {!singleCreditIdToEdit && !singleBenefitIdToEdit &&
                             <CustomAdjustmentsEditor sessionSingleCustomAdjustmentId={singleCustomAdjustmentIdToEdit}/>}
                     </DialogContent>
                     <DialogActions sx={{
