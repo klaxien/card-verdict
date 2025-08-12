@@ -52,7 +52,7 @@ const CardVerdictNavBar = () => {
             >
                 <Toolbar>
                     <Typography variant="h6" component="div" className={styles.leftTitle}>
-                        CardVerdict
+                        Card Verdict
                     </Typography>
                     <Box sx={{flexGrow: 1}}/> {/* 这个Box组件会将右侧的图标推到最右边 */}
                     <IconButton
