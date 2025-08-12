@@ -4,7 +4,7 @@ import {cardverdict} from '~/generated/bundle';
 import {Controller, useFormContext} from 'react-hook-form';
 import type {FormValues} from './ValuationEditComponent';
 import {createLengthValidator} from "~/components/common/validators";
-import {getBenefitDisplayDetails} from "~/components/homePanel/CreditCardComponent";
+import {getBenefitDisplayDetails} from "~/components/homePanel/utils/creditCardDisplayUtils";
 
 type BenefitRowProps = {
     benefit: cardverdict.v1.IOtherBenefit;

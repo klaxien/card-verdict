@@ -17,9 +17,9 @@ import {cardverdict, userprofile} from '~/generated/bundle';
 import {calcRawAnnualCents} from '~/utils/cardCalculations';
 import {CustomAdjustmentsEditor} from './CustomAdjustmentsEditor';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/userSettingsPersistence';
-import {shouldHideBenefit} from "~/components/homePanel/CreditCardComponent"; // Assuming helper is exported
 import {BenefitRow} from "./BenefitRow";
 import {CreditRow} from "./CreditRow";
+import {shouldHideBenefit} from "~/components/homePanel/utils/creditCardDisplayUtils";
 
 // Type Definitions
 type PerkValue = userprofile.v1.IPerkValue;
