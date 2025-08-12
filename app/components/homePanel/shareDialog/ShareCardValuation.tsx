@@ -64,11 +64,12 @@ const generateShareText = (
     const cardName = card.name ?? '这张卡';
     const annualFee = (card.annualFeeCents ?? 0) / 100;
     const netWorth = calculateNetWorth(card, valuation) / 100;
+    const textGeneratedBy = '估值由Card Verdict生成。';
 
     if (format === 'plain') {
         const lines: string[] = [];
         lines.push(`我对「${cardName}」的估值：`);
-        lines.push(`此卡年费$${annualFee.toFixed(0)}，等效年费（净值）$${netWorth.toFixed(0)}`);
+        lines.push(`年费$${annualFee.toFixed(0)}，等效年费（净值）$${netWorth.toFixed(0)}`);
         lines.push('');
         if (card.credits && card.credits.length > 0) {
             lines.push('Credits:');
@@ -99,10 +100,11 @@ const generateShareText = (
                 lines.push(`  •【${description}】我的估值$${annualValue.toFixed(0)}`);
             });
         }
+        lines.push(textGeneratedBy);
         return lines.join('\n').trim();
     }
 
-    const summary = `我对「${cardName}」的估值：\n此卡年费$${annualFee.toFixed(0)}，等效年费（净值）**$${netWorth.toFixed(0)}**\n`;
+    const summary = `我对「${cardName}」的估值：\n年费$${annualFee.toFixed(0)}，等效年费（净值）$${netWorth.toFixed(0)}\n`;
     const table: string[] = [];
     table.push(`| 类型 | 描述 | 纸面价值 | 估值 |`);
     table.push(`|:---|:---|:---|:---|`);
@@ -117,7 +119,7 @@ const generateShareText = (
     (valuation?.customAdjustments ?? []).forEach(adj => {
         table.push(`| User-defined | ${sanitize(adj.description)} | N/A | $${(((adj.valueCents ?? 0) * periodsInYearFor(adj.frequency)) / 100).toFixed(0)} |`);
     });
-    return summary + '\n' + table.join('\n');
+    return `${summary}\n${table.join('\n')}\n\n${textGeneratedBy}`;
 };
 
 // --- Main Component ---
