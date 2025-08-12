@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {
     Box,
     Card,
@@ -99,7 +99,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
                                                                      card,
                                                                      onSaveValuation,
                                                                      initialValuation,
-                                                                     pointSystemValuations
+                                                                     pointSystemValuations: initialPointSystemValuations
                                                                  }) => {
     const [editOpen, setEditOpen] = useState(false);
     const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
@@ -147,12 +147,10 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
         closeActions();
     };
 
-    // This is the key state. It will be initialized from props, then updated from localStorage.
+    // The state is initialized here ONCE from props. After initialization,
+    // this component manages its own state. This is the correct pattern.
     const [userValuation, setUserValuation] = useState<userprofile.v1.IUserCardValuation | undefined>(initialValuation);
-
-    useEffect(() => {
-        setUserValuation(initialValuation);
-    }, [initialValuation]);
+    const [pointSystemValuations, setPointSystemValuations] = useState(initialPointSystemValuations);
 
     // --- Calculations ---
 
@@ -284,6 +282,10 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
         if (updates.cardValuation) {
             setUserValuation(updates.cardValuation);
             onSaveValuation?.(updates.cardValuation, card);
+        }
+
+        if (updates.pointSystemValuations) {
+            setPointSystemValuations(updates.pointSystemValuations);
         }
     };
 

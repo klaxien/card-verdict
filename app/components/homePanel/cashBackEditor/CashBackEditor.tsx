@@ -332,12 +332,12 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                         </Tabs>
                     </Box>
                     <TabPanel value={tabIndex} index={0}>
-                        <Box sx={{px: 3, my: 0}}>
+                        <Box sx={{px: 0, my: 0}}>
                             <Alert icon={false} severity={effectiveReturnRate > 0 ? "success" : "warning"}
                                    sx={{pb: 1.5, '& .MuiAlert-message': {width: '100%'}}}>
                                 <Stack spacing={1}>
                                     <Grid container alignItems="center" justifyContent="space-around" flexWrap="wrap"
-                                          spacing={1}>
+                                          spacing={0.5}>
                                         <Grid size={3} textAlign="center"><Typography variant="caption"
                                                                                       color="text.secondary">总消费</Typography><Typography
                                             variant="h6"
