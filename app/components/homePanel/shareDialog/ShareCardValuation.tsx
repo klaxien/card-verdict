@@ -92,7 +92,7 @@ const generateShareText = (
         }
         const adjustments = valuation?.customAdjustments?.filter(adj => adj.valueCents);
         if (adjustments && adjustments.length > 0) {
-            lines.push('自定义:');
+            lines.push('User-defined:');
             adjustments.forEach(adj => {
                 const description = adj.description ?? '自定义项';
                 const annualValue = ((adj.valueCents ?? 0) * periodsInYearFor(adj.frequency)) / 100;
@@ -115,7 +115,7 @@ const generateShareText = (
         table.push(`| Benefit | ${sanitize(getBenefitDisplayDetails(benefit))} | N/A | $${(getDisplayEffectiveCentsForBenefit(benefit, valuation) / 100).toFixed(0)} |`);
     });
     (valuation?.customAdjustments ?? []).forEach(adj => {
-        table.push(`| 自定义 | ${sanitize(adj.description)} | N/A | $${(((adj.valueCents ?? 0) * periodsInYearFor(adj.frequency)) / 100).toFixed(0)} |`);
+        table.push(`| User-defined | ${sanitize(adj.description)} | N/A | $${(((adj.valueCents ?? 0) * periodsInYearFor(adj.frequency)) / 100).toFixed(0)} |`);
     });
     return summary + '\n' + table.join('\n');
 };
