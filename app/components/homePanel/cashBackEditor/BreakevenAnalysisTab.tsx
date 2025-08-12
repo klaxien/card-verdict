@@ -4,11 +4,13 @@ import {
     Box,
     Divider,
     FormControl,
+    FormControlLabel,
     Grid,
     MenuItem,
     Paper,
     Select,
     Stack,
+    Switch,
     Table,
     TableBody,
     TableCell,
@@ -25,6 +27,7 @@ import type {NameType, ValueType} from "recharts/types/component/DefaultTooltipC
 import {cardverdict} from "~/generated/bundle";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
+import FunctionsIcon from '@mui/icons-material/Functions';
 
 const {CreditFrequency} = cardverdict.v1;
 
@@ -39,6 +42,7 @@ interface BreakevenAnalysisTabProps {
     }>;
     cppInput: string;
     totalAnnualSpend: number;
+    spendReturnRate: number;
     netWorthCents: number;
 }
 
@@ -65,7 +69,7 @@ const CustomTooltip = ({active, payload, label}: TooltipProps<ValueType, NameTyp
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
-            <Paper elevation={3} sx={{p: 2, minWidth: 200}}>
+            <Paper elevation={3} sx={{p: 2, minWidth: 220}}>
                 <Typography variant="body2" fontWeight="bold" gutterBottom>总消费: ${label.toFixed(0)}</Typography>
                 <Typography variant="body2" color="primary"
                             gutterBottom>总返现率: {data.returnRate.toFixed(2)}%</Typography>
@@ -73,11 +77,16 @@ const CustomTooltip = ({active, payload, label}: TooltipProps<ValueType, NameTyp
                 <Typography variant="caption" display="block" color="text.secondary">消费构成:</Typography>
                 <Stack spacing={0.5} mt={0.5}>
                     {data.breakdown.map((item: any, index: number) => (
-                        <Typography variant="caption" key={index}
-                                    sx={{display: 'flex', justifyContent: 'space-between'}}>
-                            <span>{item.description}:</span>
-                            <span style={{fontWeight: 500}}>${item.amount.toFixed(0)}</span>
-                        </Typography>
+                        <Grid container key={index} justifyContent="space-between" spacing={1}>
+                            <Grid item xs>
+                                <Typography variant="caption" noWrap
+                                            title={item.description}>{item.description}:</Typography>
+                            </Grid>
+                            <Grid item>
+                                <Typography variant="caption" fontWeight={500}
+                                            sx={{pl: 1}}>${item.amount.toFixed(0)}</Typography>
+                            </Grid>
+                        </Grid>
                     ))}
                 </Stack>
             </Paper>
@@ -91,11 +100,13 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                                                                        spendings,
                                                                        cppInput,
                                                                        totalAnnualSpend,
+                                                                       spendReturnRate,
                                                                        netWorthCents
                                                                    }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [calculationModes, setCalculationModes] = useState<Record<string, CalculationMode>>({});
+    const [includeNetWorth, setIncludeNetWorth] = useState(true);
 
     const activeSpendings = useMemo(() =>
             (spendings ?? []).filter(s => s && parseFloat(s.amountInput) > 0),
@@ -115,20 +126,53 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
 
     const analysisData = useMemo(() => {
         const cpp = parseFloat(cppInput) || 0;
-        const netWorth = netWorthCents / 100;
-        if (activeSpendings.length === 0) return {show: false, tableRows: [], chartData: [], tableHeaders: []};
+        const effectiveNetWorth = includeNetWorth ? netWorthCents / 100 : 0;
+
+        if (activeSpendings.length === 0) return {
+            show: false,
+            tableRows: [],
+            chartData: [],
+            tableHeaders: [],
+            isConstantRate: false,
+            constantRate: 0
+        };
+
         const fixedSpendItems = activeSpendings.filter(s => calculationModes[s.earningRateId] === 'fixed');
         const linearSpendItems = activeSpendings.filter(s => calculationModes[s.earningRateId] === 'linear');
         const totalFixedSpend = fixedSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
-        const totalFixedRewards = fixedSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s._multiplier * cpp) / 100, 0);
+
+        // --- 修复: 核心逻辑修正 ---
+        const isPurelyLinearWithNoFixedCost = effectiveNetWorth === 0 && totalFixedSpend === 0;
+
         const baseLinearSpend = linearSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
         const baseLinearRewards = linearSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s._multiplier * cpp) / 100, 0);
         const effectiveLinearSpendRate = baseLinearSpend > 0 ? baseLinearRewards / baseLinearSpend : 0;
+
+        if (isPurelyLinearWithNoFixedCost) {
+            return {
+                show: true,
+                isConstantRate: true,
+                constantRate: effectiveLinearSpendRate * 100,
+                tableRows: [], chartData: [], tableHeaders: []
+            };
+        }
+
+        const totalFixedRewards = fixedSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s._multiplier * cpp) / 100, 0);
+
+        const currentEffectiveReturnRate = totalAnnualSpend > 0 ? (spendReturnRate + (effectiveNetWorth * 100) / totalAnnualSpend) : (effectiveNetWorth > 0 ? Infinity : 0);
+        let tableTargets: number[];
+        if (currentEffectiveReturnRate > 5) {
+            const startRate = Math.ceil(currentEffectiveReturnRate);
+            tableTargets = Array.from({length: 5}, (_, i) => startRate + i);
+        } else {
+            tableTargets = [0, 1, 2, 3, 4, 5];
+        }
+
         const tableHeaders = activeSpendings.map(s => s._description);
-        const tableTargets = [0, 1, 2, 3, 4, 5];
+
         const tableRows = tableTargets.map(targetPercent => {
             const targetRate = targetPercent / 100;
-            const numerator = totalFixedRewards + netWorth - targetRate * totalFixedSpend;
+            const numerator = totalFixedRewards + effectiveNetWorth - targetRate * totalFixedSpend;
             const denominator = targetRate - effectiveLinearSpendRate;
             let requiredLinearSpend = (Math.abs(denominator) < 1e-9) ? (Math.abs(numerator) > 1e-9 ? null : 0) : (numerator / denominator);
             const requiredTotalSpend = (requiredLinearSpend !== null && requiredLinearSpend >= 0) ? requiredLinearSpend + totalFixedSpend : null;
@@ -140,29 +184,30 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
             });
             return {targetPercent, total: requiredTotalSpend, breakdown};
         });
+
         const chartData = [];
         if (baseLinearSpend > 0) {
             const breakevenTotalSpend = tableRows[0]?.total;
             const startSpend = (breakevenTotalSpend !== null && breakevenTotalSpend >= 0) ? breakevenTotalSpend : totalAnnualSpend;
             if (startSpend > 0) {
-                const maxSpend = Math.max(startSpend * 5, totalAnnualSpend * 5, 20000);
+                const maxSpend = Math.max(startSpend * 3, totalAnnualSpend * 3, 20000);
                 const steps = 20;
                 for (let i = 0; i <= steps; i++) {
                     const currentTotalSpend = startSpend + (maxSpend - startSpend) * (i / steps);
                     if (currentTotalSpend < totalFixedSpend) continue;
                     const currentLinearSpend = currentTotalSpend - totalFixedSpend;
                     const totalRewards = (currentLinearSpend * effectiveLinearSpendRate) + totalFixedRewards;
-                    const rate = (totalRewards + netWorth) / currentTotalSpend * 100;
+                    const rate = (totalRewards + effectiveNetWorth) / currentTotalSpend * 100;
                     const breakdown = activeSpendings.map(s => ({
-                        description: s._description.split(' ')[0],
+                        description: s._description,
                         amount: calculationModes[s.earningRateId] === 'fixed' ? (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) : currentLinearSpend * (baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0),
                     }));
                     chartData.push({spend: currentTotalSpend, returnRate: rate, breakdown: breakdown});
                 }
             }
         }
-        return {show: true, tableRows, chartData, tableHeaders};
-    }, [activeSpendings, calculationModes, cppInput, netWorthCents, totalAnnualSpend]);
+        return {show: true, tableRows, chartData, tableHeaders, isConstantRate: false, constantRate: 0};
+    }, [activeSpendings, calculationModes, cppInput, netWorthCents, totalAnnualSpend, includeNetWorth, spendReturnRate]);
 
     if (!analysisData.show) {
         return <Typography variant="body2" display="block" textAlign="center" color="text.secondary"
@@ -179,7 +224,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                             <CartesianGrid strokeDasharray="3 3"/>
                             <XAxis dataKey="spend" type="number" domain={['dataMin', 'dataMax']}
                                    tickFormatter={(tick) => `$${Math.round(tick / 1000)}k`} name="总消费"/>
-                            <YAxis domain={[0, 'dataMax + 1']} tickFormatter={(tick) => `${tick.toFixed(1)}%`}
+                            <YAxis domain={['auto', 'auto']} tickFormatter={(tick) => `${tick.toFixed(1)}%`}
                                    name="总返现率"/>
                             <Tooltip content={<CustomTooltip/>}/>
                             <Legend formatter={() => "总返现率"}/>
@@ -226,15 +271,20 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
 
     const AlgorithmControls = () => (
         <Paper elevation={2} sx={{p: 2}}>
-            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+            <Stack direction="row" alignItems="center" spacing={1} mb={1}>
                 <TuneOutlinedIcon color="action"/>
                 <Typography variant="h6" fontWeight="bold">算法调整</Typography>
             </Stack>
+            <FormControlLabel
+                control={<Switch checked={includeNetWorth} onChange={(e) => setIncludeNetWorth(e.target.checked)}/>}
+                label={<Typography variant="body2">计算时考虑等效年费</Typography>}
+                sx={{mb: 1}}
+            />
+            <Divider sx={{mb: 2}}/>
             <Stack spacing={2}>
                 {activeSpendings.map(spending => {
                     const annualAmount = (parseFloat(spending.amountInput) || 0) * periodsInYearFor(spending.frequency);
                     return (
-                        // --- 修正: 使用 Grid v2 语法 ---
                         <Grid container key={spending.earningRateId} alignItems="center" spacing={1}>
                             <Grid xs={7} sm={8}>
                                 <Typography variant="body2" noWrap
@@ -257,31 +307,34 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
     );
 
     return (
-        <Stack spacing={3}>
+        <Stack spacing={3} sx={{mt: 2}}>
             <Alert severity="info" icon={<InfoOutlinedIcon fontSize="inherit"/>}>
                 算法说明：根据您在“消费规划”页的输入进行分析。您可以在下方调整每个消费类别的计算方式（固定值或按比例增减）来模拟不同消费场景。
             </Alert>
 
-            {isMobile ? (
+            {analysisData.isConstantRate ? (
+                <Alert severity="warning" icon={<FunctionsIcon/>}>
+                    <Typography fontWeight="bold">回报率固定</Typography>
+                    <Typography variant="body2">
+                        当关闭年费计算且所有消费都按比例增减时，返现率是一个固定值，恒为 <b>{analysisData.constantRate.toFixed(2)}%</b>，与消费金额无关。
+                    </Typography>
+                    <Typography variant="caption" display="block" mt={1}>
+                        请将某项消费设为“固定”或开启年费计算以进行盈亏分析。
+                    </Typography>
+                </Alert>
+            ) : isMobile ? (
                 <Stack spacing={3}>
                     <AnalysisChart/>
                     <AnalysisTable/>
-                    <AlgorithmControls/>
                 </Stack>
             ) : (
-                // --- 修正: 使用 Grid v2 语法 ---
                 <Grid container spacing={3}>
-                    <Grid xs={12} md={7} flexGrow={1}>
-                        <AnalysisChart/>
-                    </Grid>
-                    <Grid xs={12} md={5}>
-                        <Stack spacing={3}>
-                            <AnalysisTable/>
-                            <AlgorithmControls/>
-                        </Stack>
-                    </Grid>
+                    <Grid xs={12} md={7} flexGrow={1}><AnalysisChart/></Grid>
+                    <Grid xs={12} md={5}><AnalysisTable/></Grid>
                 </Grid>
             )}
+
+            <AlgorithmControls/>
         </Stack>
     );
 };

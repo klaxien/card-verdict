@@ -505,6 +505,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                         <BreakevenAnalysisTab
                             spendings={watchedValues.spendings}
                             cppInput={watchedValues.cppInput} // <-- 传递 cpp
+                            spendReturnRate={spendReturnRate} // <-- 新增这一行
                             totalAnnualSpend={totalAnnualSpend}
                             netWorthCents={netWorthCents}
                         />
