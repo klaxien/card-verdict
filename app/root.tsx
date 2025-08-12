@@ -1,11 +1,4 @@
-import {
-    isRouteErrorResponse,
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-} from "react-router";
+import {isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration,} from "react-router";
 
 import type {Route} from "./+types/root";
 import "./app.css";
@@ -13,7 +6,7 @@ import CardVerdictNavBar from "~/components/navBar/CardVerdictNavBar";
 import Grid from '@mui/material/Grid';
 
 // MUI theme imports
-import {ThemeProvider, createTheme} from '@mui/material/styles';
+import {createTheme, ThemeProvider} from '@mui/material/styles';
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 
 import CssBaseline from '@mui/material/CssBaseline';
@@ -82,6 +75,31 @@ const theme = createTheme({
     colorSchemes: {
         dark: true,
         light: true,
+    },
+    typography: {
+        fontFamily: [
+            '"Roboto"',                  // 主英文字体
+            '"Helvetica"',               // Mac 备用英文
+            '"Arial"',                   // 通用英文 fallback
+
+            // 中文优先按简→繁
+            '"PingFang SC"',              // macOS 简体中文
+            '"Microsoft YaHei"',          // Windows 简体中文
+            '"Noto Sans CJK SC"',         // Linux/跨平台 简体
+            '"Noto Sans CJK TC"',         // 繁体中文
+            '"WenQuanYi Micro Hei"',      // 旧 Linux 中文
+
+            // 日语（防止 Accept-Language=ja 时 fallback 不一致）
+            '"Noto Sans JP"',             // Linux/Mac 日语
+            '"Hiragino Kaku Gothic ProN"',// macOS 日语
+
+            // Emoji（不同系统彩色支持）
+            '"Apple Color Emoji"',        // macOS
+            '"Segoe UI Emoji"',           // Windows
+            '"Noto Color Emoji"',         // Linux
+
+            'sans-serif'                  // 最终兜底
+        ].join(','),
     },
 });
 
