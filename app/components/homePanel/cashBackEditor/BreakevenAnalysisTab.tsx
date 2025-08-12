@@ -305,7 +305,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                                     <Select value={calculationModes[spending.id] || 'linear'}
                                             onChange={(e) => handleModeChange(spending.id, e.target.value as CalculationMode)}>
                                         <MenuItem value="linear">线性增加</MenuItem>
-                                        <MenuItem value="fixed">固定: ${annualAmount.toFixed(0)}</MenuItem>
+                                        <MenuItem value="fixed">固定每年: ${annualAmount.toFixed(0)}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -319,7 +319,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
     return (
         <Stack spacing={3} sx={{mt: 2}}>
             <Alert severity="info" icon={<InfoOutlinedIcon fontSize="inherit"/>}>
-                算法说明：根据您在“消费规划”页的输入进行分析。您可以在下方调整每个消费类别的计算方式（固定值或按比例增减）来模拟不同消费场景。
+                算法说明：根您在“消费规划”页的输入进行分析。可以在下方调整每个消费类别的计算方式（固定值或线形增减）来模拟不同消费场景。
             </Alert>
 
             {analysisData.isConstantRate ? (
