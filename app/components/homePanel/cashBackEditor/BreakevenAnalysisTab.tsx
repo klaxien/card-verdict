@@ -1,8 +1,13 @@
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
+    Alert,
     Box,
     Divider,
+    FormControl,
+    Grid,
+    MenuItem,
     Paper,
+    Select,
     Stack,
     Table,
     TableBody,
@@ -11,39 +16,35 @@ import {
     TableHead,
     TableRow,
     Typography,
+    useMediaQuery,
     useTheme
 } from '@mui/material';
-import {
-    CartesianGrid,
-    Legend,
-    Line,
-    LineChart,
-    ResponsiveContainer,
-    Tooltip,
-    type TooltipProps,
-    XAxis,
-    YAxis
-} from 'recharts';
+import type {TooltipProps} from 'recharts';
+import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
 import type {NameType, ValueType} from "recharts/types/component/DefaultTooltipContent";
 import {cardverdict} from "~/generated/bundle";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 
 const {CreditFrequency} = cardverdict.v1;
 
 // --- Props 定义 ---
 interface BreakevenAnalysisTabProps {
-    // 从 FormWatcher 传入的消费数据
     spendings: Array<{
+        earningRateId: string;
         amountInput: string;
         frequency: cardverdict.v1.CreditFrequency;
         _description: string;
+        _multiplier: number;
     }>;
-    // 从主组件计算得出的值
+    cppInput: string;
     totalAnnualSpend: number;
-    spendReturnRate: number;
     netWorthCents: number;
 }
 
-// --- 辅助函数 (保持组件自包含) ---
+type CalculationMode = 'linear' | 'fixed';
+
+// --- 辅助函数 ---
 const periodsInYearFor = (frequency?: cardverdict.v1.CreditFrequency): number => {
     switch (frequency) {
         case CreditFrequency.ANNUAL:
@@ -64,19 +65,18 @@ const CustomTooltip = ({active, payload, label}: TooltipProps<ValueType, NameTyp
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
-            <Paper elevation={3} sx={{p: 2}}>
-                <Typography variant="body2" fontWeight="bold" gutterBottom>
-                    总消费: ${label.toFixed(0)}
-                </Typography>
-                <Typography variant="body2" color="primary" gutterBottom>
-                    总返现率: {data.returnRate.toFixed(2)}%
-                </Typography>
+            <Paper elevation={3} sx={{p: 2, minWidth: 200}}>
+                <Typography variant="body2" fontWeight="bold" gutterBottom>总消费: ${label.toFixed(0)}</Typography>
+                <Typography variant="body2" color="primary"
+                            gutterBottom>总返现率: {data.returnRate.toFixed(2)}%</Typography>
                 <Divider sx={{my: 1}}/>
-                <Typography variant="caption" display="block">消费构成:</Typography>
-                <Stack spacing={0.5}>
+                <Typography variant="caption" display="block" color="text.secondary">消费构成:</Typography>
+                <Stack spacing={0.5} mt={0.5}>
                     {data.breakdown.map((item: any, index: number) => (
-                        <Typography variant="caption" key={index}>
-                            {item.description}: ${item.amount.toFixed(0)}
+                        <Typography variant="caption" key={index}
+                                    sx={{display: 'flex', justifyContent: 'space-between'}}>
+                            <span>{item.description}:</span>
+                            <span style={{fontWeight: 500}}>${item.amount.toFixed(0)}</span>
                         </Typography>
                     ))}
                 </Stack>
@@ -86,89 +86,126 @@ const CustomTooltip = ({active, payload, label}: TooltipProps<ValueType, NameTyp
     return null;
 };
 
-
+// --- 主要UI组件 ---
 const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                                                                        spendings,
+                                                                       cppInput,
                                                                        totalAnnualSpend,
-                                                                       spendReturnRate,
                                                                        netWorthCents
                                                                    }) => {
     const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [calculationModes, setCalculationModes] = useState<Record<string, CalculationMode>>({});
+
+    const activeSpendings = useMemo(() =>
+            (spendings ?? []).filter(s => s && parseFloat(s.amountInput) > 0),
+        [spendings]);
+
+    useEffect(() => {
+        const newModes: Record<string, CalculationMode> = {};
+        activeSpendings.forEach(s => {
+            newModes[s.earningRateId] = calculationModes[s.earningRateId] || 'linear';
+        });
+        setCalculationModes(newModes);
+    }, [activeSpendings.map(s => s.earningRateId).join(',')]);
+
+    const handleModeChange = (earningRateId: string, mode: CalculationMode) => {
+        setCalculationModes(prev => ({...prev, [earningRateId]: mode}));
+    };
 
     const analysisData = useMemo(() => {
-        const activeSpendings = (spendings ?? []).filter(s => s && parseFloat(s.amountInput) > 0);
-        const hasSpending = activeSpendings.length > 0 && totalAnnualSpend > 0;
-        if (!hasSpending) {
-            return {show: false, tableRows: [], chartData: [], tableHeaders: []};
-        }
-
-        const spendRate = spendReturnRate;
+        const cpp = parseFloat(cppInput) || 0;
         const netWorth = netWorthCents / 100;
-
+        if (activeSpendings.length === 0) return {show: false, tableRows: [], chartData: [], tableHeaders: []};
+        const fixedSpendItems = activeSpendings.filter(s => calculationModes[s.earningRateId] === 'fixed');
+        const linearSpendItems = activeSpendings.filter(s => calculationModes[s.earningRateId] === 'linear');
+        const totalFixedSpend = fixedSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
+        const totalFixedRewards = fixedSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s._multiplier * cpp) / 100, 0);
+        const baseLinearSpend = linearSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
+        const baseLinearRewards = linearSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s._multiplier * cpp) / 100, 0);
+        const effectiveLinearSpendRate = baseLinearSpend > 0 ? baseLinearRewards / baseLinearSpend : 0;
+        const tableHeaders = activeSpendings.map(s => s._description);
         const tableTargets = [0, 1, 2, 3, 4, 5];
-        const activeSpendingProportions = activeSpendings.map(s => {
-            const annualAmount = (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency);
-            return {
-                description: s._description,
-                proportion: annualAmount / totalAnnualSpend,
-            };
-        });
-        const tableHeaders = activeSpendingProportions.map(p => p.description);
-
         const tableRows = tableTargets.map(targetPercent => {
-            const denominator = (spendRate - targetPercent) / 100;
-            let requiredTotalSpend: number | null;
-            if (Math.abs(denominator) < 1e-9) {
-                requiredTotalSpend = null;
-            } else {
-                requiredTotalSpend = -netWorth / denominator;
-            }
-            const breakdown = activeSpendingProportions.map(({proportion}) =>
-                requiredTotalSpend !== null && requiredTotalSpend >= 0 ? requiredTotalSpend * proportion : null
-            );
+            const targetRate = targetPercent / 100;
+            const numerator = totalFixedRewards + netWorth - targetRate * totalFixedSpend;
+            const denominator = targetRate - effectiveLinearSpendRate;
+            let requiredLinearSpend = (Math.abs(denominator) < 1e-9) ? (Math.abs(numerator) > 1e-9 ? null : 0) : (numerator / denominator);
+            const requiredTotalSpend = (requiredLinearSpend !== null && requiredLinearSpend >= 0) ? requiredLinearSpend + totalFixedSpend : null;
+            const breakdown = activeSpendings.map(s => {
+                if (requiredLinearSpend === null || requiredLinearSpend < 0) return null;
+                if (calculationModes[s.earningRateId] === 'fixed') return (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency);
+                const proportion = baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0;
+                return requiredLinearSpend * proportion;
+            });
             return {targetPercent, total: requiredTotalSpend, breakdown};
         });
-
         const chartData = [];
-        const startSpend = tableRows[0]?.total ?? totalAnnualSpend;
-        if (startSpend > 0) {
-            const maxSpend = Math.max(startSpend * 5, totalAnnualSpend * 5, 20000);
-            const steps = 20;
-            for (let i = 0; i <= steps; i++) {
-                const currentSpend = startSpend + (maxSpend - startSpend) * (i / steps);
-                if (currentSpend <= 0) continue;
-                const rate = (spendRate + (netWorth * 100) / currentSpend);
-                const breakdown = activeSpendingProportions.map(({description, proportion}) => ({
-                    description: description.split(' ')[0],
-                    amount: currentSpend * proportion,
-                }));
-                chartData.push({spend: currentSpend, returnRate: rate, breakdown: breakdown});
+        if (baseLinearSpend > 0) {
+            const breakevenTotalSpend = tableRows[0]?.total;
+            const startSpend = (breakevenTotalSpend !== null && breakevenTotalSpend >= 0) ? breakevenTotalSpend : totalAnnualSpend;
+            if (startSpend > 0) {
+                const maxSpend = Math.max(startSpend * 5, totalAnnualSpend * 5, 20000);
+                const steps = 20;
+                for (let i = 0; i <= steps; i++) {
+                    const currentTotalSpend = startSpend + (maxSpend - startSpend) * (i / steps);
+                    if (currentTotalSpend < totalFixedSpend) continue;
+                    const currentLinearSpend = currentTotalSpend - totalFixedSpend;
+                    const totalRewards = (currentLinearSpend * effectiveLinearSpendRate) + totalFixedRewards;
+                    const rate = (totalRewards + netWorth) / currentTotalSpend * 100;
+                    const breakdown = activeSpendings.map(s => ({
+                        description: s._description.split(' ')[0],
+                        amount: calculationModes[s.earningRateId] === 'fixed' ? (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) : currentLinearSpend * (baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0),
+                    }));
+                    chartData.push({spend: currentTotalSpend, returnRate: rate, breakdown: breakdown});
+                }
             }
         }
-
-        return {show: true, tableHeaders, tableRows, chartData};
-    }, [spendings, totalAnnualSpend, spendReturnRate, netWorthCents]);
+        return {show: true, tableRows, chartData, tableHeaders};
+    }, [activeSpendings, calculationModes, cppInput, netWorthCents, totalAnnualSpend]);
 
     if (!analysisData.show) {
-        return (
-            <Typography variant="body2" display="block" textAlign="center" color="text.secondary" sx={{py: 4}}>
-                在“消费规划”标签页中输入计划消费以查看分析
-            </Typography>
-        );
+        return <Typography variant="body2" display="block" textAlign="center" color="text.secondary"
+                           sx={{py: 4}}>在“消费规划”标签页中输入计划消费以查看分析</Typography>;
     }
 
-    return (
-        <Stack spacing={3}>
-            <TableContainer sx={{maxHeight: 220}}>
-                <Table size="small" stickyHeader>
-                    <TableHead>
+    const AnalysisChart = () => (
+        <Paper elevation={2} sx={{p: 2, height: '100%'}}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>回报率曲线</Typography>
+            <Box sx={{height: 300}}>
+                {analysisData.chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={analysisData.chartData} margin={{top: 5, right: 20, left: -10, bottom: 5}}>
+                            <CartesianGrid strokeDasharray="3 3"/>
+                            <XAxis dataKey="spend" type="number" domain={['dataMin', 'dataMax']}
+                                   tickFormatter={(tick) => `$${Math.round(tick / 1000)}k`} name="总消费"/>
+                            <YAxis domain={[0, 'dataMax + 1']} tickFormatter={(tick) => `${tick.toFixed(1)}%`}
+                                   name="总返现率"/>
+                            <Tooltip content={<CustomTooltip/>}/>
+                            <Legend formatter={() => "总返现率"}/>
+                            <Line type="monotone" dataKey="returnRate" stroke={theme.palette.primary.main}
+                                  strokeWidth={2} dot={false}/>
+                        </LineChart>
+                    </ResponsiveContainer>
+                ) : <Typography variant="body2" color="text.secondary"
+                                textAlign="center">无法生成图表（例如所有消费都设为固定）。</Typography>}
+            </Box>
+        </Paper>
+    );
+
+    const AnalysisTable = () => (
+        <Paper elevation={2} sx={{p: 2}}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>盈亏平衡点</Typography>
+            <TableContainer>
+                <Table size="small">
+                    <TableHead sx={{backgroundColor: theme.palette.action.hover}}>
                         <TableRow>
                             <TableCell sx={{fontWeight: 'bold'}}>目标返现率</TableCell>
                             <TableCell align="right" sx={{fontWeight: 'bold'}}>所需总消费</TableCell>
-                            {analysisData.tableHeaders.map(header => (
-                                <TableCell align="right" key={header}
-                                           sx={{fontWeight: 'bold'}}>{header.split(' ')[0]}</TableCell>
-                            ))}
+                            {analysisData.tableHeaders.map(header => <TableCell align="right" key={header} sx={{
+                                fontWeight: 'bold',
+                                whiteSpace: 'nowrap'
+                            }}>{header.split(' ')[0]}</TableCell>)}
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -177,31 +214,74 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                                 <TableCell component="th" scope="row">{row.targetPercent}%</TableCell>
                                 <TableCell
                                     align="right">{row.total !== null && row.total >= 0 ? `$${row.total.toFixed(0)}` : '无法达到'}</TableCell>
-                                {row.breakdown.map((spend, index) => (
-                                    <TableCell align="right"
-                                               key={index}>{spend !== null && spend >= 0 ? `$${spend.toFixed(0)}` : '--'}</TableCell>
-                                ))}
+                                {row.breakdown.map((spend, index) => <TableCell align="right"
+                                                                                key={index}>{spend !== null && spend >= 0 ? `$${spend.toFixed(0)}` : '--'}</TableCell>)}
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </TableContainer>
+        </Paper>
+    );
 
-            <Box sx={{height: 300, width: '100%'}}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={analysisData.chartData} margin={{top: 5, right: 20, left: -10, bottom: 5}}>
-                        <CartesianGrid strokeDasharray="3 3"/>
-                        <XAxis dataKey="spend" type="number" domain={['dataMin', 'dataMax']}
-                               tickFormatter={(tick) => `$${Math.round(tick / 1000)}k`} name="总消费"/>
-                        <YAxis domain={[0, 'dataMax + 1']} tickFormatter={(tick) => `${tick.toFixed(1)}%`}
-                               name="总返现率"/>
-                        <Tooltip content={<CustomTooltip/>}/>
-                        <Legend formatter={() => "总返现率"}/>
-                        <Line type="monotone" dataKey="returnRate" stroke={theme.palette.primary.main} strokeWidth={2}
-                              dot={false}/>
-                    </LineChart>
-                </ResponsiveContainer>
-            </Box>
+    const AlgorithmControls = () => (
+        <Paper elevation={2} sx={{p: 2}}>
+            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+                <TuneOutlinedIcon color="action"/>
+                <Typography variant="h6" fontWeight="bold">算法调整</Typography>
+            </Stack>
+            <Stack spacing={2}>
+                {activeSpendings.map(spending => {
+                    const annualAmount = (parseFloat(spending.amountInput) || 0) * periodsInYearFor(spending.frequency);
+                    return (
+                        // --- 修正: 使用 Grid v2 语法 ---
+                        <Grid container key={spending.earningRateId} alignItems="center" spacing={1}>
+                            <Grid xs={7} sm={8}>
+                                <Typography variant="body2" noWrap
+                                            title={spending._description}>{spending._description}</Typography>
+                            </Grid>
+                            <Grid xs={5} sm={4}>
+                                <FormControl fullWidth size="small">
+                                    <Select value={calculationModes[spending.earningRateId] || 'linear'}
+                                            onChange={(e) => handleModeChange(spending.earningRateId, e.target.value as CalculationMode)}>
+                                        <MenuItem value="linear">线性增加</MenuItem>
+                                        <MenuItem value="fixed">固定: ${annualAmount.toFixed(0)}</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                        </Grid>
+                    );
+                })}
+            </Stack>
+        </Paper>
+    );
+
+    return (
+        <Stack spacing={3}>
+            <Alert severity="info" icon={<InfoOutlinedIcon fontSize="inherit"/>}>
+                算法说明：根据您在“消费规划”页的输入进行分析。您可以在下方调整每个消费类别的计算方式（固定值或按比例增减）来模拟不同消费场景。
+            </Alert>
+
+            {isMobile ? (
+                <Stack spacing={3}>
+                    <AnalysisChart/>
+                    <AnalysisTable/>
+                    <AlgorithmControls/>
+                </Stack>
+            ) : (
+                // --- 修正: 使用 Grid v2 语法 ---
+                <Grid container spacing={3}>
+                    <Grid xs={12} md={7} flexGrow={1}>
+                        <AnalysisChart/>
+                    </Grid>
+                    <Grid xs={12} md={5}>
+                        <Stack spacing={3}>
+                            <AnalysisTable/>
+                            <AlgorithmControls/>
+                        </Stack>
+                    </Grid>
+                </Grid>
+            )}
         </Stack>
     );
 };

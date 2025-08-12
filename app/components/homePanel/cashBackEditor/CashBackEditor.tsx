@@ -360,8 +360,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
 
     return (
         <FormProvider {...methods}>
-            <Dialog open={open} onClose={onClose} fullScreen={isMobile} maxWidth="md" fullWidth
-                    PaperProps={{sx: {height: {sm: '90vh'}, width: {sm: '100vw'}}}}>
+            <Dialog open={open} onClose={onClose} fullScreen maxWidth="md" fullWidth>
                 <DialogTitle>计算 {card.name} 返现</DialogTitle>
 
                 <DialogContent dividers sx={{pt: 0, pb: {xs: 'calc(72px + env(safe-area-inset-bottom))', sm: 2}}}>
@@ -505,8 +504,8 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                         {/* --- 使用新的独立组件 --- */}
                         <BreakevenAnalysisTab
                             spendings={watchedValues.spendings}
+                            cppInput={watchedValues.cppInput} // <-- 传递 cpp
                             totalAnnualSpend={totalAnnualSpend}
-                            spendReturnRate={spendReturnRate}
                             netWorthCents={netWorthCents}
                         />
                     </TabPanel>
