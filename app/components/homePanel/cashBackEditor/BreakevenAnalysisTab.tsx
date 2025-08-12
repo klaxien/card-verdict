@@ -335,7 +335,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                 <Alert severity="warning" icon={<FunctionsIcon/>}>
                     <Typography fontWeight="bold">回报率固定</Typography>
                     <Typography variant="body2">
-                        当关闭年费计算，或等效年费为0，且所有消费都按比例增减时，返现率是一个固定值，恒为 <b>{analysisData.constantRate.toFixed(2)}%</b>，与消费金额无关。
+                        当不考虑等效年费，或等效年费为0，且所有消费都按比例增减时，返现率是一个固定值，恒为 <b>{analysisData.constantRate.toFixed(2)}%</b>，与消费金额无关。
                     </Typography>
                     <Typography variant="body2">
                         当前等效年费为${formatWithoutTrailingZeroes((netWorthCents / 100))}。
