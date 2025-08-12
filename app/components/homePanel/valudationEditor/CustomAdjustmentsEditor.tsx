@@ -95,107 +95,108 @@ export const CustomAdjustmentsEditor: React.FC<CustomAdjustmentsEditorProps> = (
                         const originalIndex = fields.findIndex(f => f.key === field.key);
 
                         return (
-                            <Box key={field.key} sx={{ p: 1.5, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                                <Grid container spacing={2} alignItems="flex-start">
-                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                        <Controller
-                                            name={`customAdjustments.${originalIndex}.description`}
-                                            control={control}
-                                            rules={{
-                                                required: '描述不能为空',
-                                                validate: createLengthValidator(30, '描述')
-                                            }}
-                                            render={({ field, fieldState: { error } }) => (
-                                                <TextField {...field} fullWidth
-                                                           label="描述"
-                                                           size="small" autoComplete="off"
-                                                           error={!!error} helperText={error?.message ?? ' '}/>
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 12, sm: 3 }}>
-                                        <Controller
-                                            name={`customAdjustments.${originalIndex}.frequency`}
-                                            control={control}
-                                            defaultValue={CreditFrequency.ANNUAL}
-                                            render={({ field }) => (
-                                                <FormControl fullWidth size="small">
-                                                    <InputLabel>频率</InputLabel>
-                                                    <Select {...field} label="频率">
-                                                        {frequencyOptions.map(opt => (
-                                                            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 12, sm: 3 }}>
-                                        <Controller
-                                            name={`customAdjustments.${originalIndex}.valueCents`}
-                                            control={control}
-                                            rules={{ validate: validateSignedDollars }}
-                                            render={({ field, fieldState: { error } }) => (
-                                                <TextField
-                                                    {...field}
-                                                    fullWidth
-                                                    label="金额"
-                                                    size="small"
-                                                    autoComplete="off"
-                                                    onBlur={() => {
-                                                        // FIX: Only convert to cents if the value is a string from user input.
-                                                        if (typeof field.value === 'string') {
-                                                            const num = parseFloat(field.value);
-                                                            field.onChange(isNaN(num) ? null : Math.round(num * 100));
-                                                        }
-                                                    }}
-                                                    onChange={(e) => {
-                                                        field.onChange(e.target.value);
-                                                    }}
-                                                    // Handle different value types for display
-                                                    value={
-                                                        field.value === null || field.value === undefined
-                                                            ? ''
-                                                            : typeof field.value === 'number'
-                                                                // If number, it's cents; convert to dollars
-                                                                ? (field.value / 100).toString()
-                                                                // Otherwise, it's a string from user input; display as-is
-                                                                : field.value
-                                                    }
-                                                    error={!!error}
-                                                    helperText={error?.message ?? ' '}
-                                                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                                                />
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid size={12}>
-                                        <Controller
-                                            name={`customAdjustments.${originalIndex}.notes`}
-                                            control={control}
-                                            rules={{validate: createLengthValidator(50, '备注')}}
-                                            render={({field, fieldState: {error}}) => (
-                                                <TextField {...field}
-                                                           fullWidth
-                                                           autoComplete="off"
-                                                           label="备注（可选）"
-                                                           size="small"
-                                                           multiline
-                                                           minRows={1}
-                                                           error={!!error}
-                                                           helperText={error?.message || ''}/>
-                                            )}
-                                        />
-                                    </Grid>
-                                    <Grid size={12} display="flex" justifyContent="flex-end">
-                                        <Tooltip title="删除此自定义报销">
-                                            <IconButton color="error" onClick={() => remove(originalIndex)} size="small">
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </Grid>
+                            <Grid container spacing={2} alignItems="flex-start">
+                                <Grid size={{xs: 12, sm: 6}}>
+                                    <Controller
+                                        name={`customAdjustments.${originalIndex}.description`}
+                                        control={control}
+                                        rules={{
+                                            required: '描述不能为空',
+                                            validate: createLengthValidator(30, '描述')
+                                        }}
+                                        render={({field, fieldState: {error}}) => (
+                                            <TextField {...field} fullWidth
+                                                       label="描述"
+                                                       size="small" autoComplete="off"
+                                                       error={!!error} helperText={error?.message ?? ''}/>
+                                        )}
+                                    />
                                 </Grid>
-                            </Box>
+                                <Grid size={{xs: 12, sm: 3}}>
+                                    <Controller
+                                        name={`customAdjustments.${originalIndex}.frequency`}
+                                        control={control}
+                                        defaultValue={CreditFrequency.ANNUAL}
+                                        render={({field}) => (
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>频率</InputLabel>
+                                                <Select {...field} label="频率">
+                                                    {frequencyOptions.map(opt => (
+                                                        <MenuItem key={opt.value}
+                                                                  value={opt.value}>{opt.label}</MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        )}
+                                    />
+                                </Grid>
+                                <Grid size={{xs: 12, sm: 3}}>
+                                    <Controller
+                                        name={`customAdjustments.${originalIndex}.valueCents`}
+                                        control={control}
+                                        rules={{validate: validateSignedDollars}}
+                                        render={({field, fieldState: {error}}) => (
+                                            <TextField
+                                                {...field}
+                                                fullWidth
+                                                label="金额"
+                                                size="small"
+                                                autoComplete="off"
+                                                onBlur={() => {
+                                                    // FIX: Only convert to cents if the value is a string from user input.
+                                                    if (typeof field.value === 'string') {
+                                                        const num = parseFloat(field.value);
+                                                        field.onChange(isNaN(num) ? null : Math.round(num * 100));
+                                                    }
+                                                }}
+                                                onChange={(e) => {
+                                                    field.onChange(e.target.value);
+                                                }}
+                                                // Handle different value types for display
+                                                value={
+                                                    field.value === null || field.value === undefined
+                                                        ? ''
+                                                        : typeof field.value === 'number'
+                                                            // If number, it's cents; convert to dollars
+                                                            ? (field.value / 100).toString()
+                                                            // Otherwise, it's a string from user input; display as-is
+                                                            : field.value
+                                                }
+                                                error={!!error}
+                                                helperText={error?.message ?? ''}
+                                                InputProps={{
+                                                    startAdornment: <InputAdornment position="start">$</InputAdornment>
+                                                }}
+                                            />
+                                        )}
+                                    />
+                                </Grid>
+                                <Grid size={12}>
+                                    <Controller
+                                        name={`customAdjustments.${originalIndex}.notes`}
+                                        control={control}
+                                        rules={{validate: createLengthValidator(50, '备注')}}
+                                        render={({field, fieldState: {error}}) => (
+                                            <TextField {...field}
+                                                       fullWidth
+                                                       autoComplete="off"
+                                                       label="备注（可选）"
+                                                       size="small"
+                                                       multiline
+                                                       minRows={1}
+                                                       error={!!error}
+                                                       helperText={error?.message || ''}/>
+                                        )}
+                                    />
+                                </Grid>
+                                <Grid size={12} display="flex" justifyContent="flex-end">
+                                    <Tooltip title="删除此自定义报销">
+                                        <IconButton color="error" onClick={() => remove(originalIndex)} size="small">
+                                            <DeleteIcon fontSize="small"/>
+                                        </IconButton>
+                                    </Tooltip>
+                                </Grid>
+                            </Grid>
                         );
                     })}
                 </Stack>

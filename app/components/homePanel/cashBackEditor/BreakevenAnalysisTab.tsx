@@ -21,9 +21,7 @@ import {
     useMediaQuery,
     useTheme
 } from '@mui/material';
-import type {TooltipProps} from 'recharts';
 import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
-import type {NameType, ValueType} from "recharts/types/component/DefaultTooltipContent";
 import {cardverdict} from "~/generated/bundle";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
@@ -34,11 +32,11 @@ const {CreditFrequency} = cardverdict.v1;
 // --- Props 定义 ---
 interface BreakevenAnalysisTabProps {
     spendings: Array<{
-        earningRateId: string;
+        id: string;
+        description: string;
+        multiplier: number;
         amountInput: string;
         frequency: cardverdict.v1.CreditFrequency;
-        _description: string;
-        _multiplier: number;
     }>;
     cppInput: string;
     totalAnnualSpend: number;
@@ -64,13 +62,26 @@ const periodsInYearFor = (frequency?: cardverdict.v1.CreditFrequency): number =>
     }
 };
 
+// --- 修复: 为自定义 Tooltip 创建专用的 Props 接口 ---
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: Array<{
+        payload: {
+            returnRate: number;
+            breakdown: Array<{ description: string; amount: number }>;
+        };
+    }>;
+    label?: string | number;
+}
+
 // --- 自定义图表 Tooltip ---
-const CustomTooltip = ({active, payload, label}: TooltipProps<ValueType, NameType>) => {
+const CustomTooltip = ({active, payload, label}: CustomTooltipProps) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
             <Paper elevation={3} sx={{p: 2, minWidth: 220}}>
-                <Typography variant="body2" fontWeight="bold" gutterBottom>总消费: ${label.toFixed(0)}</Typography>
+                <Typography variant="body2" fontWeight="bold" gutterBottom>总消费:
+                    ${Number(label).toFixed(0)}</Typography>
                 <Typography variant="body2" color="primary"
                             gutterBottom>总返现率: {data.returnRate.toFixed(2)}%</Typography>
                 <Divider sx={{my: 1}}/>
@@ -78,11 +89,11 @@ const CustomTooltip = ({active, payload, label}: TooltipProps<ValueType, NameTyp
                 <Stack spacing={0.5} mt={0.5}>
                     {data.breakdown.map((item: any, index: number) => (
                         <Grid container key={index} justifyContent="space-between" spacing={1}>
-                            <Grid item xs>
+                            <Grid xs>
                                 <Typography variant="caption" noWrap
                                             title={item.description}>{item.description}:</Typography>
                             </Grid>
-                            <Grid item>
+                            <Grid>
                                 <Typography variant="caption" fontWeight={500}
                                             sx={{pl: 1}}>${item.amount.toFixed(0)}</Typography>
                             </Grid>
@@ -115,13 +126,13 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
     useEffect(() => {
         const newModes: Record<string, CalculationMode> = {};
         activeSpendings.forEach(s => {
-            newModes[s.earningRateId] = calculationModes[s.earningRateId] || 'linear';
+            newModes[s.id] = calculationModes[s.id] || 'linear';
         });
         setCalculationModes(newModes);
-    }, [activeSpendings.map(s => s.earningRateId).join(',')]);
+    }, [activeSpendings.map(s => s.id).join(',')]);
 
-    const handleModeChange = (earningRateId: string, mode: CalculationMode) => {
-        setCalculationModes(prev => ({...prev, [earningRateId]: mode}));
+    const handleModeChange = (id: string, mode: CalculationMode) => {
+        setCalculationModes(prev => ({...prev, [id]: mode}));
     };
 
     const analysisData = useMemo(() => {
@@ -137,15 +148,14 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
             constantRate: 0
         };
 
-        const fixedSpendItems = activeSpendings.filter(s => calculationModes[s.earningRateId] === 'fixed');
-        const linearSpendItems = activeSpendings.filter(s => calculationModes[s.earningRateId] === 'linear');
+        const fixedSpendItems = activeSpendings.filter(s => calculationModes[s.id] === 'fixed');
+        const linearSpendItems = activeSpendings.filter(s => calculationModes[s.id] === 'linear');
         const totalFixedSpend = fixedSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
 
-        // --- 修复: 核心逻辑修正 ---
         const isPurelyLinearWithNoFixedCost = effectiveNetWorth === 0 && totalFixedSpend === 0;
 
         const baseLinearSpend = linearSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
-        const baseLinearRewards = linearSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s._multiplier * cpp) / 100, 0);
+        const baseLinearRewards = linearSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s.multiplier * cpp) / 100, 0);
         const effectiveLinearSpendRate = baseLinearSpend > 0 ? baseLinearRewards / baseLinearSpend : 0;
 
         if (isPurelyLinearWithNoFixedCost) {
@@ -157,7 +167,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
             };
         }
 
-        const totalFixedRewards = fixedSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s._multiplier * cpp) / 100, 0);
+        const totalFixedRewards = fixedSpendItems.reduce((sum, s) => sum + ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) * s.multiplier * cpp) / 100, 0);
 
         const currentEffectiveReturnRate = totalAnnualSpend > 0 ? (spendReturnRate + (effectiveNetWorth * 100) / totalAnnualSpend) : (effectiveNetWorth > 0 ? Infinity : 0);
         let tableTargets: number[];
@@ -168,7 +178,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
             tableTargets = [0, 1, 2, 3, 4, 5];
         }
 
-        const tableHeaders = activeSpendings.map(s => s._description);
+        const tableHeaders = activeSpendings.map(s => s.description);
 
         const tableRows = tableTargets.map(targetPercent => {
             const targetRate = targetPercent / 100;
@@ -178,7 +188,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
             const requiredTotalSpend = (requiredLinearSpend !== null && requiredLinearSpend >= 0) ? requiredLinearSpend + totalFixedSpend : null;
             const breakdown = activeSpendings.map(s => {
                 if (requiredLinearSpend === null || requiredLinearSpend < 0) return null;
-                if (calculationModes[s.earningRateId] === 'fixed') return (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency);
+                if (calculationModes[s.id] === 'fixed') return (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency);
                 const proportion = baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0;
                 return requiredLinearSpend * proportion;
             });
@@ -199,8 +209,8 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                     const totalRewards = (currentLinearSpend * effectiveLinearSpendRate) + totalFixedRewards;
                     const rate = (totalRewards + effectiveNetWorth) / currentTotalSpend * 100;
                     const breakdown = activeSpendings.map(s => ({
-                        description: s._description,
-                        amount: calculationModes[s.earningRateId] === 'fixed' ? (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) : currentLinearSpend * (baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0),
+                        description: s.description,
+                        amount: calculationModes[s.id] === 'fixed' ? (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) : currentLinearSpend * (baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0),
                     }));
                     chartData.push({spend: currentTotalSpend, returnRate: rate, breakdown: breakdown});
                 }
@@ -285,15 +295,15 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                 {activeSpendings.map(spending => {
                     const annualAmount = (parseFloat(spending.amountInput) || 0) * periodsInYearFor(spending.frequency);
                     return (
-                        <Grid container key={spending.earningRateId} alignItems="center" spacing={1}>
+                        <Grid container key={spending.id} alignItems="center" spacing={1}>
                             <Grid xs={7} sm={8}>
                                 <Typography variant="body2" noWrap
-                                            title={spending._description}>{spending._description}</Typography>
+                                            title={spending.description}>{spending.description}</Typography>
                             </Grid>
                             <Grid xs={5} sm={4}>
                                 <FormControl fullWidth size="small">
-                                    <Select value={calculationModes[spending.earningRateId] || 'linear'}
-                                            onChange={(e) => handleModeChange(spending.earningRateId, e.target.value as CalculationMode)}>
+                                    <Select value={calculationModes[spending.id] || 'linear'}
+                                            onChange={(e) => handleModeChange(spending.id, e.target.value as CalculationMode)}>
                                         <MenuItem value="linear">线性增加</MenuItem>
                                         <MenuItem value="fixed">固定: ${annualAmount.toFixed(0)}</MenuItem>
                                     </Select>
@@ -329,7 +339,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                 </Stack>
             ) : (
                 <Grid container spacing={3}>
-                    <Grid xs={12} md={7} flexGrow={1}><AnalysisChart/></Grid>
+                    <Grid xs={12} md={7}><AnalysisChart/></Grid>
                     <Grid xs={12} md={5}><AnalysisTable/></Grid>
                 </Grid>
             )}

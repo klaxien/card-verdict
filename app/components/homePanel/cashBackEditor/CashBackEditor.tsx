@@ -22,12 +22,13 @@ import {
     useMediaQuery,
     useTheme,
 } from '@mui/material';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import {cardverdict, userprofile} from '~/generated/bundle';
 import {Controller, FormProvider, useFieldArray, useForm} from 'react-hook-form';
 import {loadActiveValuationProfile} from "~/client/userSettingsPersistence";
 import {createLengthValidator} from "~/components/common/validators";
 import {formatWithoutTrailingZeroes} from "~/components/homePanel/utils/creditCardDisplayUtils";
-import BreakevenAnalysisTab from "./BreakevenAnalysisTab"; // <-- 新增 Import
+import BreakevenAnalysisTab from "./BreakevenAnalysisTab"; // 假设 BreakevenAnalysisTab 在同一目录下
 
 // 为了方便访问，进行解构
 const {EarningRate, CreditFrequency} = cardverdict.v1;
@@ -35,6 +36,7 @@ type IEarningRate = cardverdict.v1.IEarningRate;
 type IPlannedSpending = userprofile.v1.IPlannedSpending;
 type IUserCardValuation = userprofile.v1.IUserCardValuation;
 type IValuationProfile = userprofile.v1.IValuationProfile;
+type ICustomPlannedSpending = userprofile.v1.ICustomPlannedSpending;
 
 
 // --- 辅助函数和常量 ---
@@ -112,18 +114,20 @@ const formatEarningRate = (rate: IEarningRate): string => {
     return description;
 };
 
-// --- React Hook Form 型定义 ---
+// --- React Hook Form 的统一数据模型 ---
+type UnifiedSpendingField = {
+    id: string; // 将是 earningRateId 或 customSpendingId
+    isCustom: boolean;
+    description: string;
+    multiplier: number;
+    amountInput: string;
+    frequency: cardverdict.v1.CreditFrequency;
+    notes: string;
+};
+
 type FormValues = {
     cppInput: string;
-    spendings: Array<{
-        earningRateId: string;
-        amountInput: string;
-        frequency: cardverdict.v1.CreditFrequency;
-        notes: string;
-        // 静态数据，仅用于UI显示
-        _description: string;
-        _multiplier: number;
-    }>;
+    spendings: UnifiedSpendingField[];
 };
 
 // --- 验证函数 ---
@@ -188,7 +192,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                        }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
     const [confirmClearOpen, setConfirmClearOpen] = useState(false);
     const [tabIndex, setTabIndex] = useState(0);
 
@@ -198,22 +201,15 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
 
     const methods = useForm<FormValues>({
         mode: 'onChange',
-        defaultValues: {
-            cppInput: '',
-            spendings: [],
-        },
+        defaultValues: {cppInput: '', spendings: []},
     });
     const {control, handleSubmit, watch, reset, formState: {isDirty, isValid}} = methods;
 
-    const {fields} = useFieldArray({
-        control,
-        name: 'spendings',
-    });
+    const {fields, append, remove} = useFieldArray({control, name: 'spendings'});
 
     const sortedEarningRates = useMemo(() =>
             [...(card.earningRates ?? [])].sort((a, b) => (b.multiplier ?? 0) - (a.multiplier ?? 0)),
         [card.earningRates]);
-
 
     useEffect(() => {
         if (open) {
@@ -224,24 +220,32 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                 cppValue = initialPointSystemValuations[systemId].centsPerPoint!;
             }
 
-            const initialSpendings = sortedEarningRates.map(rate => {
-                const earningRateId = rate.earningRateId!;
-                const savedSpending = initialCardValuation?.plannedSpending?.[earningRateId];
-                const amountCents = savedSpending?.amountCents ?? 0;
-
+            const officialSpendings: UnifiedSpendingField[] = sortedEarningRates.map(rate => {
+                const savedSpending = initialCardValuation?.plannedSpending?.[rate.earningRateId!];
                 return {
-                    earningRateId: earningRateId,
-                    amountInput: amountCents === 0 ? '' : (amountCents / 100).toString(),
+                    id: rate.earningRateId!,
+                    isCustom: false,
+                    description: formatEarningRate(rate),
+                    multiplier: rate.multiplier ?? 0,
+                    amountInput: savedSpending?.amountCents ? (savedSpending.amountCents / 100).toString() : '',
                     frequency: savedSpending?.frequency ?? CreditFrequency.ANNUAL,
                     notes: savedSpending?.notes ?? '',
-                    _description: formatEarningRate(rate),
-                    _multiplier: rate.multiplier ?? 0,
                 };
             });
 
+            const customSpendings: UnifiedSpendingField[] = (initialCardValuation?.customPlannedSpending ?? []).map(custom => ({
+                id: custom.customSpendingId!,
+                isCustom: true,
+                description: custom.description!,
+                multiplier: custom.multiplier!,
+                amountInput: custom.amountCents ? (custom.amountCents / 100).toString() : '',
+                frequency: custom.frequency!,
+                notes: custom.notes ?? '',
+            }));
+
             reset({
                 cppInput: cppValue.toFixed(2),
-                spendings: initialSpendings,
+                spendings: [...officialSpendings, ...customSpendings],
             });
         }
     }, [open, card, initialCardValuation, initialPointSystemValuations, sortedEarningRates, reset]);
@@ -267,7 +271,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             const periods = periodsInYearFor(spending.frequency);
             const amountCents = Math.round((parseFloat(spending.amountInput) || 0) * 100);
             const annualAmountCents = amountCents * periods;
-            const multiplier = spending._multiplier ?? 0;
+            const multiplier = spending.multiplier ?? 0;
 
             totalAnnualSpendCents += annualAmountCents;
             rewardsFromSpendCents += (annualAmountCents * multiplier * cpp) / 100;
@@ -275,29 +279,40 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
 
         const totalValueCents = rewardsFromSpendCents + netWorth;
 
-        let spendReturnRate = 0;
-        let netWorthEffectRate = 0;
-        let effectiveReturnRate = 0;
+        let spendReturnRateResult = 0;
+        let netWorthEffectRateResult = 0;
+        let effectiveReturnRateResult = 0;
 
         if (totalAnnualSpendCents > 0) {
-            spendReturnRate = (rewardsFromSpendCents / totalAnnualSpendCents) * 100;
-            netWorthEffectRate = (netWorth / totalAnnualSpendCents) * 100;
-            effectiveReturnRate = spendReturnRate + netWorthEffectRate;
+            spendReturnRateResult = (rewardsFromSpendCents / totalAnnualSpendCents) * 100;
+            netWorthEffectRateResult = (netWorth / totalAnnualSpendCents) * 100;
+            effectiveReturnRateResult = spendReturnRateResult + netWorthEffectRateResult;
         } else if (netWorth !== 0) { //  Handle both positive and negative netWorth when spend is 0
             const netWorthDollars = netWorth / 100;
-            netWorthEffectRate = netWorthDollars * 100; // This results in a large percentage, which is the intended behavior.
-            effectiveReturnRate = netWorthEffectRate;
+            netWorthEffectRateResult = netWorthDollars * 100; // This results in a large percentage, which is the intended behavior.
+            effectiveReturnRateResult = netWorthEffectRateResult;
         }
 
         return {
             totalAnnualSpend: totalAnnualSpendCents / 100,
             totalReturnValue: totalValueCents / 100,
-            effectiveReturnRate,
-            spendReturnRate,
-            netWorthEffectRate,
+            effectiveReturnRate: effectiveReturnRateResult,
+            spendReturnRate: spendReturnRateResult,
+            netWorthEffectRate: netWorthEffectRateResult,
         };
     }, [watchedValues, netWorthCents]);
 
+    const handleAddCustomSpending = () => {
+        append({
+            id: crypto.randomUUID(),
+            isCustom: true,
+            description: '',
+            multiplier: 1,
+            amountInput: '',
+            frequency: CreditFrequency.ANNUAL,
+            notes: '',
+        });
+    };
 
     const onSubmit = (data: FormValues) => {
         const parsedCpp = parseFloat(data.cppInput);
@@ -305,37 +320,51 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             console.error("输入的每点价值 (cpp) 无效。");
             return;
         }
-
         const newPointSystemValuations = {...(initialPointSystemValuations ?? {})};
         const systemId = card.pointSystemInfo?.systemId;
         if (systemId) {
-            // 根据新 Proto 保存为 PointSystemValue，直接存储 float，不再需要 *100
-            newPointSystemValuations[systemId] = {
-                centsPerPoint: parsedCpp
-            };
+            newPointSystemValuations[systemId] = {centsPerPoint: parsedCpp};
         }
 
         const plannedSpendingResult: Record<string, IPlannedSpending> = {};
+        const customPlannedSpendingResult: ICustomPlannedSpending[] = [];
+
         data.spendings.forEach(s => {
             const amount = parseFloat(s.amountInput) || 0;
-            plannedSpendingResult[s.earningRateId] = {
-                lastKnownRuleDescription: s._description,
-                lastKnownMultiplier: s._multiplier,
-                amountCents: Math.round(amount * 100),
-                frequency: s.frequency,
-                notes: s.notes,
-            };
+            if (amount === 0 && s.isCustom) { // 如果是自定义项且金额为0，则不保存
+                return;
+            }
+
+            if (s.isCustom) {
+                customPlannedSpendingResult.push({
+                    customSpendingId: s.id,
+                    description: s.description,
+                    multiplier: s.multiplier,
+                    amountCents: Math.round(amount * 100),
+                    frequency: s.frequency,
+                    notes: s.notes,
+                });
+            } else {
+                if (amount > 0) { // 只有当金额大于0时，才保存官方消费项
+                    plannedSpendingResult[s.id] = {
+                        amountCents: Math.round(amount * 100),
+                        frequency: s.frequency,
+                        lastKnownRuleDescription: s.description,
+                        lastKnownMultiplier: s.multiplier,
+                        notes: s.notes,
+                    };
+                }
+            }
         });
 
         const updatedCardValuation: IUserCardValuation = {
             ...(initialCardValuation ?? {}),
             plannedSpending: plannedSpendingResult,
+            customPlannedSpending: customPlannedSpendingResult,
         };
+        console.log(updatedCardValuation);
 
-        onSave({
-            cardValuation: updatedCardValuation,
-            pointSystemValuations: newPointSystemValuations
-        });
+        onSave({cardValuation: updatedCardValuation, pointSystemValuations: newPointSystemValuations});
         onClose();
     };
 
@@ -348,6 +377,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         const profile = loadActiveValuationProfile() ?? {cardValuations: {}, pointSystemValuations: {}};
         const cardValuation = profile.cardValuations?.[card.cardId] ?? {};
         cardValuation.plannedSpending = {};
+        cardValuation.customPlannedSpending = []; // 同样清空自定义消费
         const systemId = card.pointSystemInfo?.systemId;
         const pointSystemValuations = profile.pointSystemValuations ?? {};
         if (systemId && pointSystemValuations[systemId]) {
@@ -360,10 +390,47 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
 
     return (
         <FormProvider {...methods}>
-            <Dialog open={open} onClose={onClose} fullScreen maxWidth="md" fullWidth>
+            <Dialog open={open} onClose={onClose} fullScreen={isMobile} maxWidth="md" fullWidth
+                    PaperProps={{sx: {height: {sm: '90vh'}, width: {sm: '100vw'}}}}>
                 <DialogTitle>计算 {card.name} 返现</DialogTitle>
-
-                <DialogContent dividers sx={{pt: 0, pb: {xs: 'calc(72px + env(safe-area-inset-bottom))', sm: 2}}}>
+                <Box sx={{px: 3, mb: 1, mt: -1.5}}>
+                    <Alert icon={false} severity={effectiveReturnRate > 0 ? "success" : "warning"}
+                           sx={{pb: 1.5, '& .MuiAlert-message': {width: '100%'}}}>
+                        <Stack spacing={1}>
+                            <Grid container alignItems="center" justifyContent="space-around" flexWrap="wrap"
+                                  spacing={1}>
+                                <Grid size={3} textAlign="center"><Typography variant="caption" color="text.secondary"
+                                                                              display="block">总消费</Typography><Typography
+                                    variant="h6" fontWeight="bold"
+                                    sx={{wordBreak: 'break-word'}}>${totalAnnualSpend.toFixed(0)}</Typography></Grid>
+                                <Grid size={3} textAlign="center"><Typography variant="caption" color="text.secondary"
+                                                                              display="block">总返现率</Typography><Typography
+                                    variant="h6" fontWeight="bold" sx={{
+                                    color: effectiveReturnRate > 0 ? 'success.main' : 'error.main',
+                                    wordBreak: 'break-word'
+                                }}>{formatWithoutTrailingZeroes(effectiveReturnRate)}%</Typography></Grid>
+                                <Grid size={3} textAlign="center"><Typography variant="caption" color="text.secondary"
+                                                                              display="block">纯消费返现率</Typography><Typography
+                                    variant="h6" fontWeight="bold" sx={{
+                                    color: spendReturnRate > 0 ? 'success.main' : 'error.main',
+                                    wordBreak: 'break-word'
+                                }}>{formatWithoutTrailingZeroes(spendReturnRate)}%</Typography></Grid>
+                                <Grid size={3} textAlign="center"><Typography variant="caption" color="text.secondary"
+                                                                              display="block">总返现</Typography><Typography
+                                    variant="h6" fontWeight="bold" sx={{
+                                    color: totalReturnValue >= 0 ? 'success.main' : 'error.main',
+                                    wordBreak: 'break-word'
+                                }}>${totalReturnValue.toFixed(0)}</Typography></Grid>
+                            </Grid>
+                            <Divider/>
+                            <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
+                                总返现率 = 消费回报 {spendReturnRate.toFixed(2)}%
+                                +等效年费影响 {netWorthEffectRate.toFixed(2)}%
+                            </Typography>
+                        </Stack>
+                    </Alert>
+                </Box>
+                <DialogContent dividers sx={{pt: 0, pb: {xs: `calc(72px + env(safe-area-inset-bottom))`, sm: 2}}}>
                     <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
                         <Tabs value={tabIndex} onChange={handleTabChange} aria-label="analysis tabs">
                             <Tab label="消费规划"/>
@@ -371,49 +438,6 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                         </Tabs>
                     </Box>
                     <TabPanel value={tabIndex} index={0}>
-                        <Box sx={{px: 3, my: 0}}>
-                            <Alert icon={false} severity={effectiveReturnRate > 0 ? "success" : "warning"}
-                                   sx={{pb: 1.5, '& .MuiAlert-message': {width: '100%'}}}>
-                                <Stack spacing={1}>
-                                    <Grid container alignItems="center" justifyContent="space-around" flexWrap="wrap"
-                                          spacing={1}>
-                                        <Grid size={3} textAlign="center"><Typography variant="caption"
-                                                                                      color="text.secondary"
-                                                                                      display="block">总消费</Typography><Typography
-                                            variant="h6" fontWeight="bold"
-                                            sx={{wordBreak: 'break-word'}}>${totalAnnualSpend.toFixed(0)}</Typography></Grid>
-                                        <Grid size={3} textAlign="center"><Typography variant="caption"
-                                                                                      color="text.secondary"
-                                                                                      display="block">总返现率</Typography><Typography
-                                            variant="h6" fontWeight="bold" sx={{
-                                            color: effectiveReturnRate > 0 ? 'success.main' : 'error.main',
-                                            wordBreak: 'break-word'
-                                        }}>{formatWithoutTrailingZeroes(effectiveReturnRate)}%</Typography></Grid>
-                                        <Grid size={3} textAlign="center"><Typography variant="caption"
-                                                                                      color="text.secondary"
-                                                                                      display="block">纯消费返现率</Typography><Typography
-                                            variant="h6" fontWeight="bold" sx={{
-                                            color: spendReturnRate > 0 ? 'success.main' : 'error.main',
-                                            wordBreak: 'break-word'
-                                        }}>{formatWithoutTrailingZeroes(spendReturnRate)}%</Typography></Grid>
-                                        <Grid size={3} textAlign="center"><Typography variant="caption"
-                                                                                      color="text.secondary"
-                                                                                      display="block">总返现</Typography><Typography
-                                            variant="h6" fontWeight="bold" sx={{
-                                            color: totalReturnValue >= 0 ? 'success.main' : 'error.main',
-                                            wordBreak: 'break-word'
-                                        }}>${totalReturnValue.toFixed(0)}</Typography></Grid>
-                                    </Grid>
-                                    <Divider/>
-                                    <Typography variant="caption" color="text.secondary" display="block"
-                                                textAlign="center">
-                                        总返现率 = 消费回报 {spendReturnRate.toFixed(2)}%
-                                        +等效年费影响 {netWorthEffectRate.toFixed(2)}%
-                                    </Typography>
-                                </Stack>
-                            </Alert>
-                        </Box>
-
                         <form id="cash-back-form" onSubmit={handleSubmit(onSubmit)}>
                             <Stack>
                                 <Box sx={{py: 2}}>
@@ -438,8 +462,40 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                 {fields.map((field, index) => (
                                     <React.Fragment key={field.id}>
                                         <Box sx={{py: 2}}>
-                                            <Typography variant="subtitle1" fontWeight="bold"
-                                                        gutterBottom>{field._description}</Typography>
+                                            {field.isCustom ? (
+                                                <Grid container spacing={2} alignItems="center" sx={{mb: 2}}>
+                                                    <Grid item xs={12} sm={6}>
+                                                        <Controller name={`spendings.${index}.description`}
+                                                                    control={control} rules={{required: '描述不能为空'}}
+                                                                    render={({field: descField, fieldState}) =>
+                                                                        <TextField {...descField} fullWidth
+                                                                                   label="自定义类别描述" size="small"
+                                                                                   error={!!fieldState.error}
+                                                                                   helperText={fieldState.error?.message}/>}/>
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={4}>
+                                                        <Controller name={`spendings.${index}.multiplier`}
+                                                                    control={control}
+                                                                    rules={{validate: v => parseFloat(String(v)) > 0 || '必须是正数'}}
+                                                                    render={({field: multField, fieldState}) =>
+                                                                        <TextField {...multField} fullWidth
+                                                                                   label="返现乘数" type="number"
+                                                                                   size="small" InputProps={{
+                                                                            endAdornment: <InputAdornment
+                                                                                position="end">x</InputAdornment>
+                                                                        }} error={!!fieldState.error}
+                                                                                   helperText={fieldState.error?.message}/>}/>
+                                                    </Grid>
+                                                    <Grid item xs={12} sm={2}>
+                                                        <Button onClick={() => remove(index)}
+                                                                color="error">删除</Button>
+                                                    </Grid>
+                                                </Grid>
+                                            ) : (
+                                                <Typography variant="subtitle1" fontWeight="bold"
+                                                            gutterBottom>{field.description}</Typography>
+                                            )}
+
                                             <Grid container spacing={{xs: 2, md: 3}} columns={{xs: 4, sm: 8, md: 12}}
                                                   alignItems="flex-start">
                                                 <Grid size={{xs: 4, sm: 4, md: 4}}>
@@ -497,16 +553,20 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                         {index < fields.length - 1 && <Divider/>}
                                     </React.Fragment>
                                 ))}
+                                <Box sx={{display: 'flex', justifyContent: 'center', py: 2}}>
+                                    <Button startIcon={<AddCircleOutlineIcon/>} onClick={handleAddCustomSpending}>
+                                        添加自定义消费类别
+                                    </Button>
+                                </Box>
                             </Stack>
                         </form>
                     </TabPanel>
                     <TabPanel value={tabIndex} index={1}>
-                        {/* --- 使用新的独立组件 --- */}
                         <BreakevenAnalysisTab
                             spendings={watchedValues.spendings}
-                            cppInput={watchedValues.cppInput} // <-- 传递 cpp
-                            spendReturnRate={spendReturnRate} // <-- 新增这一行
+                            cppInput={watchedValues.cppInput}
                             totalAnnualSpend={totalAnnualSpend}
+                            spendReturnRate={spendReturnRate}
                             netWorthCents={netWorthCents}
                         />
                     </TabPanel>
