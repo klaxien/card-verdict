@@ -1146,16 +1146,6 @@ cards {
   issuer: CHASE
   annual_fee_cents: 69500
   credits {
-    credit_id: "united-club-membership"
-    type: LOUNGE_MEMBERSHIP
-    frequency: ANNUAL
-    default_period_value_cents: 75000
-    qualifying_merchants: "United Club"
-    details: "United Club Membership"
-    default_effective_value_cents: 16000
-    default_effective_value_explanation: "可带1人，假设长持这张卡就是为了United Club，一次带1人，一次相当于省一次机场餐厅$20*2，一年可用4次，休息室会籍估值为$40*4=160。"
-  }
-  credits {
     credit_id: "renowned-hotels-credit"
     type: HOTEL_STAY
     frequency: ANNUAL
@@ -1245,6 +1235,13 @@ cards {
     system_type: UNITED_MILEAGEPLUS
     default_cents_per_point: 1.5
     notes: "United MileagePlus Miles 估值"
+  }
+  other_benefits {
+    benefit_id: "lounge-access-united-club"
+    lounge_access {
+      network: UNITED_CLUB
+      guest_count: 1
+    }
   }
   other_benefits {
     benefit_id: "travel-status-premier-access"
@@ -1897,16 +1894,6 @@ cards {
   issuer: CITI
   annual_fee_cents: 59500
   credits {
-    credit_id: "admirals-club-membership"
-    type: LOUNGE_MEMBERSHIP
-    frequency: ANNUAL
-    default_period_value_cents: 85000
-    qualifying_merchants: "Admirals Club"
-    details: "Admirals Club会籍"
-    default_effective_value_cents: 16000
-    default_effective_value_explanation: "可带2人，假设长持这张卡就是为了Admirals Club，一次带1人，一次相当于省一次机场餐厅$20*2，一年可用4次，休息室会籍估值为$40*4=160。"
-  }
-  credits {
     credit_id: "avis-budget-credit"
     type: GROUND_TRANSPORTATION
     frequency: ANNUAL
@@ -1970,6 +1957,13 @@ cards {
     system_type: AA_AADVANTAGE
     default_cents_per_point: 1.5
     notes: "American Airlines AAdvantage Mile 估值"
+  }
+  other_benefits {
+    benefit_id: "lounge-access-admirals-club"
+    lounge_access {
+      network: AA_ADMIRALS_CLUB
+      guest_count: 2
+    }
   }
   other_benefits {
     benefit_id: "baggage-benefit"

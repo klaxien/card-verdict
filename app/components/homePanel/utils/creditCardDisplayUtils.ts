@@ -72,6 +72,8 @@ export const getBenefitDisplayDetails = (benefit: cardverdict.v1.IOtherBenefit):
                 .split('_')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ');
+
+            loungeName = loungeName.replace(/^Aa\s/, 'AA ');
         }
 
         const detailsParts = [`可进${loungeName}`];
