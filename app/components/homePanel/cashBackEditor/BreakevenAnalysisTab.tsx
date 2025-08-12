@@ -89,7 +89,7 @@ const CustomTooltip = ({active, payload, label}: CustomTooltipProps) => {
                 <Stack spacing={0.5} mt={0.5}>
                     {data.breakdown.map((item: any, index: number) => (
                         <Grid container key={index} justifyContent="space-between" spacing={1}>
-                            <Grid xs>
+                            <Grid size={"grow"}>
                                 <Typography variant="caption" noWrap
                                             title={item.description}>{item.description}:</Typography>
                             </Grid>
@@ -230,7 +230,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
             <Box sx={{height: 300}}>
                 {analysisData.chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={analysisData.chartData} margin={{top: 5, right: 20, left: -10, bottom: 5}}>
+                        <LineChart data={analysisData.chartData} margin={{top: 10, right: 10, left: 10, bottom: 10}}>
                             <CartesianGrid strokeDasharray="3 3"/>
                             <XAxis dataKey="spend" type="number" domain={['dataMin', 'dataMax']}
                                    tickFormatter={(tick) => `$${Math.round(tick / 1000)}k`} name="总消费"/>
@@ -296,11 +296,11 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                     const annualAmount = (parseFloat(spending.amountInput) || 0) * periodsInYearFor(spending.frequency);
                     return (
                         <Grid container key={spending.id} alignItems="center" spacing={1}>
-                            <Grid xs={7} sm={8}>
+                            <Grid size={{xs: 7, sm: 8}}>
                                 <Typography variant="body2" noWrap
                                             title={spending.description}>{spending.description}</Typography>
                             </Grid>
-                            <Grid xs={5} sm={4}>
+                            <Grid size={{xs: 5, sm: 4}}>
                                 <FormControl fullWidth size="small">
                                     <Select value={calculationModes[spending.id] || 'linear'}
                                             onChange={(e) => handleModeChange(spending.id, e.target.value as CalculationMode)}>
@@ -339,8 +339,8 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                 </Stack>
             ) : (
                 <Grid container spacing={3}>
-                    <Grid xs={12} md={7}><AnalysisChart/></Grid>
-                    <Grid xs={12} md={5}><AnalysisTable/></Grid>
+                    <Grid size={{xs: 12, sm: 7}}><AnalysisChart/></Grid>
+                    <Grid size={{xs: 12, sm: 5}}><AnalysisTable/></Grid>
                 </Grid>
             )}
 
