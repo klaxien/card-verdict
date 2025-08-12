@@ -27,6 +27,7 @@ import {cardverdict, userprofile} from "~/generated/bundle";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import FunctionsIcon from '@mui/icons-material/Functions';
+import {formatWithoutTrailingZeroes} from "~/components/homePanel/utils/creditCardDisplayUtils";
 
 // --- MODIFICATION: Use enums from generated code ---
 const {CreditFrequency} = cardverdict.v1;
@@ -334,7 +335,10 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                 <Alert severity="warning" icon={<FunctionsIcon/>}>
                     <Typography fontWeight="bold">回报率固定</Typography>
                     <Typography variant="body2">
-                        当关闭年费计算且所有消费都按比例增减时，返现率是一个固定值，恒为 <b>{analysisData.constantRate.toFixed(2)}%</b>，与消费金额无关。
+                        当关闭年费计算，或等效年费为0，且所有消费都按比例增减时，返现率是一个固定值，恒为 <b>{analysisData.constantRate.toFixed(2)}%</b>，与消费金额无关。
+                    </Typography>
+                    <Typography variant="body2">
+                        当前等效年费为${formatWithoutTrailingZeroes((netWorthCents / 100))}。
                     </Typography>
                     <Typography variant="caption" display="block" mt={1}>
                         请将某项消费设为“固定”或开启年费计算以进行盈亏分析。
