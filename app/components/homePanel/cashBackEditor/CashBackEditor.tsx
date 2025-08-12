@@ -251,7 +251,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         });
     };
 
-    const onSubmit = (data: FormValues) => {
+    const saveData = (data: FormValues) => {
         const parsedCpp = parseFloat(data.cppInput);
         if (isNaN(parsedCpp)) return;
 
@@ -363,7 +363,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                 </Stack>
                             </Alert>
                         </Box>
-                        <form id="cash-back-form" onSubmit={handleSubmit(onSubmit)}>
+                        <form id="cash-back-form" onSubmit={handleSubmit(saveData)}>
                             <Box sx={{py: 2}}>
                                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>积分价值估算</Typography>
                                 <Controller name="cppInput" control={control} rules={{validate: validateCpp}}
@@ -408,7 +408,8 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                     <Button color="error" variant="text" onClick={() => setConfirmClearOpen(true)}>清空</Button>
                     <Box sx={{flexGrow: 1}}/>
                     <Button onClick={onClose}>取消</Button>
-                    <Button variant="contained" type="submit" form="cash-back-form"
+                    <Button variant="contained"
+                            onClick={() => saveData(watchedValues)}
                             disabled={(!isDirty && !isSettingsDirty) || !isValid}>保存</Button>
                 </DialogActions>
             </Dialog>
