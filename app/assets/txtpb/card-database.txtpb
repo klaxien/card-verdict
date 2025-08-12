@@ -1535,8 +1535,8 @@ cards {
   point_system_info {
     system_id: "usbank-altitude-reserve"
     system_type: US_BANK_ALTITUDE
-    default_cents_per_point: 1.5
-    notes: "通过 Real-Time Rewards 兑换旅行消费时价值为 1.5 cents/point"
+    default_cents_per_point: 1.0
+    notes: "通过 Real-Time Rewards 兑换旅行消费时价值为 1.0 cents/point"
   }
   other_benefits {
     benefit_id: "lounge-access-priority-pass"
