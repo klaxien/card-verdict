@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {
     Alert,
     Box,
@@ -22,14 +22,17 @@ import {
     useTheme
 } from '@mui/material';
 import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
-import {cardverdict} from "~/generated/bundle";
+// --- MODIFICATION: Import new proto definitions ---
+import {cardverdict, userprofile} from "~/generated/bundle";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import FunctionsIcon from '@mui/icons-material/Functions';
 
+// --- MODIFICATION: Use enums from generated code ---
 const {CreditFrequency} = cardverdict.v1;
+const {SpendingCalculationMode} = userprofile.v1;
 
-// --- Props 定义 ---
+// --- MODIFICATION: Props are updated to receive state and handlers from parent ---
 interface BreakevenAnalysisTabProps {
     spendings: Array<{
         id: string;
@@ -42,11 +45,14 @@ interface BreakevenAnalysisTabProps {
     totalAnnualSpend: number;
     spendReturnRate: number;
     netWorthCents: number;
+    includeNetWorth: boolean;
+    onIncludeNetWorthChange: (include: boolean) => void;
+    calculationModes: Record<string, userprofile.v1.SpendingCalculationMode>;
+    onCalculationModeChange: React.Dispatch<React.SetStateAction<Record<string, userprofile.v1.SpendingCalculationMode>>>;
 }
 
-type CalculationMode = 'linear' | 'fixed';
+// --- MODIFICATION: Removed `type CalculationMode = 'linear' | 'fixed';` ---
 
-// --- 辅助函数 ---
 const periodsInYearFor = (frequency?: cardverdict.v1.CreditFrequency): number => {
     switch (frequency) {
         case CreditFrequency.ANNUAL:
@@ -62,19 +68,12 @@ const periodsInYearFor = (frequency?: cardverdict.v1.CreditFrequency): number =>
     }
 };
 
-// --- 修复: 为自定义 Tooltip 创建专用的 Props 接口 ---
 interface CustomTooltipProps {
     active?: boolean;
-    payload?: Array<{
-        payload: {
-            returnRate: number;
-            breakdown: Array<{ description: string; amount: number }>;
-        };
-    }>;
+    payload?: Array<{ payload: { returnRate: number; breakdown: Array<{ description: string; amount: number }>; }; }>;
     label?: string | number;
 }
 
-// --- 自定义图表 Tooltip ---
 const CustomTooltip = ({active, payload, label}: CustomTooltipProps) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
@@ -106,33 +105,43 @@ const CustomTooltip = ({active, payload, label}: CustomTooltipProps) => {
     return null;
 };
 
-// --- 主要UI组件 ---
 const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                                                                        spendings,
                                                                        cppInput,
                                                                        totalAnnualSpend,
                                                                        spendReturnRate,
-                                                                       netWorthCents
+                                                                       netWorthCents,
+                                                                       includeNetWorth,
+                                                                       onIncludeNetWorthChange,
+                                                                       calculationModes,
+                                                                       onCalculationModeChange
                                                                    }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [calculationModes, setCalculationModes] = useState<Record<string, CalculationMode>>({});
-    const [includeNetWorth, setIncludeNetWorth] = useState(true);
+    // --- MODIFICATION: Internal state is removed, now managed by parent ---
 
     const activeSpendings = useMemo(() =>
             (spendings ?? []).filter(s => s && parseFloat(s.amountInput) > 0),
         [spendings]);
 
+    // --- MODIFICATION: This effect now ensures any new spending item gets a default mode in the PARENT state ---
     useEffect(() => {
-        const newModes: Record<string, CalculationMode> = {};
+        const newModes = {...calculationModes};
+        let hasChanged = false;
         activeSpendings.forEach(s => {
-            newModes[s.id] = calculationModes[s.id] || 'linear';
+            if (!(s.id in newModes)) {
+                newModes[s.id] = SpendingCalculationMode.LINEAR; // Default to LINEAR
+                hasChanged = true;
+            }
         });
-        setCalculationModes(newModes);
-    }, [activeSpendings.map(s => s.id).join(',')]);
+        if (hasChanged) {
+            onCalculationModeChange(newModes);
+        }
+    }, [activeSpendings.map(s => s.id).join(','), calculationModes, onCalculationModeChange]);
 
-    const handleModeChange = (id: string, mode: CalculationMode) => {
-        setCalculationModes(prev => ({...prev, [id]: mode}));
+    // --- MODIFICATION: Mode change handler now calls the parent's state setter ---
+    const handleModeChange = (id: string, mode: userprofile.v1.SpendingCalculationMode) => {
+        onCalculationModeChange(prev => ({...prev, [id]: mode}));
     };
 
     const analysisData = useMemo(() => {
@@ -140,18 +149,14 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
         const effectiveNetWorth = includeNetWorth ? netWorthCents / 100 : 0;
 
         if (activeSpendings.length === 0) return {
-            show: false,
-            tableRows: [],
-            chartData: [],
-            tableHeaders: [],
-            isConstantRate: false,
-            constantRate: 0
+            show: false, tableRows: [], chartData: [], tableHeaders: [], isConstantRate: false, constantRate: 0
         };
 
-        const fixedSpendItems = activeSpendings.filter(s => calculationModes[s.id] === 'fixed');
-        const linearSpendItems = activeSpendings.filter(s => calculationModes[s.id] === 'linear');
-        const totalFixedSpend = fixedSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
+        // --- MODIFICATION: Use proto enum for comparison ---
+        const fixedSpendItems = activeSpendings.filter(s => calculationModes[s.id] === SpendingCalculationMode.FIXED);
+        const linearSpendItems = activeSpendings.filter(s => calculationModes[s.id] !== SpendingCalculationMode.FIXED);
 
+        const totalFixedSpend = fixedSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
         const isPurelyLinearWithNoFixedCost = effectiveNetWorth === 0 && totalFixedSpend === 0;
 
         const baseLinearSpend = linearSpendItems.reduce((sum, s) => sum + (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency), 0);
@@ -160,9 +165,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
 
         if (isPurelyLinearWithNoFixedCost) {
             return {
-                show: true,
-                isConstantRate: true,
-                constantRate: effectiveLinearSpendRate * 100,
+                show: true, isConstantRate: true, constantRate: effectiveLinearSpendRate * 100,
                 tableRows: [], chartData: [], tableHeaders: []
             };
         }
@@ -179,7 +182,6 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
         }
 
         const tableHeaders = activeSpendings.map(s => s.description);
-
         const tableRows = tableTargets.map(targetPercent => {
             const targetRate = targetPercent / 100;
             const numerator = totalFixedRewards + effectiveNetWorth - targetRate * totalFixedSpend;
@@ -188,7 +190,8 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
             const requiredTotalSpend = (requiredLinearSpend !== null && requiredLinearSpend >= 0) ? requiredLinearSpend + totalFixedSpend : null;
             const breakdown = activeSpendings.map(s => {
                 if (requiredLinearSpend === null || requiredLinearSpend < 0) return null;
-                if (calculationModes[s.id] === 'fixed') return (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency);
+                // --- MODIFICATION: Use proto enum for comparison ---
+                if (calculationModes[s.id] === SpendingCalculationMode.FIXED) return (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency);
                 const proportion = baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0;
                 return requiredLinearSpend * proportion;
             });
@@ -210,7 +213,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                     const rate = (totalRewards + effectiveNetWorth) / currentTotalSpend * 100;
                     const breakdown = activeSpendings.map(s => ({
                         description: s.description,
-                        amount: calculationModes[s.id] === 'fixed' ? (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) : currentLinearSpend * (baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0),
+                        amount: calculationModes[s.id] === SpendingCalculationMode.FIXED ? (parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency) : currentLinearSpend * (baseLinearSpend > 0 ? ((parseFloat(s.amountInput) || 0) * periodsInYearFor(s.frequency)) / baseLinearSpend : 0),
                     }));
                     chartData.push({spend: currentTotalSpend, returnRate: rate, breakdown: breakdown});
                 }
@@ -249,7 +252,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
     );
 
     const AnalysisTable = () => (
-        <Paper elevation={2} sx={{p: 2}}>
+        <Paper elevation={2} sx={{p: 2, height: '100%'}}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>盈亏平衡点</Typography>
             <TableContainer>
                 <Table size="small">
@@ -286,7 +289,9 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                 <Typography variant="h6" fontWeight="bold">算法调整</Typography>
             </Stack>
             <FormControlLabel
-                control={<Switch checked={includeNetWorth} onChange={(e) => setIncludeNetWorth(e.target.checked)}/>}
+                // Use prop value and handler ---
+                control={<Switch checked={includeNetWorth}
+                                 onChange={(e) => onIncludeNetWorthChange(e.target.checked)}/>}
                 label={<Typography variant="body2">计算时考虑等效年费</Typography>}
                 sx={{mb: 1}}
             />
@@ -302,10 +307,13 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                             </Grid>
                             <Grid size={{xs: 5, sm: 4}}>
                                 <FormControl fullWidth size="small">
-                                    <Select value={calculationModes[spending.id] || 'linear'}
-                                            onChange={(e) => handleModeChange(spending.id, e.target.value as CalculationMode)}>
-                                        <MenuItem value="linear">线性增加</MenuItem>
-                                        <MenuItem value="fixed">固定每年: ${annualAmount.toFixed(0)}</MenuItem>
+                                    {/*  Use prop value and handler with proto enum --- */}
+                                    <Select
+                                        value={calculationModes[spending.id] || SpendingCalculationMode.LINEAR}
+                                        onChange={(e) => handleModeChange(spending.id, e.target.value as userprofile.v1.SpendingCalculationMode)}>
+                                        <MenuItem value={SpendingCalculationMode.LINEAR}>线性增加</MenuItem>
+                                        <MenuItem value={SpendingCalculationMode.FIXED}>固定每年:
+                                            ${annualAmount.toFixed(0)}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -319,7 +327,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
     return (
         <Stack spacing={3} sx={{mt: 2}}>
             <Alert severity="info" icon={<InfoOutlinedIcon fontSize="inherit"/>}>
-                算法说明：根您在“消费规划”页的输入进行分析。可以在下方调整每个消费类别的计算方式（固定值或线形增减）来模拟不同消费场景。
+                算法说明：根据在“消费规划”页的输入进行分析。可以在下方调整每个消费类别的计算方式（固定值或线性增减）来模拟不同消费场景。
             </Alert>
 
             {analysisData.isConstantRate ? (

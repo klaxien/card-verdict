@@ -19,6 +19,7 @@ import {
     useTheme,
 } from '@mui/material';
 import {Controller, FormProvider, useFieldArray, useForm} from 'react-hook-form';
+// --- MODIFICATION: Import new proto definitions ---
 import {cardverdict, userprofile} from '~/generated/bundle';
 import {loadActiveValuationProfile} from '~/client/userSettingsPersistence';
 import {formatWithoutTrailingZeroes} from '~/components/homePanel/utils/creditCardDisplayUtils';
@@ -27,19 +28,19 @@ import {formatEarningRate, periodsInYearFor, validateCpp} from './cashBackUtils'
 import {OfficialSpendingsEditor} from './OfficialSpendingsEditor';
 import {CustomSpendingsEditor} from './CustomSpendingsEditor';
 
-// 类型定义
+// --- MODIFICATION: Import new enum from userprofile ---
 const {CreditFrequency} = cardverdict.v1;
+const {SpendingCalculationMode} = userprofile.v1;
+
 type IUserCardValuation = userprofile.v1.IUserCardValuation;
 type IValuationProfile = userprofile.v1.IValuationProfile;
 type IPlannedSpending = userprofile.v1.IPlannedSpending;
 type ICustomPlannedSpending = userprofile.v1.ICustomPlannedSpending;
+// --- MODIFICATION: Import settings interface ---
+type IBreakevenAnalysisSettings = userprofile.v1.IBreakevenAnalysisSettings;
 
-/**
- * 一个统一的数据模型，用于表示官方或自定义的消费字段，
- * 以便在 React Hook Form 中进行统一处理。
- */
 export type UnifiedSpendingField = {
-    id: string; // earningRateId 或 customSpendingId
+    id: string;
     isCustom: boolean;
     description: string;
     multiplier: number;
@@ -48,16 +49,11 @@ export type UnifiedSpendingField = {
     notes: string;
 };
 
-/**
- * React Hook Form 的表单值类型定义。
- */
 export type FormValues = {
     cppInput: string;
     spendings: UnifiedSpendingField[];
 };
 
-
-// Props 定义
 type CashBackEditorProps = {
     open: boolean;
     onClose: () => void;
@@ -100,6 +96,11 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [confirmClearOpen, setConfirmClearOpen] = useState(false);
     const [tabIndex, setTabIndex] = useState(0);
+
+    // --- MODIFICATION: State for Breakeven Analysis is "lifted" to the parent ---
+    const [breakevenIncludeNetWorth, setBreakevenIncludeNetWorth] = useState(true);
+    const [breakevenCalcModes, setBreakevenCalcModes] = useState<Record<string, userprofile.v1.SpendingCalculationMode>>({});
+    const [initialBreakevenSettings, setInitialBreakevenSettings] = useState<IBreakevenAnalysisSettings | undefined>(undefined);
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => setTabIndex(newValue);
 
@@ -144,12 +145,52 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                 notes: custom.notes ?? '',
             }));
 
+            // Initialize breakeven settings from saved data ---
+            const savedSettings = initialCardValuation?.breakevenAnalysisSettings;
+
+            // 保存初始状态，用于后续比较
+            setInitialBreakevenSettings(savedSettings ?? undefined);
+
+            // Defaults to true if no setting is saved yet.
+            setBreakevenIncludeNetWorth(savedSettings?.includeEquivalentAnnualFee ?? true);
+            setBreakevenCalcModes(savedSettings?.spendingCalculationModes ?? {});
+
             reset({
                 cppInput: cppValue.toFixed(2),
                 spendings: [...officialSpendings, ...customSpendings],
             });
         }
     }, [open, card, initialCardValuation, initialPointSystemValuations, sortedEarningRates, reset]);
+
+    const isSettingsDirty = useMemo(() => {
+        const initialInclude = initialBreakevenSettings?.includeEquivalentAnnualFee ?? true;
+        if (breakevenIncludeNetWorth !== initialInclude) {
+            return true;
+        }
+
+        const initialModes = initialBreakevenSettings?.spendingCalculationModes ?? {};
+        const currentModes = breakevenCalcModes;
+
+        // 比较两个模式对象是否相同
+        const initialKeys = Object.keys(initialModes);
+        const currentKeys = Object.keys(currentModes);
+
+        // 如果一个 spending 项被添加或删除，key 的数量会不同
+        if (initialKeys.length !== currentKeys.length) {
+            // 但这种情况会被 isDirty 捕获，为严谨起见保留
+            return true;
+        }
+
+        // 检查每个 key 的值是否发生了变化
+        for (const key of currentKeys) {
+            // 如果一个 key 在旧对象中不存在，或者值不同，则为 "dirty"
+            if (initialModes[key] !== currentModes[key]) {
+                return true;
+            }
+        }
+
+        return false;
+    }, [breakevenIncludeNetWorth, breakevenCalcModes, initialBreakevenSettings]);
 
     const watchedValues = watch();
 
@@ -226,14 +267,14 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         data.spendings.forEach(s => {
             const amount = parseFloat(s.amountInput) || 0;
             if (s.isCustom) {
-                if (s.description) { // 仅当有描述时才保存
+                if (s.description) {
                     customPlannedSpendingResult.push({
                         customSpendingId: s.id, description: s.description, multiplier: s.multiplier,
                         amountCents: Math.round(amount * 100), frequency: s.frequency, notes: s.notes,
                     });
                 }
             } else {
-                if (amount > 0) { // 仅当金额大于0时才保存
+                if (amount > 0) {
                     plannedSpendingResult[s.id] = {
                         amountCents: Math.round(amount * 100), frequency: s.frequency,
                         lastKnownRuleDescription: s.description, lastKnownMultiplier: s.multiplier, notes: s.notes,
@@ -242,10 +283,18 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             }
         });
 
+        // --- MODIFICATION: Construct the settings object to be saved ---
+        const breakevenAnalysisSettings: IBreakevenAnalysisSettings = {
+            includeEquivalentAnnualFee: breakevenIncludeNetWorth,
+            spendingCalculationModes: breakevenCalcModes,
+        };
+
         const updatedCardValuation: IUserCardValuation = {
             ...(initialCardValuation ?? {}),
             plannedSpending: plannedSpendingResult,
             customPlannedSpending: customPlannedSpendingResult,
+            // --- MODIFICATION: Attach the settings to the card valuation object ---
+            breakevenAnalysisSettings: breakevenAnalysisSettings,
         };
 
         onSave({cardValuation: updatedCardValuation, pointSystemValuations: newPointSystemValuations});
@@ -258,6 +307,9 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
         const cardValuation = profile.cardValuations?.[card.cardId] ?? {};
         cardValuation.plannedSpending = {};
         cardValuation.customPlannedSpending = [];
+        // --- MODIFICATION: Also clear the saved breakeven analysis settings ---
+        cardValuation.breakevenAnalysisSettings = undefined;
+
         const systemId = card.pointSystemInfo?.systemId;
         const pointSystemValuations = profile.pointSystemValuations ?? {};
         if (systemId && pointSystemValuations[systemId]) {
@@ -333,9 +385,15 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                         </form>
                     </TabPanel>
                     <TabPanel value={tabIndex} index={1}>
+                        {/* --- MODIFICATION: Pass state and setters to child component --- */}
                         <BreakevenAnalysisTab spendings={watchedValues.spendings} cppInput={watchedValues.cppInput}
                                               totalAnnualSpend={totalAnnualSpend} spendReturnRate={spendReturnRate}
-                                              netWorthCents={netWorthCents}/>
+                                              netWorthCents={netWorthCents}
+                                              includeNetWorth={breakevenIncludeNetWorth}
+                                              onIncludeNetWorthChange={setBreakevenIncludeNetWorth}
+                                              calculationModes={breakevenCalcModes}
+                                              onCalculationModeChange={setBreakevenCalcModes}
+                        />
                     </TabPanel>
                 </DialogContent>
                 <DialogActions sx={{
@@ -351,7 +409,7 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                     <Box sx={{flexGrow: 1}}/>
                     <Button onClick={onClose}>取消</Button>
                     <Button variant="contained" type="submit" form="cash-back-form"
-                            disabled={!isDirty || !isValid}>保存</Button>
+                            disabled={(!isDirty && !isSettingsDirty) || !isValid}>保存</Button>
                 </DialogActions>
             </Dialog>
             <Dialog open={confirmClearOpen} onClose={() => setConfirmClearOpen(false)} maxWidth="xs">

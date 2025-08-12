@@ -101,6 +101,31 @@ message CustomPlannedSpending {
   string notes = 6;
 }
 
+// 定义盈亏平衡分析中消费项的计算模式
+enum SpendingCalculationMode {
+  // 默认值，在代码逻辑中应被视为与 LINEAR 相同，以实现向前兼容。
+  MODE_UNSPECIFIED = 0;
+  // 消费额随总消费按比例线性增长 (默认行为)
+  LINEAR = 1;
+  // 消费额是固定的，不随总消费的变化而变化
+  FIXED = 2;
+}
+
+// 存储与特定卡相关的盈亏平衡分析的用户自定义设置
+message BreakevenAnalysisSettings {
+  // 是否在计算总回报率时考虑等效年费（所有福利减去年费后的净值）。
+  // 这对应UI中的“计算时考虑等效年费”开关。
+  // 默认为 false，意味着前端在未设置时应视为不包含，以匹配当前逻辑。
+  bool include_equivalent_annual_fee = 1;
+
+  // 映射消费项ID到其计算模式。
+  // Key: 可以是 cardverdict.v1.EarningRate.earning_rate_id (对于官方消费类别)
+  //      也可以是 CustomPlannedSpending.custom_spending_id (对于自定义消费类别)。
+  //      这与前端 UnifiedSpendingField.id 的逻辑完全匹配。
+  // Value: 该消费项在图表分析中的计算方式 (线性或固定)。
+  map<string, SpendingCalculationMode> spending_calculation_modes = 2;
+}
+
 // 存储用户对单张信用卡所有福利和年费的自定义估值
 message UserCardValuation {
   // 映射 credit_id 到用户的自定义价值。
@@ -121,6 +146,10 @@ message UserCardValuation {
   // (核心新增) 一个列表，包含所有由用户手动添加的、非官方的消费类别。
   // 这与 `planned_spending` 完全分离，结构更清晰。
   repeated CustomPlannedSpending custom_planned_spending = 5;
+
+  // 将UI状态与核心估值数据分离，但保持其与特定卡的关联。
+  // 如果此字段不存在或为空，前端应使用默认设置。
+  BreakevenAnalysisSettings breakeven_analysis_settings = 6;
 }
 
 // ===================================================================
