@@ -116,7 +116,7 @@ export const getTooltipForBenefit = (
     return benefit.defaultEffectiveValueExplanation ?? getBenefitDisplayDetails(benefit);
 };
 
-export function shouldHideBenefit(benefit: cardverdict.v1.IOtherBenefit): boolean {
+export function shouldDisplayBenefit(benefit: cardverdict.v1.IOtherBenefit): boolean {
 
     if (benefit.feeReimbursement || benefit.pointPerk) return false;
     if (benefit.travelStatus && benefit.travelStatus.type !== TravelStatusBenefit.StatusType.HOTEL_ELITE_STATUS) return false;

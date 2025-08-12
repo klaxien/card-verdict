@@ -19,7 +19,7 @@ import {CustomAdjustmentsEditor} from './CustomAdjustmentsEditor';
 import {loadActiveValuationProfile, saveValuationProfile} from '~/client/userSettingsPersistence';
 import {BenefitRow} from "./BenefitRow";
 import {CreditRow} from "./CreditRow";
-import {shouldHideBenefit} from "~/components/homePanel/utils/creditCardDisplayUtils";
+import {shouldDisplayBenefit} from "~/components/homePanel/utils/creditCardDisplayUtils";
 
 // Type Definitions
 type PerkValue = userprofile.v1.IPerkValue;
@@ -95,7 +95,7 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
     }, [open, card.credits, displayCredits, singleCreditIdToEdit, singleBenefitIdToEdit, singleCustomAdjustmentIdToEdit]);
 
     const sessionBenefits = useMemo(() => {
-        const allBenefits = (displayBenefits && displayBenefits.length ? displayBenefits : card.otherBenefits ?? []).filter(shouldHideBenefit);
+        const allBenefits = (displayBenefits && displayBenefits.length ? displayBenefits : card.otherBenefits ?? []).filter(shouldDisplayBenefit);
         if (singleBenefitIdToEdit) return allBenefits.filter(b => b.benefitId === singleBenefitIdToEdit);
         if (singleCreditIdToEdit || singleCustomAdjustmentIdToEdit) return [];
         return allBenefits;

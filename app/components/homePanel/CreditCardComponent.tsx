@@ -44,7 +44,7 @@ import {
     getCustomAdjustmentChipColor,
     getTooltipForBenefit,
     getTooltipForCredit,
-    shouldHideBenefit
+    shouldDisplayBenefit
 } from "~/components/homePanel/utils/creditCardDisplayUtils";
 
 const genericImageName = 'generic_credit_card_picryl_66dea8.png';
@@ -175,7 +175,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
         // userValuation is not used here because otherBenefits are not currently user-editable.
         const benefits = card.otherBenefits ?? [];
         return [...benefits]
-            .filter(shouldHideBenefit)
+            .filter(shouldDisplayBenefit)
             .sort((a, b) => {
             const aVal = a.defaultEffectiveValueCents ?? 0;
             const bVal = b.defaultEffectiveValueCents ?? 0;
