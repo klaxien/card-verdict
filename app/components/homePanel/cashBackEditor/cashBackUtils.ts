@@ -94,3 +94,14 @@ export const validateOptionalAmount = (value: string): true | string => {
     }
     return true;
 };
+
+export const validateMultiPlier = (value: number): true | string => {
+    if (value === null || value === undefined || String(value).trim() === '') {
+        return '不能为空'; // 不允许空值
+    }
+    if (!/^\d*\.?\d{0,1}$/.test(String(value))) {
+        return '必须是正数，最多1位小数';
+    }
+    return true;
+};
+

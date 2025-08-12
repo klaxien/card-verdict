@@ -17,7 +17,7 @@ import {
 import {type Control, Controller, type FieldArrayWithId, type UseFieldArrayRemove} from 'react-hook-form';
 import DeleteIcon from '@mui/icons-material/Delete';
 import type {FormValues} from './CashBackEditor';
-import {frequencyOptions, validateOptionalAmount} from './cashBackUtils';
+import {frequencyOptions, validateMultiPlier, validateOptionalAmount} from './cashBackUtils';
 import {createLengthValidator} from '~/components/common/validators';
 
 type CustomSpendingsEditorProps = {
@@ -67,6 +67,7 @@ export const CustomSpendingsEditor: React.FC<CustomSpendingsEditorProps> = ({con
                                         autoComplete="off"
                                         label="自定义类别描述"
                                         size="small"
+                                        required
                                         error={!!fieldState.error}
                                         helperText={fieldState.error?.message || ' '}
                                     />
@@ -77,7 +78,9 @@ export const CustomSpendingsEditor: React.FC<CustomSpendingsEditorProps> = ({con
                             <Controller
                                 name={`spendings.${originalIndex}.multiplier`}
                                 control={control}
-                                rules={{validate: v => !isNaN(parseFloat(String(v))) && parseFloat(String(v)) >= 0 || '必须是非负数'}}
+                                rules={{
+                                    validate: validateMultiPlier
+                                }}
                                 render={({field: multField, fieldState}) => (
                                     <TextField
                                         {...multField}
@@ -160,15 +163,6 @@ export const CustomSpendingsEditor: React.FC<CustomSpendingsEditorProps> = ({con
                     </Grid>
                 </Box>
             ))}
-
-
-            {/*<Grid size={12} display="flex" justifyContent="flex-end">*/}
-            {/*    <Tooltip title="删除此自定义报销">*/}
-            {/*        <IconButton color="error" onClick={() => remove(originalIndex)} size="small">*/}
-            {/*            <DeleteIcon fontSize="small" />*/}
-            {/*        </IconButton>*/}
-            {/*    </Tooltip>*/}
-            {/*</Grid>*/}
         </Stack>
     );
 };
