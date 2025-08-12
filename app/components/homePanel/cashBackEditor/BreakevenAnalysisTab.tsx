@@ -37,6 +37,7 @@ const {SpendingCalculationMode} = userprofile.v1;
 interface BreakevenAnalysisTabProps {
     spendings: Array<{
         id: string;
+        isCustom: boolean;
         description: string;
         multiplier: number;
         amountInput: string;
@@ -304,7 +305,7 @@ const BreakevenAnalysisTab: React.FC<BreakevenAnalysisTabProps> = ({
                         <Grid container key={spending.id} alignItems="center" spacing={1}>
                             <Grid size={{xs: 7, sm: 8}}>
                                 <Typography variant="body2" noWrap
-                                            title={spending.description}>{spending.description}</Typography>
+                                            title={spending.description}>{spending.isCustom ? `[自定义${formatWithoutTrailingZeroes(spending.multiplier)}x] ` : ''}{spending.description}</Typography>
                             </Grid>
                             <Grid size={{xs: 5, sm: 4}}>
                                 <FormControl fullWidth size="small">
