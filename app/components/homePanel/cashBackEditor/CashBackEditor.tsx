@@ -24,6 +24,7 @@ import {cardverdict, userprofile} from '~/generated/bundle';
 import {Controller, FormProvider, useFieldArray, useForm} from 'react-hook-form';
 import {loadActiveValuationProfile} from "~/client/userSettingsPersistence";
 import {createLengthValidator} from "~/components/common/validators";
+import {formatWithoutTrailingZeroes} from "~/components/homePanel/utils/creditCardDisplayUtils";
 
 // 为了方便访问，进行解构
 const {EarningRate, CreditFrequency} = cardverdict.v1;
@@ -97,7 +98,7 @@ const formatEarningRate = (rate: IEarningRate): string => {
     if (channel === EarningRate.Channel.DIRECT) {
         description += ' (直接预定)';
     } else if (channel === EarningRate.Channel.TRAVEL_PORTAL) {
-        description += ' (旅行门户)';
+        description += ' (Portal)';
     } else if (channel === EarningRate.Channel.SPECIFIC_MERCHANTS && qualifyingMerchants && qualifyingMerchants.length > 0) {
         description += ` (${qualifyingMerchants.join(', ')})`;
     }
@@ -258,9 +259,9 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
             spendReturnRate = (rewardsFromSpendCents / totalAnnualSpendCents) * 100;
             netWorthEffectRate = (netWorth / totalAnnualSpendCents) * 100;
             effectiveReturnRate = spendReturnRate + netWorthEffectRate;
-        } else if (netWorth > 0) {
+        } else if (netWorth !== 0) { //  Handle both positive and negative netWorth when spend is 0
             const netWorthDollars = netWorth / 100;
-            netWorthEffectRate = netWorthDollars * 100;
+            netWorthEffectRate = netWorthDollars * 100; // This results in a large percentage, which is the intended behavior.
             effectiveReturnRate = netWorthEffectRate;
         }
 
@@ -359,29 +360,48 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                 <DialogTitle>计算 {card.name} 返现</DialogTitle>
 
                 <Box sx={{px: 3, mb: 2, mt: -1.5}}>
-                    <Alert severity={effectiveReturnRate > 0 ? "success" : "warning"}
+                    <Alert icon={false} severity={effectiveReturnRate > 0 ? "success" : "warning"}
                            sx={{pb: 0, '& .MuiAlert-message': {width: '100%'}}}>
                         <Stack spacing={1}>
-                            <Grid container alignItems="center" justifyContent="space-around" spacing={1}>
-                                <Grid size={4} textAlign="center">
+                            <Grid container alignItems="center" justifyContent="space-around" flexWrap="wrap"
+                                  spacing={1}>
+                                <Grid size={3} textAlign="center">
                                     <Typography variant="caption" color="text.secondary"
                                                 display="block">总消费</Typography>
                                     <Typography
-                                        variant="h6" fontWeight="bold">${totalAnnualSpend.toFixed(0)}</Typography>
+                                        variant="h6" fontWeight="bold"
+                                        sx={{wordBreak: 'break-word'}}>${totalAnnualSpend.toFixed(0)}</Typography>
                                 </Grid>
-                                <Grid size={4} textAlign="center">
+                                <Grid size={3} textAlign="center">
                                     <Typography variant="caption" color="text.secondary"
                                                 display="block">总返现率</Typography>
                                     <Typography variant="h6" fontWeight="bold"
-                                                sx={{color: effectiveReturnRate > 0 ? 'success.main' : 'error.main'}}>
-                                        {effectiveReturnRate.toFixed(2)}%
+                                                sx={{
+                                                    color: effectiveReturnRate > 0 ? 'success.main' : 'error.main',
+                                                    wordBreak: 'break-word'
+                                                }}>
+                                        {formatWithoutTrailingZeroes(effectiveReturnRate)}%
                                     </Typography>
                                 </Grid>
-                                <Grid size={4} textAlign="center">
+                                <Grid size={3} textAlign="center">
+                                    <Typography variant="caption" color="text.secondary"
+                                                display="block">纯消费返现率</Typography>
+                                    <Typography variant="h6" fontWeight="bold"
+                                                sx={{
+                                                    color: spendReturnRate > 0 ? 'success.main' : 'error.main',
+                                                    wordBreak: 'break-word'
+                                                }}>
+                                        {formatWithoutTrailingZeroes(spendReturnRate)}%
+                                    </Typography>
+                                </Grid>
+                                <Grid size={3} textAlign="center">
                                     <Typography variant="caption" color="text.secondary"
                                                 display="block">总返现</Typography>
                                     <Typography variant="h6" fontWeight="bold"
-                                                sx={{color: totalReturnValue >= 0 ? 'success.main' : 'error.main'}}>
+                                                sx={{
+                                                    color: totalReturnValue >= 0 ? 'success.main' : 'error.main',
+                                                    wordBreak: 'break-word'
+                                                }}>
                                         ${totalReturnValue.toFixed(0)}
                                     </Typography>
                                 </Grid>
@@ -389,7 +409,8 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                             <Divider/>
                             <Typography variant="caption" color="text.secondary" display="block"
                                         textAlign="center">
-                                总返现率 = 消费回报 {spendReturnRate.toFixed(2)}% + 净值影响 {netWorthEffectRate.toFixed(2)}%
+                                总返现率 = 消费回报 {spendReturnRate.toFixed(2)}%
+                                +等效年费影响 {netWorthEffectRate.toFixed(2)}%
                             </Typography>
                         </Stack>
                     </Alert>
@@ -421,13 +442,11 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                             }}
                                             fullWidth
                                             label="每点价值 (cpp)"
-                                            slotProps={{
-                                                input: {
-                                                    endAdornment: <InputAdornment position="end">¢/pt</InputAdornment>,
-                                                },
-                                                htmlInput: {
-                                                    inputMode: 'decimal',
-                                                }
+                                            InputProps={{
+                                                endAdornment: <InputAdornment position="end">¢/pt</InputAdornment>,
+                                            }}
+                                            inputProps={{
+                                                inputMode: 'decimal',
                                             }}
                                             size="small"
                                             error={!!error}
@@ -470,14 +489,12 @@ const CashBackEditor: React.FC<CashBackEditorProps> = ({
                                                             label="计划消费额"
                                                             error={!!error}
                                                             helperText={error?.message || ' '}
-                                                            slotProps={{
-                                                                input: {
-                                                                    startAdornment: <InputAdornment
-                                                                        position="start">$</InputAdornment>,
-                                                                },
-                                                                htmlInput: {
-                                                                    min: 0,
-                                                                }
+                                                            InputProps={{
+                                                                startAdornment: <InputAdornment
+                                                                    position="start">$</InputAdornment>,
+                                                            }}
+                                                            inputProps={{
+                                                                min: 0,
                                                             }}
                                                             size="small"
                                                         />

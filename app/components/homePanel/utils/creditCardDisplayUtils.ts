@@ -149,3 +149,7 @@ export function getTooltipForCredit(
     if (creditValuation?.valueCents || creditValuation?.proportion) return '自定义估值（未输入原因）';
     return credit.defaultEffectiveValueExplanation ?? '';
 }
+
+export function formatWithoutTrailingZeroes(number: number): string {
+    return parseFloat(number.toFixed(2)).toString();
+}
