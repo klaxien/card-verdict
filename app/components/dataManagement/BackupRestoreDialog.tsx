@@ -162,7 +162,7 @@ const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({open, onClose,
                         <Typography variant="h6" gutterBottom>恢复数据</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{mb: 1.5}}>
                             请选择您之前下载的 <code>.json</code> 备份文件进行恢复。<br/>
-                            上传陌生人的数据进行恢复可能有安全风险，请只使用你完全信任的数据进行恢复。<br/>
+                            上传陌生人提供的备份文件可能有安全风险，请只使用你完全信任的数据进行恢复。<br/>
                             <strong>注意：这将覆盖您当前的所有数据。</strong>
                         </Typography>
                         <Button variant="outlined" color="primary" onClick={handleRestoreClick}>选择 .json
