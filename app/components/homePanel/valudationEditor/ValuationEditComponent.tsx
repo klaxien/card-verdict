@@ -174,38 +174,58 @@ const ValuationEditComponent: React.FC<CardEditProps> = (props) => {
     const onSubmit = (data: FormValues) => {
         const output: UserCardValuation = {
             ...(initialValuation ?? emptyValuation()),
-            creditValuations: {},
-            otherBenefitValuations: {},
+            // 确保嵌套的估值对象也被复制，而不仅仅是引用。
+            creditValuations: {...(initialValuation?.creditValuations ?? {})},
+            otherBenefitValuations: {...(initialValuation?.otherBenefitValuations ?? {})},
+            // 直接使用表单中最新的 customAdjustments 数组。
             customAdjustments: data.customAdjustments,
         };
 
-        const processPerkData = (perks: any[], idKey: string, outputMap: userprofile.v1.IUserCardValuation['creditValuations']) => {
+        /**
+         * 一个通用的函数，用于将表单中的更改合并到估值映射中。
+         * @param perks - 来自 react-hook-form 的 perks 数组 (credits 或 benefits)。
+         * @param idKey - 'creditId' 或 'benefitId'。
+         * @param valuationMap - 要更新的估值对象 (output.creditValuations 或 output.otherBenefitValuations)。
+         */
+        const mergePerkValuations = (perks: any[], idKey: string, valuationMap: { [key: string]: PerkValue }) => {
             perks.forEach(row => {
-                let saved = false;
-                const hasDollars = row.dollarsInput.trim() !== '';
-                const hasProportion = row.proportionInput.trim() !== '';
                 const perkId = row[idKey];
+                if (!perkId) return;
+
+                const hasDollars = row.dollarsInput?.trim() !== '';
+                const hasProportion = row.proportionInput?.trim() !== '';
+                const hasExplanation = row.explanation?.trim() !== '';
+                let saved = false;
 
                 if (row.lastEdited === 'dollars' && hasDollars) {
-                    outputMap![perkId] = {
+                    valuationMap[perkId] = {
                         valueCents: Math.round(Number(row.dollarsInput) * 100),
                         explanation: row.explanation
                     };
                     saved = true;
                 } else if (row.lastEdited === 'proportion' && hasProportion) {
-                    outputMap![perkId] = {proportion: Number(row.proportionInput), explanation: row.explanation};
+                    valuationMap[perkId] = {
+                        proportion: Number(row.proportionInput),
+                        explanation: row.explanation
+                    };
                     saved = true;
                 }
 
-                if (!saved && row.explanation?.trim()) {
-                    outputMap![perkId] = {explanation: row.explanation};
+                if (!saved && hasExplanation) {
+                    // 如果只有解释，则创建一个只有解释的条目。
+                    valuationMap[perkId] = {explanation: row.explanation};
+                } else if (!hasDollars && !hasProportion && !hasExplanation) {
+                    // 如果用户清空了该行的所有输入，则从估值中删除此条目。
+                    delete valuationMap[perkId];
                 }
             });
         };
 
-        processPerkData(data.credits, 'creditId', output.creditValuations!);
-        processPerkData(data.benefits, 'benefitId', output.otherBenefitValuations!);
-
+        // 2. 将表单中的 credit 和 benefit 更改合并到 output 对象中。
+        mergePerkValuations(data.credits, 'creditId', output.creditValuations!);
+        mergePerkValuations(data.benefits, 'benefitId', output.otherBenefitValuations!);
+        console.log(output);
+        // 3. 使用包含所有正确数据的、完整的 output 对象来调用 onSave。
         onSave?.(output);
         onClose();
     };

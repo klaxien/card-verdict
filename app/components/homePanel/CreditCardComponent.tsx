@@ -322,7 +322,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
             const bVal = b.defaultEffectiveValueCents ?? 0;
             return bVal - aVal;
         });
-    }, [card.otherBenefits]);
+    }, [card.otherBenefits, userValuation]);
 
 
     const sortedCustomAdjustments = useMemo(() => {
@@ -376,7 +376,7 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
             isLast: index === sortedBenefits.length - 1,
             onClick: () => setEditingBenefitId(benefit.benefitId ?? null),
         }));
-    }, [sortedBenefits]);
+    }, [sortedBenefits, userValuation]);
 
     const customDisplayItems: DisplayItem[] = sortedCustomAdjustments.map((adj, index) => {
         const annualValue = (adj.valueCents ?? 0) * periodsInYearFor(adj.frequency);
