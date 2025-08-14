@@ -74,10 +74,23 @@ const HomePanel: React.FC = () => {
                 }
             }
 
-            // --- 步骤2: 加载主卡片数据库 ---
+            // --- 步骤2: 加载主卡片数据库并设置默认筛选 ---
             try {
                 const data = await getCardDatabase();
-                setCardData(data);
+                setCardData(data); // 存储完整的数据库，供筛选器使用
+
+                // 计算个人卡ID并设置为默认筛选状态
+                const personalCardIds = new Set<string>();
+                data.cards?.forEach(card => {
+                    // 假设未指定类型的卡默认为个人卡
+                    if (card.cardId && card.cardType !== cardverdict.v1.CardType.BUSINESS) {
+                        personalCardIds.add(card.cardId);
+                    }
+                });
+
+                setSelectedCardIds(personalCardIds);
+                setFilterHasBeenApplied(true); // 立即应用此默认筛选
+
             } catch (err) {
                 // 这是网络错误等，显示通用错误信息
                 setGenericError(err instanceof Error ? err.message : '无法加载信用卡数据库');
@@ -88,7 +101,7 @@ const HomePanel: React.FC = () => {
         };
 
         fetchAllData();
-    }, []);
+    }, []); // 空依赖数组确保此 effect 仅在组件挂载时运行一次
 
     // 按发卡行对卡片进行分组，供筛选器使用
     const {cardsByIssuer, allCardIds} = useMemo(() => {
@@ -113,9 +126,9 @@ const HomePanel: React.FC = () => {
 
         let cardsToDisplay: cardverdict.v1.ICreditCard[];
 
-        // 关键逻辑: 区分初始状态和已应用筛选的状态
+        // 关键逻辑: 由于 filterHasBeenApplied 初始即为 true, 此逻辑现在默认就会执行筛选
         if (!filterHasBeenApplied) {
-            // 在用户第一次应用筛选之前，显示所有卡片
+            // 这个分支在正常流程下几乎不会被执行，但作为备用保留
             cardsToDisplay = cardData.cards;
         } else {
             // 一旦用户应用了筛选，就严格按照 selectedIds 来显示。

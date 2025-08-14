@@ -7,6 +7,7 @@ cards {
   image_name: "amex_gold.png"
   issuer: AMEX
   annual_fee_cents: 32500
+  card_type: PERSONAL
   credits {
     credit_id: "uber-credit"
     type: RIDESHARE
@@ -96,6 +97,7 @@ cards {
   image_name: "amex_platinum.png"
   issuer: AMEX
   annual_fee_cents: 69500
+  card_type: PERSONAL
   credits {
     credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
@@ -259,6 +261,7 @@ cards {
   image_name: "amex_delta_platinum.png"
   issuer: AMEX
   annual_fee_cents: 35000
+  card_type: PERSONAL
   credits {
     credit_id: "companion-ticket"
     type: COMPANION_TICKET
@@ -374,6 +377,7 @@ cards {
   image_name: "amex_delta_reserve.png"
   issuer: AMEX
   annual_fee_cents: 65000
+  card_type: PERSONAL
   credits {
     credit_id: "companion-ticket"
     type: COMPANION_TICKET
@@ -487,6 +491,7 @@ cards {
   image_name: "amex_marriott_monvoy_brilliant.png"
   issuer: AMEX
   annual_fee_cents: 65000
+  card_type: PERSONAL
   credits {
     credit_id: "dining-credit"
     type: DINING
@@ -575,6 +580,7 @@ cards {
   image_name: "amex_hilton_surpass.png"
   issuer: AMEX
   annual_fee_cents: 15000
+  card_type: PERSONAL
   credits {
     credit_id: "hilton-hotel-credit"
     type: HOTEL_STAY
@@ -635,6 +641,7 @@ cards {
   image_name: "amex_hilton_honors_aspire.png"
   issuer: AMEX
   annual_fee_cents: 55000
+  card_type: PERSONAL
   credits {
     credit_id: "hilton-resort-credit"
     type: HOTEL_PROPERTY_CREDIT
@@ -724,6 +731,7 @@ cards {
   image_name: "chase_sapphire_preferred.png"
   issuer: CHASE
   annual_fee_cents: 9500
+  card_type: PERSONAL
   credits {
     credit_id: "hotel-portal-credit"
     type: TRAVEL_PORTAL
@@ -822,6 +830,7 @@ cards {
   image_name: "chase_sapphire_reserve.png"
   issuer: CHASE
   annual_fee_cents: 79500
+  card_type: PERSONAL
   credits {
     credit_id: "travel-credit"
     type: TRAVEL
@@ -989,6 +998,7 @@ cards {
   image_name: "chase_united_quest.png"
   issuer: CHASE
   annual_fee_cents: 35000
+  card_type: PERSONAL
   credits {
     credit_id: "united-travelbank-credit"
     type: AIRLINE_CREDIT
@@ -1145,6 +1155,7 @@ cards {
   image_name: "chase_united_club_infinite.png"
   issuer: CHASE
   annual_fee_cents: 69500
+  card_type: PERSONAL
   credits {
     credit_id: "renowned-hotels-credit"
     type: HOTEL_STAY
@@ -1302,6 +1313,7 @@ cards {
   image_name: "chase_ritz_carlton.png"
   issuer: CHASE
   annual_fee_cents: 45000
+  card_type: PERSONAL
   credits {
     credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
@@ -1409,6 +1421,7 @@ cards {
   image_name: "capital_one_venture_x.png"
   issuer: CAPITAL_ONE
   annual_fee_cents: 39500
+  card_type: PERSONAL
   credits {
     credit_id: "travel-portal-credit"
     type: TRAVEL_PORTAL
@@ -1487,6 +1500,7 @@ cards {
   image_name: "us_bank_altitude_reserve.png"
   issuer: US_BANK
   annual_fee_cents: 40000
+  card_type: PERSONAL
   credits {
     credit_id: "travel-portal-credit"
     type: TRAVEL_PORTAL
@@ -1564,6 +1578,7 @@ cards {
   image_name: "cnb_crystal.png"
   issuer: CITY_NATIONAL_BANK
   annual_fee_cents: 40000
+  card_type: PERSONAL
   credits {
     credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
@@ -1630,6 +1645,7 @@ cards {
   image_name: "citi_prestige.png"
   issuer: CITI
   annual_fee_cents: 49500
+  card_type: PERSONAL
   credits {
     credit_id: "travel-credit"
     type: TRAVEL
@@ -1704,6 +1720,7 @@ cards {
   image_name: "citi_strata_premier.png"
   issuer: CITI
   annual_fee_cents: 9500
+  card_type: PERSONAL
   credits {
     credit_id: "hotel-credit"
     type: HOTEL_STAY
@@ -1783,6 +1800,7 @@ cards {
   image_name: "citi_strata_elite.png"
   issuer: CITI
   annual_fee_cents: 59500
+  card_type: PERSONAL
   credits {
     credit_id: "hotel-credit"
     type: HOTEL_STAY
@@ -1893,6 +1911,7 @@ cards {
   image_name: "citi_aadvantage_executive.png"
   issuer: CITI
   annual_fee_cents: 59500
+  card_type: PERSONAL
   credits {
     credit_id: "avis-budget-credit"
     type: GROUND_TRANSPORTATION
@@ -1992,6 +2011,7 @@ cards {
   image_name: "bofa_premium_elite.png"
   issuer: BANK_OF_AMERICA
   annual_fee_cents: 55000
+  card_type: PERSONAL
   credits {
     credit_id: "airline-fee-credit"
     type: AIRLINE_FEE
@@ -2062,6 +2082,7 @@ cards {
   image_name: "hsbc_elite.png"
   issuer: HSBC
   annual_fee_cents: 49500
+  card_type: PERSONAL
   credits {
     credit_id: "travel-credit"
     type: TRAVEL
