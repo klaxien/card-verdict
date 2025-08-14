@@ -1025,8 +1025,8 @@ cards {
     default_period_value_cents: 15000
     qualifying_merchants: "Renowned Hotels and Resorts"
     details: "$150 Renowned Hotels and Resorts credit"
-    default_effective_value_proportion: 0.2
-    default_effective_value_explanation: "The Edit换皮？20%"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "The Edit换皮？50%"
   }
   credits {
     credit_id: "avis-budget-credit"
@@ -1163,8 +1163,8 @@ cards {
     default_period_value_cents: 20000
     qualifying_merchants: "Renowned Hotels and Resorts"
     details: "$200 Renowned Hotels and Resorts credit"
-    default_effective_value_proportion: 0.2
-    default_effective_value_explanation: "The Edit换皮？20%"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "The Edit换皮？50%"
   }
   credits {
     credit_id: "avis-budget-credit"
