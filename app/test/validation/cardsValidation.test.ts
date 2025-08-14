@@ -5,6 +5,7 @@ import {getCardDatabase} from '~/client/cardDetailsFetcher';
 import {cardverdict, cardverdict as pb} from '~/generated/bundle';
 import SpendingCategory = cardverdict.v1.EarningRate.SpendingCategory;
 import Channel = cardverdict.v1.EarningRate.Channel;
+import CardType = cardverdict.v1.CardType;
 
 // 类型别名
 type CreditCardDatabase = pb.v1.ICreditCardDatabase;
@@ -80,6 +81,9 @@ describe('CreditCardDatabase Data Validation', () => {
                     earningRateIds.add(id);
                 }
             }
+
+            expect(card.cardType).not.toBe(CardType.CARD_TYPE_UNSPECIFIED);
+            expect(card.cardType).toBeDefined();
         }
     });
 
