@@ -2133,3 +2133,1013 @@ cards {
     }
   }
 }
+
+cards {
+  card_id: "chase-united-business"
+  name: "Chase United Business"
+  image_name: "chase_united_business.png"
+  issuer: CHASE
+  annual_fee_cents: 19900
+  card_type: BUSINESS
+  credits {
+    credit_id: "united-travelbank-credit"
+    type: AIRLINE_CREDIT
+    frequency: ANNUAL
+    default_period_value_cents: 12500
+    qualifying_merchants: "United Airlines"
+    details: "每个 calendar year 买至少5次金额至少$100的United机票，可得 $125 United TravelBank cash。"
+    default_effective_value_proportion: 1.0
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "united-hotels-credit"
+    type: TRAVEL_PORTAL
+    frequency: ANNUAL
+    default_period_value_cents: 10000
+    qualifying_merchants: "United Hotels"
+    details: "每年 (anniversary year) 在 United Hotels 预订 prepaid hotel，前两个预订可得 $50 back，总计 $100。"
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+  }
+  credits {
+    credit_id: "avis-budget-credit"
+    type: GROUND_TRANSPORTATION
+    frequency: ANNUAL
+    default_period_value_cents: 5000
+    qualifying_merchants: "Avis"
+    qualifying_merchants: "Budget"
+    details: "每年 (anniversary year) 在 cars.united.com 用此卡租Avis/Budget的车，前两个预订可得 $25 United TravelBank cash，总计$50。"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "特定租车平台报销，且返还的是TravelBank，估值参考United Quest卡。"
+  }
+  credits {
+    credit_id: "rideshare-credit"
+    type: RIDESHARE
+    frequency: MONTHLY
+    default_period_value_cents: 800
+    overrides {
+      period: 12
+      value_cents: 1200
+    }
+    details: "$100 Rideshare Credit ($8/月, 12月为$12)。需要每年 opt-in。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+  }
+  credits {
+    credit_id: "instacart-credit"
+    type: FOOD_DELIVERY
+    frequency: MONTHLY
+    default_period_value_cents: 1000
+    qualifying_merchants: "Instacart"
+    details: "每月可得 $10 Instacart credit，将于2027年12月31日截止。"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "平台溢价，按50%估值。"
+  }
+  credits {
+    credit_id: "jsx-credit"
+    type: AIRLINE_CREDIT
+    frequency: ANNUAL
+    default_period_value_cents: 10000
+    qualifying_merchants: "JSX"
+    details: "每年在JSX消费可报销$100。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "航线极少，非刚需，估值为0。"
+  }
+  credits {
+    credit_id: "farelock-credit"
+    type: AIRLINE_FEE
+    frequency: ANNUAL
+    default_period_value_cents: 2500
+    qualifying_merchants: "United Airlines"
+    details: "每年报销 up to $25 United FareLock。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-business-2x-group"
+    multiplier: 2
+    category: FLIGHT
+    qualifying_merchants: "United Airlines"
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-business-2x-hotel"
+    multiplier: 2
+    category: HOTEL
+    channel: GENERAL
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-business-2x-gas"
+    multiplier: 2
+    category: GAS_STATIONS
+    channel: GENERAL
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-business-2x-office"
+    multiplier: 2
+    category: OFFICE_SUPPLY_STORES
+    channel: GENERAL
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-business-2x-transit"
+    multiplier: 2
+    category: TRANSIT
+    channel: GENERAL
+    notes: "Local transit and commuting"
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-business-1x-other"
+    multiplier: 1
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "ua-mileageplus"
+    system_type: UNITED_MILEAGEPLUS
+    default_cents_per_point: 1.5
+    notes: "United MileagePlus Miles 估值"
+  }
+  other_benefits {
+    benefit_id: "lounge-access-united-club-passes"
+    lounge_access {
+      network: UNITED_CLUB
+      notes: "每年获得两张一次性United Club门票。"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-5k-bonus"
+    point_perk {
+      description: "若同时持有此卡和一张UA个人卡，则每年anniversary时可以获得 5,000 UA 里程。"
+    }
+  }
+  other_benefits {
+    benefit_id: "baggage-benefit"
+    baggage {
+      free_checked_bags_count: 1
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-priority-boarding"
+    travel_status {
+      type: AIRLINE_PRIORITY_ACCESS
+      description: "享受UA执飞航班的 Group 2 优先登机权"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-mpx-bonus"
+    point_perk {
+      description: "在Mileage Plus X (MPX)上购物可以额外获得25%的 UA Miles。"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-xn-availability"
+    point_perk {
+      description: "可以看到额外的经济舱XN舱余票"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-pay-fee-with-points"
+    point_perk {
+      description: "持有此卡可以以 1.52 cents/point 的比例用UA里程抵消年费。"
+    }
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
+    car_rental_insurance {
+      coverage_type: PRIMARY
+    }
+  }
+}
+cards {
+  card_id: "chase-united-club-business"
+  name: "Chase United Club Business"
+  image_name: "chase_united_club_business.png"
+  issuer: CHASE
+  annual_fee_cents: 69500
+  card_type: BUSINESS
+  credits {
+    credit_id: "renowned-hotels-credit"
+    type: HOTEL_STAY
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "Renowned Hotels and Resorts"
+    details: "每年 (anniversary year) 在 Renowned Hotels and Resorts 预订 prepaid hotel，可报销 $200。"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "估值参考United Club Infinite个人卡"
+  }
+  credits {
+    credit_id: "avis-budget-credit"
+    type: GROUND_TRANSPORTATION
+    frequency: ANNUAL
+    default_period_value_cents: 10000
+    qualifying_merchants: "Avis"
+    qualifying_merchants: "Budget"
+    details: "每年 (anniversary year) 在 cars.united.com 租Avis/Budget的车，前两个预订可得 $50 United TravelBank cash，总计$100。"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "估值参考United Club Infinite个人卡"
+  }
+  credits {
+    credit_id: "rideshare-credit"
+    type: RIDESHARE
+    frequency: MONTHLY
+    default_period_value_cents: 1200
+    overrides {
+      period: 12
+      value_cents: 1800
+    }
+    details: "$150 Rideshare Credit ($12/月, 12月为$18)。需要每年 opt-in。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "网约车礼品卡常有折扣，假设用来报销外卖，按80%估值。"
+  }
+  credits {
+    credit_id: "instacart-credit"
+    type: FOOD_DELIVERY
+    frequency: MONTHLY
+    default_period_value_cents: 2000
+    qualifying_merchants: "Instacart"
+    details: "每月可得两张 $10 Instacart credit，将于2027年12月31日截止。"
+    default_effective_value_proportion: 0.5
+    default_effective_value_explanation: "平台溢价，按50%估值。"
+  }
+  credits {
+    credit_id: "jsx-credit"
+    type: AIRLINE_CREDIT
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "JSX"
+    details: "每年在JSX消费可报销$200。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "航线极少，非刚需，估值为0。"
+  }
+  credits {
+    credit_id: "farelock-credit"
+    type: AIRLINE_FEE
+    frequency: ANNUAL
+    default_period_value_cents: 5000
+    qualifying_merchants: "United Airlines"
+    details: "每年报销 up to $50 United FareLock。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-club-biz-2x-ua"
+    multiplier: 2
+    category: FLIGHT
+    qualifying_merchants: "United Airlines"
+  }
+  earning_rates {
+    earning_rate_id: "chase-united-club-biz-1.5x-other"
+    multiplier: 1.5
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "ua-mileageplus"
+    system_type: UNITED_MILEAGEPLUS
+    default_cents_per_point: 1.5
+    notes: "United MileagePlus Miles 估值"
+  }
+  other_benefits {
+    benefit_id: "lounge-access-united-club"
+    lounge_access {
+      network: UNITED_CLUB
+      guest_count: 1
+    }
+  }
+  other_benefits {
+    benefit_id: "baggage-benefit"
+    baggage {
+      free_checked_bags_count: 2
+      details: "主卡持有人和一位同行者（同一预订下）。"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-premier-access"
+    travel_status {
+      type: AIRLINE_PRIORITY_ACCESS
+      description: "享受UA执飞航班的 Premier Access（行李优先处理、Group 2登机等）。"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-hertz-presidents-circle"
+    travel_status {
+      type: RENTAL_CAR_ELITE_STATUS
+      description: "Hertz President’s Circle 会员"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-pqd-waiver"
+    point_perk {
+      description: "每年消费满$25k可免掉UA银卡、金卡、白金卡的 Premier Qualifying Dollars (PQD) 要求。"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-mpx-bonus"
+    point_perk {
+      description: "在Mileage Plus X (MPX)上购物可以额外获得25%的 UA Miles。"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-xn-availability"
+    point_perk {
+      description: "可以看到额外的经济舱XN舱余票"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-pay-fee-with-points"
+    point_perk {
+      description: "持有此卡可以以 1.75 cents/point 的比例用UA里程抵消年费。"
+    }
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
+    car_rental_insurance {
+      coverage_type: PRIMARY
+    }
+  }
+}
+cards {
+  card_id: "chase-sapphire-reserve-business"
+  name: "Chase Sapphire Reserve for Business"
+  image_name: "chase_sapphire_reserve_business.png"
+  issuer: CHASE
+  annual_fee_cents: 79500
+  card_type: BUSINESS
+  credits {
+    credit_id: "travel-credit"
+    type: TRAVEL
+    frequency: ANNUAL
+    default_period_value_cents: 30000
+    details: "$300 annual travel credit"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "通用旅行报销极其灵活，视为现金。"
+  }
+  credits {
+    credit_id: "the-edit-credit"
+    type: TRAVEL_PORTAL
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 25000
+    qualifying_merchants: "The Edit"
+    details: "$500 Edit Collection Credit ($250 per half-year)"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "doordash-credit"
+    type: FOOD_DELIVERY
+    frequency: MONTHLY
+    default_period_value_cents: 2500
+    qualifying_merchants: "DoorDash"
+    details: "$300 DoorDash Credit (每月$25)。"
+    default_effective_value_proportion: 0.7
+    default_effective_value_explanation: "按7折估值。"
+  }
+  credits {
+    credit_id: "dashpass-membership"
+    type: MEMBERSHIP_REIMBURSEMENT
+    frequency: ANNUAL
+    default_period_value_cents: 12000
+    qualifying_merchants: "DashPass"
+    details: "免费的DashPass会员。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
+  }
+  credits {
+    credit_id: "lyft-credit"
+    type: RIDESHARE
+    frequency: MONTHLY
+    default_period_value_cents: 1000
+    qualifying_merchants: "Lyft"
+    details: "$120 Lyft Credit (每月$10)。"
+    default_effective_value_proportion: 0.45
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "ziprecruiter-credit"
+    type: BUSINESS_SERVICES
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "ZipRecruiter"
+    details: "$400 ZipRecruiter Credit ($200 per half-year)。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "google-workspace-credit"
+    type: BUSINESS_SERVICES
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "Google Workspace"
+    details: "$200 Google Workspace Credit。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "giftcards-com-credit"
+    type: RETAIL
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 5000
+    qualifying_merchants: "giftcards.com/reservebusiness"
+    details: "$100 Giftcards.com credit ($50 per half-year)。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "southwest-credit"
+    type: AIRLINE_CREDIT
+    frequency: ANNUAL
+    default_period_value_cents: 50000
+    qualifying_merchants: "Southwest"
+    details: "每年消费满$120,000后，通过Chase Travel预订Southwest航班可报销$500。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "the-shops-credit"
+    type: RETAIL
+    frequency: ANNUAL
+    default_period_value_cents: 50000
+    qualifying_merchants: "The Shops at Chase"
+    details: "每年消费满$120,000后，可获得$500 The Shops at Chase报销。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  earning_rates {
+    earning_rate_id: "csr-biz-travel-portal"
+    multiplier: 8
+    category: TRAVEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    earning_rate_id: "csr-biz-flight-direct"
+    multiplier: 4
+    category: FLIGHT
+    channel: DIRECT
+  }
+  earning_rates {
+    earning_rate_id: "csr-biz-hotel-direct"
+    multiplier: 4
+    category: HOTEL
+    channel: DIRECT
+  }
+  earning_rates {
+    earning_rate_id: "csr-biz-advertising-online"
+    multiplier: 3
+    category: ADVERTISING
+    notes: "Online advertising"
+  }
+  earning_rates {
+    earning_rate_id: "csr-biz-all-other"
+    multiplier: 1
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "ur-transferable"
+    system_type: CHASE_ULTIMATE_REWARDS
+    default_cents_per_point: 1.6
+    notes: "Chase Ultimate Rewards (UR) 可转点体系综合估值"
+  }
+  other_benefits {
+    benefit_id: "lounge-access-chase-sapphire"
+    lounge_access {
+      network: CHASE_SAPPHIRE_LOUNGE
+    }
+  }
+  other_benefits {
+    benefit_id: "lounge-access-priority-pass"
+    lounge_access {
+      network: PRIORITY_PASS_SELECT
+    }
+  }
+  other_benefits {
+    benefit_id: "fee-reimbursement"
+    fee_reimbursement {
+      programs: GLOBAL_ENTRY
+      programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-sw-alist"
+    travel_status {
+      type: AIRLINE_PRIORITY_ACCESS
+      description: "Southwest A-List 会员等级 (年消费满$120,000后)。"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-ihg-diamond"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "IHG Diamond 会员等级 (年消费满$120,000后)。"
+    }
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
+    car_rental_insurance {
+      coverage_type: PRIMARY
+    }
+  }
+}
+cards {
+  card_id: "amex-business-platinum"
+  name: "AMEX Business Platinum"
+  image_name: "amex_business_platinum.png"
+  issuer: AMEX
+  annual_fee_cents: 69500
+  card_type: BUSINESS
+  credits {
+    credit_id: "airline-fee-credit"
+    type: AIRLINE_FEE
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    details: "$200 airline fee credit"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
+  }
+  credits {
+    credit_id: "hilton-credit"
+    type: HOTEL_STAY
+    frequency: QUARTERLY
+    default_period_value_cents: 5000
+    qualifying_merchants: "Hilton"
+    details: "$200 Hilton credit ($50 per quarter)。需要 Hilton for Business 账户。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "dell-credit"
+    type: BUSINESS_SERVICES
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "Dell"
+    details: "$400 Dell credit ($200 per half-year)。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "wireless-credit"
+    type: TELECOM
+    frequency: MONTHLY
+    default_period_value_cents: 1000
+    details: "$120 wireless credit ($10 per month)。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "indeed-credit"
+    type: BUSINESS_SERVICES
+    frequency: QUARTERLY
+    default_period_value_cents: 9000
+    qualifying_merchants: "Indeed"
+    details: "$360 Indeed credit ($90 per quarter)。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "adobe-credit"
+    type: BUSINESS_SERVICES
+    frequency: ANNUAL
+    default_period_value_cents: 15000
+    qualifying_merchants: "Adobe"
+    details: "$150 Adobe credit (需选择 annually prepaid plan)。"
+    default_effective_value_proportion: 1
+    default_effective_value_explanation: "商业卡暂时不提供默认估值。"
+  }
+  credits {
+    credit_id: "clear-credit"
+    type: MEMBERSHIP_REIMBURSEMENT
+    frequency: ANNUAL
+    default_period_value_cents: 18900
+    qualifying_merchants: "CLEAR"
+    details: "Annual CLEAR credit"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-plat-amextravel"
+    multiplier: 5
+    category: TRAVEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-plat-large-purchase"
+    multiplier: 1.5
+    category: ALL_OTHER
+    notes: "单笔超过 $5000 的消费, 每年上限 $2m"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-plat-construction"
+    multiplier: 1.5
+    category: CONSTRUCTION_MATERIALS_AND_HARDWARE
+    notes: "每年1.5x总上限 $2m"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-plat-electronics"
+    multiplier: 1.5
+    category: ELECTRONICS
+    notes: "每年1.5x总上限 $2m"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-plat-software"
+    multiplier: 1.5
+    category: SOFTWARE_AND_CLOUD_SERVICES
+    notes: "每年1.5x总上限 $2m"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-plat-shipping"
+    multiplier: 1.5
+    category: SHIPPING
+    notes: "每年1.5x总上限 $2m"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-plat-all-other"
+    multiplier: 1
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "mr-transferable"
+    system_type: AMEX_MEMBERSHIP_REWARDS
+    default_cents_per_point: 1.6
+    notes: "Amex Membership Rewards (MR) 可转点体系综合估值"
+  }
+  other_benefits {
+    benefit_id: "point-perk-35-rebate"
+    point_perk {
+      description: "在 Amex Travel 用点数支付机票时返还35%点数（头等/商务舱或指定航司经济舱），每年上限1M点。2025.9.18起限定为指定航司。"
+    }
+  }
+  other_benefits {
+    benefit_id: "lounge-access-priority-pass"
+    lounge_access {
+      network: PRIORITY_PASS_SELECT
+      guest_count: 2
+    }
+  }
+  other_benefits {
+    benefit_id: "lounge-access-amex-centurion"
+    lounge_access {
+      network: AMEX_CENTURION
+      guest_count: 0
+      notes: "除非年消费满$75,000，否则不可免费带人"
+    }
+  }
+  other_benefits {
+    benefit_id: "lounge-access-delta-sky-club"
+    lounge_access {
+      network: DELTA_SKY_CLUB
+      notes: "需搭乘当日的Delta航班"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-marriott-gold"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "Marriott Gold 会籍"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-hilton-gold"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "Hilton Gold 会籍"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-rental-car"
+    travel_status {
+      type: RENTAL_CAR_ELITE_STATUS
+      description: "Avis, Hertz, National 三家租车公司高级会员。"
+    }
+  }
+  other_benefits {
+    benefit_id: "fee-reimbursement"
+    fee_reimbursement {
+      programs: GLOBAL_ENTRY
+      programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
+    car_rental_insurance {
+      coverage_type: SECONDARY
+    }
+  }
+}
+cards {
+  card_id: "amex-delta-platinum-business"
+  name: "AMEX Delta Platinum Business"
+  image_name: "amex_delta_platinum_business.png"
+  issuer: AMEX
+  annual_fee_cents: 35000
+  card_type: BUSINESS
+  credits {
+    credit_id: "companion-ticket"
+    type: COMPANION_TICKET
+    frequency: ANNUAL
+    details: "第二年开始每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱机票。"
+    default_period_value_cents: 50000
+    default_effective_value_cents: 16700
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "resy-credit"
+    type: DINING
+    frequency: MONTHLY
+    default_period_value_cents: 1000
+    qualifying_merchants: "Resy"
+    details: "$10*12 Resy credit"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "rideshare-credit"
+    type: RIDESHARE
+    frequency: MONTHLY
+    default_period_value_cents: 1000
+    details: "$10*12 Rideshare credit"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "delta-stays-credit"
+    type: TRAVEL_PORTAL
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "delta.com/stays"
+    details: "$200 Delta Stays credit, for prepaid bookings."
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-plat-biz-hotel"
+    multiplier: 3
+    category: HOTEL
+    channel: GENERAL
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-plat-biz-flight-delta"
+    multiplier: 3
+    category: FLIGHT
+    channel: DIRECT
+    qualifying_merchants: "Delta Air Lines"
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-plat-biz-transit"
+    multiplier: 1.5
+    category: TRANSIT
+    notes: "每年上限$100k (与其它1.5x类别共享)"
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-plat-biz-shipping"
+    multiplier: 1.5
+    category: SHIPPING
+    notes: "每年上限$100k (与其它1.5x类别共享)"
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-plat-biz-large-purchase"
+    multiplier: 1.5
+    category: ALL_OTHER
+    notes: "单笔超过$5000的消费, 每年上限$100k (与其它1.5x类别共享)"
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-plat-biz-all-other"
+    multiplier: 1
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "delta-skymiles"
+    system_type: DELTA_SKYMILES
+    default_cents_per_point: 1.1
+    notes: "Delta SkyMiles 估值"
+  }
+  other_benefits {
+    benefit_id: "point-perk-mqd-boost-headstart"
+    point_perk {
+      description: "MQD Headstart: 每年赠送 2500 MQD。MQD Boost: 每消费$20获得1 MQD。"
+    }
+  }
+  other_benefits {
+    benefit_id: "baggage-benefit"
+    baggage {
+      free_checked_bags_count: 1
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-priority-boarding"
+    travel_status {
+      type: AIRLINE_PRIORITY_ACCESS
+      description: "DL航班优先登机权"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-upgrade-list"
+    travel_status {
+      type: AIRLINE_UPGRADE_ELIGIBILITY
+      description: "免费排上 Delta Upgrade List，但优先级排在 Delta高级会员及 Delta Reserve 持卡人之后."
+    }
+  }
+  other_benefits {
+    benefit_id: "fee-reimbursement"
+    fee_reimbursement {
+      programs: GLOBAL_ENTRY
+      programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
+    car_rental_insurance {
+      coverage_type: SECONDARY
+    }
+  }
+}
+cards {
+  card_id: "amex-delta-reserve-business"
+  name: "AMEX Delta Reserve Business"
+  image_name: "amex_delta_reserve_business.png"
+  issuer: AMEX
+  annual_fee_cents: 65000
+  card_type: BUSINESS
+  credits {
+    credit_id: "companion-ticket"
+    type: COMPANION_TICKET
+    frequency: ANNUAL
+    details: "第二年开始每年赠送一张美国国内、加勒比或中美洲往返的同行经济舱/头等舱机票。"
+    default_period_value_cents: 50000
+    default_effective_value_cents: 16700
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "resy-credit"
+    type: DINING
+    frequency: MONTHLY
+    default_period_value_cents: 2000
+    qualifying_merchants: "Resy"
+    details: "$20*12 Resy credit"
+    default_effective_value_proportion: 0.2
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "rideshare-credit"
+    type: RIDESHARE
+    frequency: MONTHLY
+    default_period_value_cents: 1000
+    details: "$10*12 Rideshare credit"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "估值参考个人卡版本。"
+  }
+  credits {
+    credit_id: "delta-stays-credit"
+    type: TRAVEL_PORTAL
+    frequency: ANNUAL
+    default_period_value_cents: 25000
+    qualifying_merchants: "delta.com/stays"
+    details: "$250 Delta Stays credit, for prepaid bookings."
+    default_effective_value_proportion: 0.9
+    default_effective_value_explanation: "旅行门户网站预定灵活度较低，按90%估值。"
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-reserve-biz-flight-delta"
+    multiplier: 3
+    category: FLIGHT
+    channel: DIRECT
+    qualifying_merchants: "Delta Air Lines"
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-reserve-biz-transit"
+    multiplier: 1.5
+    category: TRANSIT
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-reserve-biz-shipping"
+    multiplier: 1.5
+    category: SHIPPING
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-reserve-biz-office"
+    multiplier: 1.5
+    category: OFFICE_SUPPLY_STORES
+  }
+  earning_rates {
+    earning_rate_id: "amex-delta-reserve-biz-all-other"
+    multiplier: 1
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "delta-skymiles"
+    system_type: DELTA_SKYMILES
+    default_cents_per_point: 1.1
+    notes: "Delta SkyMiles 估值"
+  }
+  other_benefits {
+    benefit_id: "lounge-access-delta-sky-club"
+    lounge_access {
+      network: DELTA_SKY_CLUB
+      notes: "每个Medallion年可免费进入10次，每年4张免费单次 SkyClub pass"
+    }
+  }
+  other_benefits {
+    benefit_id: "lounge-access-amex-centurion"
+    lounge_access {
+      network: AMEX_CENTURION
+      notes: "仅限搭乘用此卡购买的Delta航班时进入"
+    }
+  }
+  other_benefits {
+    benefit_id: "point-perk-mqd-boost-headstart"
+    point_perk {
+      description: "MQD Headstart: 每年赠送 2500 MQD。MQD Boost: 每消费$10获得1 MQD。"
+    }
+  }
+  other_benefits {
+    benefit_id: "baggage-benefit"
+    baggage {
+      free_checked_bags_count: 1
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-priority-boarding"
+    travel_status {
+      type: AIRLINE_PRIORITY_ACCESS
+      description: "DL航班优先登机权"
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-upgrade-list"
+    travel_status {
+      type: AIRLINE_UPGRADE_ELIGIBILITY
+      description: "免费排上 Delta Upgrade List，但优先级排在 Delta高级会员之后。"
+    }
+  }
+  other_benefits {
+    benefit_id: "fee-reimbursement"
+    fee_reimbursement {
+      programs: GLOBAL_ENTRY
+      programs: TSA_PRECHECK
+    }
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
+    car_rental_insurance {
+      coverage_type: SECONDARY
+    }
+  }
+}
+cards {
+  card_id: "amex-business-gold"
+  name: "AMEX Business Gold"
+  image_name: "amex_business_gold.png"
+  issuer: AMEX
+  annual_fee_cents: 29500
+  card_type: BUSINESS
+  credits {
+    credit_id: "business-credit"
+    type: BUSINESS_SERVICES
+    frequency: MONTHLY
+    default_period_value_cents: 2000
+    details: "每月在 FedEx, Grubhub, office supply stores 合计报销$20。"
+    default_effective_value_proportion: 0.8
+    default_effective_value_explanation: "主要按Grubhub估值，按80%算。"
+  }
+  credits {
+    credit_id: "walmart-plus-credit"
+    type: MEMBERSHIP_REIMBURSEMENT
+    frequency: MONTHLY
+    default_period_value_cents: 1295
+    qualifying_merchants: "Walmart+"
+    details: "每月报销 Walmart+ 会员费 ($12.95/month)。"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-gold-top-two-4x"
+    multiplier: 4
+    category: SOFTWARE_AND_CLOUD_SERVICES
+    notes: "每个月消费最多的两个类别可自动获得4x返点（每年上限$150k）。适用类别包括：软件/云服务，广告，加油站，餐饮，机票，无线话费，邮寄。"
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-gold-amextravel-3x"
+    multiplier: 3
+    category: TRAVEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    earning_rate_id: "amex-biz-gold-all-other-1x"
+    multiplier: 1
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "mr-transferable"
+    system_type: AMEX_MEMBERSHIP_REWARDS
+    default_cents_per_point: 1.6
+    notes: "Amex Membership Rewards (MR) 可转点体系综合估值"
+  }
+  other_benefits {
+    benefit_id: "car-rental-insurance"
+    car_rental_insurance {
+      coverage_type: SECONDARY
+    }
+  }
+}

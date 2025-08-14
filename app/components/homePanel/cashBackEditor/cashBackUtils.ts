@@ -50,10 +50,25 @@ export const getCategoryName = (category?: cardverdict.v1.EarningRate.SpendingCa
             return '加油';
         case EarningRate.SpendingCategory.PHARMACIES:
             return '药店';
+        case EarningRate.SpendingCategory.ADVERTISING:
+            return '广告';
+        case EarningRate.SpendingCategory.SHIPPING:
+            return '邮寄/快递';
+        case EarningRate.SpendingCategory.OFFICE_SUPPLY_STORES:
+            return '办公用品';
+        case EarningRate.SpendingCategory.TELECOMMUNICATIONS:
+            return '电信服务';
+        case EarningRate.SpendingCategory.SOFTWARE_AND_CLOUD_SERVICES:
+            return '软件/云服务';
+        case EarningRate.SpendingCategory.CONSTRUCTION_MATERIALS_AND_HARDWARE:
+            return '建筑/五金';
+        case EarningRate.SpendingCategory.ELECTRONICS:
+            return '电子产品';
+
         case EarningRate.SpendingCategory.ALL_OTHER:
             return '所有其他消费';
         default:
-            return '无类别';
+            return '未知类别';
     }
 };
 

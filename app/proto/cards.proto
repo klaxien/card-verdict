@@ -28,13 +28,13 @@ enum CreditFrequency {
   MONTHLY = 4;        // 每月一次
 }
 
-// 定义一个标准的、语义化的报销类别枚举
+// (更新) 定义一个标准的、语义化的报销类别枚举
 // 这个枚举定义“是什么”，而具体“在哪里用”由其他字段决定
 enum CreditType {
   CREDIT_TYPE_UNSPECIFIED = 0;
   TRAVEL = 1;                           // 通用旅行报销 (e.g., Chase Sapphire Reserve)
   TRAVEL_PORTAL = 2;                    // 旅行门户网站报销 (e.g., Capital One Venture X, Delta Stays)
-  AIRLINE_FEE = 3;                      // 航空杂费 (行李、选座等)
+  AIRLINE_FEE = 3;                      // 航空杂费 (行李、选座、FareLock等)
   AIRLINE_CREDIT = 4;                   // 航司通用消费金/现金券 (e.g., United TravelBank, JSX Credit)
   HOTEL_STAY = 5;                       // 通用酒店住宿报销 (e.g., Citi Strata's hotel credit)
   HOTEL_PROPERTY_CREDIT = 6;            // 特定酒店内的消费报销 (e.g., a $100 F&B credit during a stay)
@@ -42,18 +42,28 @@ enum CreditType {
   RIDESHARE = 8;                        // 网约车 (e.g., Uber, Lyft)
   FOOD_DELIVERY = 9;                    // 外卖服务 (e.g., DoorDash, Instacart, Grubhub)
   DIGITAL_ENTERTAINMENT = 10;           // 流媒体/新闻订阅 (e.g., Amex Platinum's Digital credit)
-  RETAIL = 11;                          // 零售商户 (e.g., Saks, Dunkin')
+  RETAIL = 11;                          // 零售商户 (e.g., Saks, Dunkin', Giftcards.com)
   FITNESS = 12;                         // 健身会员 (e.g., Equinox, Peloton)
   GROUND_TRANSPORTATION = 13;           // 地面交通 (租车, 专车 e.g., Avis, Budget, Blacklane)
   TICKETING_SERVICE = 14;               // 票务服务 (e.g., StubHub)
   LIFESTYLE = 15;                       // 综合生活方式报销 (e.g., BoA Premium Elite, Citi Splurge Credit)
-  MEMBERSHIP_REIMBURSEMENT = 16;        // 会员费报销 (e.g., Walmart+, CLEAR, DashPass, Lounge Membership Fee)
+  MEMBERSHIP_REIMBURSEMENT = 16;        // 会员费报销 (e.g., Walmart+, CLEAR, DashPass)
+
+  BUSINESS_SERVICES = 30;               // 商业服务 (e.g., Dell, Adobe, Indeed, ZipRecruiter, Google Workspace)
+  TELECOM = 31;                         // 手机话费等电信服务
 
   // 非现金等价物福利 (Non-cash-equivalent benefits)
   COMPANION_TICKET = 50;                // 同行机票
   FREE_NIGHT_AWARD = 51;                // 年度免费房券 (FN)
   POINTS_OR_MILES_BONUS = 52;           // 年度积分/里程奖励 (e.g., Venture X 10k miles)
   LOUNGE_MEMBERSHIP = 53;               // 完整的休息室会籍 (e.g., United Club, Admirals Club)
+}
+
+// (新增) 定义卡片类型以区分个人卡和商业卡
+enum CardType {
+  CARD_TYPE_UNSPECIFIED = 0;
+  PERSONAL = 1;
+  BUSINESS = 2;
 }
 
 
@@ -99,7 +109,7 @@ message Credit {
   repeated string qualifying_merchants = 6;
 
   // 额外备注，用于说明人类易读的、无法结构化的使用条件。
-  // e.g., "需预定至少两晚", "每年最多使用两次"
+  // e.g., "需预定至少两晚", "每年最多使用两次", "年消费满$120k可得"
   string details = 7;
 
   // 官方/默认的等效价值 (Represents the default perceived value)
@@ -190,9 +200,11 @@ message TravelStatusBenefit {
     HOTEL_ELITE_STATUS = 1;
     AIRLINE_PRIORITY_ACCESS = 2; // e.g., 优先登机, Premier Access
     AIRLINE_UPGRADE_ELIGIBILITY = 3;
+    // 租车会籍
+    RENTAL_CAR_ELITE_STATUS = 4;
   }
   StatusType type = 1;
-  string description = 2; // e.g., "IHG Platinum 会籍", "DL航班Zone 5优先登机权", "免费排上 Delta Upgrade List"
+  string description = 2; // e.g., "IHG Platinum 会籍", "DL航班Zone 5优先登机权", "免费排上 Delta Upgrade List", "Hertz President’s Circle 会员"
 }
 
 // 用于描述申请费报销 (Global Entry等)
@@ -279,6 +291,16 @@ message EarningRate {
 
     PHARMACIES = 30;              // 药店
 
+    // 商业消费类别
+    ADVERTISING = 50;                 // 广告 (Online, TV, radio)
+    SHIPPING = 51;                    // 邮寄/快递服务
+    OFFICE_SUPPLY_STORES = 52;        // 办公用品店
+    TELECOMMUNICATIONS = 53;          // 电信服务 (含手机话费)
+    SOFTWARE_AND_CLOUD_SERVICES = 54; // 软件和云计算
+    CONSTRUCTION_MATERIALS_AND_HARDWARE = 55; // 建筑材料和五金店
+    ELECTRONICS = 56;                 // 电子产品零售商
+
+    // 其他
     ALL_OTHER = 100;              // 所有其他消费 (通常是1x返现的基础类别)
   }
 
@@ -356,6 +378,9 @@ message CreditCard {
 
   // 卡片关联的积分/里程体系的详细信息
   PointSystemInfo point_system_info = 9;
+
+  // 卡片类型 (个人卡/商业卡)
+  CardType card_type = 10;
 }
 
 // 用于存储一个信用卡列表
