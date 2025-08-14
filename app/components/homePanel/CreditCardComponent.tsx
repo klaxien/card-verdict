@@ -120,6 +120,9 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
     // mobile bottom sheet state
     const [sheetOpen, setSheetOpen] = useState(false);
 
+    // State to manage the card image, including a fallback
+    const [cardImage, setCardImage] = useState(`images/${card.imageName || genericImageName}`);
+
     const openActions = (e: React.MouseEvent<HTMLElement>) => {
         if (isMobile) {
             setSheetOpen(true);
@@ -145,6 +148,10 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
     const handleShare = () => {
         setShareOpen(true);
         closeActions();
+    };
+
+    const handleImageError = () => {
+        setCardImage(`images/${genericImageName}`);
     };
 
     // The state is initialized here ONCE from props. After initialization,
@@ -175,10 +182,10 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
         return [...benefits]
             .filter(shouldDisplayBenefit)
             .sort((a, b) => {
-            const aVal = a.defaultEffectiveValueCents ?? 0;
-            const bVal = b.defaultEffectiveValueCents ?? 0;
-            return bVal - aVal;
-        });
+                const aVal = a.defaultEffectiveValueCents ?? 0;
+                const bVal = b.defaultEffectiveValueCents ?? 0;
+                return bVal - aVal;
+            });
     }, [card.otherBenefits, userValuation]);
 
 
@@ -369,8 +376,9 @@ const CreditCardComponent: React.FC<CreditCardComponentProps> = ({
                     <Grid size={4} flexShrink={0}>
                         <CardMedia
                             component="img"
-                            image={`images/${card.imageName || genericImageName}`}
+                            image={cardImage}
                             alt={`${card.name} card image`}
+                            onError={handleImageError}
                             sx={{
                                 width: 125,
                                 objectFit: 'fill',
