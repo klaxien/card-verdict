@@ -180,18 +180,42 @@ message ValuationProfile {
   // Key: cardverdict.v1.PointSystemInfo.system_id
   map<string, PointSystemValue> point_system_valuations = 6;
 
-  // [可扩展] Profile 级别的特定设置。
+  // Profile 级别的特定设置。
   ProfileSettings settings = 7;
 }
 
-// 为 Profile 级别的未来设置预留的容器
+// 为 Profile 级别的设置预留的容器，现在包含筛选和排序设置
 message ProfileSettings {
-  // 可以在此添加未来的设置，例如：
-  // message ValuationOverride {
-  //   string system_id = 1; // e.g., "amex_mr"
-  //   PerkValue value = 2;
-  // }
-  // repeated ValuationOverride global_overrides = 1;
+  // --- 筛选设置 ---
+  enum FilterMode {
+    FILTER_MODE_UNSPECIFIED = 0;  // 默认值，前端可解释为默认行为（如只看个人卡）
+    ALL_CARDS = 1;
+    PERSONAL_ONLY = 2;
+    BUSINESS_ONLY = 3;
+    CUSTOM = 4;
+    // 注意：没有 'CLEAR_ALL' 模式，因为它是一个瞬时动作，
+    // 其结果（一个空的ID列表）应该被作为 'CUSTOM' 模式保存。
+  }
+
+  // 保存用户选择的筛选模式，这是决定如何展示卡片的主要依据。
+  FilterMode filter_mode = 1;
+
+  // 保存用户自定义选择的卡片ID列表。
+  // 这个字段【仅】在 filter_mode 被设置为 CUSTOM 时才应该被读取和使用。
+  repeated string custom_selected_card_ids = 2;
+
+
+  // --- 排序设置 ---
+  enum SortOrder {
+    SORT_ORDER_UNSPECIFIED = 0;
+    NET_WORTH_HIGH_TO_LOW = 1;
+    NET_WORTH_LOW_TO_HIGH = 2;
+    CREDITS_HIGH_TO_LOW = 3;
+    CREDITS_LOW_TO_HIGH = 4;
+  }
+
+  // 保存用户选择的排序顺序。
+  SortOrder sort_order = 3;
 }
 
 

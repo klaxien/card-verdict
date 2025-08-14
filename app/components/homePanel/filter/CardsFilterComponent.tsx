@@ -16,19 +16,19 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
-import {cardverdict} from '~/generated/bundle';
+import {cardverdict, userprofile} from '~/generated/bundle';
 import {SearchOutlined} from "@mui/icons-material";
+
+// (修改) 直接导入并使用 proto 枚举
+import FilterMode = userprofile.v1.ProfileSettings.FilterMode;
 
 // --- 类型定义 ---
 interface CardsFilterComponentProps {
     cardsByIssuer: Map<cardverdict.v1.Issuer, cardverdict.v1.ICreditCard[]>;
     allCardIds: string[];
     initialSelectedIds: Set<string>;
-    onApplySelection: (selectedIds: Set<string>) => void;
+    onApplySelection: (mode: FilterMode, selectedIds: Set<string>) => void;
 }
-
-// 定义筛选模式
-type FilterMode = 'SELECT_ALL' | 'CLEAR_ALL' | 'PERSONAL_ONLY' | 'BUSINESS_ONLY' | 'CUSTOM';
 
 // --- 辅助函数: Issuer 枚举到字符串 ---
 const issuerToString = (issuer: cardverdict.v1.Issuer): string => {
@@ -37,7 +37,6 @@ const issuerToString = (issuer: cardverdict.v1.Issuer): string => {
     return issuerName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 };
 
-// 辅助函数: 比较两个 Set 是否相等
 const isSetEqual = (a: Set<string>, b: Set<string>): boolean => {
     if (a.size !== b.size) return false;
     for (const item of a) {
@@ -50,7 +49,7 @@ const isSetEqual = (a: Set<string>, b: Set<string>): boolean => {
 type FilterDialogProps = {
     open: boolean;
     onClose: () => void;
-    onApply: (selectedIds: Set<string>) => void;
+    onApply: (mode: FilterMode, selectedIds: Set<string>) => void;
     cardsByIssuer: Map<cardverdict.v1.Issuer, cardverdict.v1.ICreditCard[]>;
     allCardIds: string[];
     initialSelectedIds: Set<string>;
@@ -66,9 +65,7 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                                                    }) => {
     const [localSelectedIds, setLocalSelectedIds] = useState(new Set(initialSelectedIds));
     const [localSearchTerm, setLocalSearchTerm] = useState('');
-    // 新增一个状态来明确追踪用户选择的模式
-    const [selectedMode, setSelectedMode] = useState<FilterMode>('CUSTOM');
-    // 状态，用于“记忆”上一次的自定义选择
+    const [selectedMode, setSelectedMode] = useState<FilterMode>(FilterMode.CUSTOM);
     const [lastCustomSelection, setLastCustomSelection] = useState<Set<string>>(new Set());
 
 
@@ -91,25 +88,23 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
 
     // 计算模式的辅助函数，不再是 useMemo
     const calculateMode = (selection: Set<string>): FilterMode => {
-        if (isSetEqual(selection, new Set(allCardIds))) return 'SELECT_ALL';
-        if (selection.size === 0) return 'CLEAR_ALL';
-        if (isSetEqual(selection, personalCardIds)) return 'PERSONAL_ONLY';
-        if (isSetEqual(selection, businessCardIds)) return 'BUSINESS_ONLY';
-        return 'CUSTOM';
+        if (isSetEqual(selection, new Set(allCardIds))) return FilterMode.ALL_CARDS;
+        if (isSetEqual(selection, personalCardIds)) return FilterMode.PERSONAL_ONLY;
+        if (isSetEqual(selection, businessCardIds)) return FilterMode.BUSINESS_ONLY;
+        return FilterMode.CUSTOM;
     };
 
 
     React.useEffect(() => {
         if (open) {
-            // 当对话框打开时，从父组件加载上一次应用的状态
-            const initialSelection = initialSelectedIds.size > 0 ? initialSelectedIds : personalCardIds;
-            setLocalSelectedIds(new Set(initialSelection));
+            const initialSelection = new Set(initialSelectedIds);
+            setLocalSelectedIds(initialSelection);
 
             const initialMode = calculateMode(initialSelection);
             setSelectedMode(initialMode);
 
-            if (initialMode === 'CUSTOM') {
-                setLastCustomSelection(new Set(initialSelection));
+            if (initialMode === FilterMode.CUSTOM) {
+                setLastCustomSelection(initialSelection);
             } else {
                 // 如果初始状态不是自定义，清空自定义记忆，确保下次点击自定义时是从0开始
                 setLastCustomSelection(new Set());
@@ -117,11 +112,11 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
 
             setLocalSearchTerm('');
         }
-    }, [open, initialSelectedIds, allCardIds, personalCardIds, businessCardIds]); // 依赖项更新
+    }, [open, initialSelectedIds, allCardIds, personalCardIds, businessCardIds]);
 
     // (当选择变化时，如果是自定义模式，则更新“记忆”
     React.useEffect(() => {
-        if (selectedMode === 'CUSTOM') {
+        if (selectedMode === FilterMode.CUSTOM) {
             setLastCustomSelection(new Set(localSelectedIds));
         }
     }, [localSelectedIds, selectedMode]);
@@ -138,6 +133,10 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
         return newMap;
     }, [cardsByIssuer, localSearchTerm]);
 
+    const handleManualSelectionChange = (newSelectedIds: Set<string>) => {
+        setLocalSelectedIds(newSelectedIds);
+        setSelectedMode(FilterMode.CUSTOM);
+    }
 
     const handleIssuerToggle = (cards: cardverdict.v1.ICreditCard[], isChecked: boolean) => {
         const newSelectedIds = new Set(localSelectedIds);
@@ -147,63 +146,56 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                 else newSelectedIds.delete(card.cardId);
             }
         });
-        setLocalSelectedIds(newSelectedIds);
-        // 手动修改后，模式变为自定义
-        setSelectedMode('CUSTOM');
+        handleManualSelectionChange(newSelectedIds);
     };
 
     const handleCardToggle = (cardId: string) => {
         const newSelectedIds = new Set(localSelectedIds);
         if (newSelectedIds.has(cardId)) newSelectedIds.delete(cardId);
         else newSelectedIds.add(cardId);
-        setLocalSelectedIds(newSelectedIds);
-        //  手动修改后，模式变为自定义
-        setSelectedMode('CUSTOM');
+        handleManualSelectionChange(newSelectedIds);
     };
 
     const handleApply = () => {
-        onApply(localSelectedIds);
+        onApply(selectedMode, localSelectedIds);
         onClose();
     };
 
     //  快捷模式切换的核心逻辑
     const handleModeChange = (mode: FilterMode) => {
-        setSelectedMode(mode); // 首先，更新用户的意图
+        setSelectedMode(mode);
 
         // 然后，根据意图更新选择
         switch (mode) {
-            case 'SELECT_ALL':
+            case FilterMode.ALL_CARDS:
                 setLocalSelectedIds(new Set(allCardIds));
                 break;
-            case 'CLEAR_ALL':
-                setLocalSelectedIds(new Set());
-                break;
-            case 'PERSONAL_ONLY':
+            case FilterMode.PERSONAL_ONLY:
                 setLocalSelectedIds(new Set(personalCardIds));
                 break;
-            case 'BUSINESS_ONLY':
+            case FilterMode.BUSINESS_ONLY:
                 setLocalSelectedIds(new Set(businessCardIds));
                 break;
-            case 'CUSTOM':
-                // 恢复记忆，如果记忆为空，则清空选择
+            case FilterMode.CUSTOM:
                 setLocalSelectedIds(new Set(lastCustomSelection));
                 break;
         }
     };
 
-    const handleClose = () => {
-        onClose();
-    };
+    const handleClearAll = () => {
+        setSelectedMode(FilterMode.CUSTOM);
+        setLocalSelectedIds(new Set());
+    }
 
-    // 任何情况下，只要没有选中的卡片，应用按钮就应该被禁用。
+    const handleClose = () => onClose();
+
     const isApplyDisabled = localSelectedIds.size === 0;
 
     const filterModes: { mode: FilterMode; label: string }[] = [
-        {mode: 'SELECT_ALL', label: '全选所有'},
-        {mode: 'CLEAR_ALL', label: '清除所有选择'},
-        {mode: 'PERSONAL_ONLY', label: '只看个人卡'},
-        {mode: 'BUSINESS_ONLY', label: '只看商业卡'},
-        {mode: 'CUSTOM', label: '自定义'},
+        {mode: FilterMode.ALL_CARDS, label: '全选所有'},
+        {mode: FilterMode.PERSONAL_ONLY, label: '只看个人卡'},
+        {mode: FilterMode.BUSINESS_ONLY, label: '只看商业卡'},
+        {mode: FilterMode.CUSTOM, label: '自定义'},
     ];
 
 
@@ -227,6 +219,12 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                                 variant={selectedMode === mode ? 'filled' : 'outlined'}
                             />
                         ))}
+                        <Chip
+                            label="清除所有选择"
+                            clickable
+                            onClick={handleClearAll}
+                            variant="outlined"
+                        />
                     </Box>
                 </Box>
                 <Box>
@@ -269,14 +267,10 @@ const FilterDialog: React.FC<FilterDialogProps> = ({
                                     <Divider sx={{my: 1}}/>
                                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1}}>
                                         {cards.map(card => card.cardId && (
-                                            <Chip
-                                                key={card.cardId}
-                                                label={card.name}
-                                                clickable
-                                                onClick={() => handleCardToggle(card.cardId!)}
-                                                color={localSelectedIds.has(card.cardId) ? 'primary' : 'default'}
-                                                variant={localSelectedIds.has(card.cardId) ? 'filled' : 'outlined'}
-                                            />
+                                            <Chip key={card.cardId} label={card.name} clickable
+                                                  onClick={() => handleCardToggle(card.cardId!)}
+                                                  color={localSelectedIds.has(card.cardId) ? 'primary' : 'default'}
+                                                  variant={localSelectedIds.has(card.cardId) ? 'filled' : 'outlined'}/>
                                         ))}
                                     </Box>
                                 </Grid>
@@ -311,7 +305,8 @@ const CardsFilterComponent: React.FC<CardsFilterComponentProps> = ({
 
     const isFilterActive = useMemo(() => {
         // 如果没有应用过筛选，则不显示激活状态
-        if (initialSelectedIds.size === 0) return false;
+        if (!allCardIds.length) return false; // 防止在数据加载完成前计算
+        if (initialSelectedIds.size === 0) return true;
         // 如果全选了，也不算激活
         if (initialSelectedIds.size === allCardIds.length) return false;
 

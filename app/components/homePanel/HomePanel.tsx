@@ -14,13 +14,12 @@ import {
 import {getCardDatabase} from '~/client/cardDetailsFetcher';
 import {cardverdict, userprofile} from '~/generated/bundle';
 import CreditCardComponent from '~/components/homePanel/CreditCardComponent';
-import {DataCorruptionError, loadActiveValuationProfile,} from '~/client/userSettingsPersistence';
+import {DataCorruptionError, loadActiveValuationProfile, saveValuationProfile,} from '~/client/userSettingsPersistence';
 import {calculateNetWorth} from '~/utils/cardCalculations';
 import EmergencyDataDialog from "~/components/dataManagement/EmergencyDataDialog";
 import CardsFilterComponent from "~/components/homePanel/filter/CardsFilterComponent";
-
-// --- 类型定义 ---
-type SortOrder = 'net-high-to-low' | 'net-low-to-high' | 'credits-high-to-low' | 'credits-low-to-high';
+import SortOrder = userprofile.v1.ProfileSettings.SortOrder;
+import FilterMode = userprofile.v1.ProfileSettings.FilterMode;
 
 interface EmergencyState {
     message: string;
@@ -38,58 +37,74 @@ const HomePanel: React.FC = () => {
     const [emergencyState, setEmergencyState] = useState<EmergencyState | null>(null);
 
     // --- UI与筛选状态 ---
-    const [sortOrder, setSortOrder] = useState<SortOrder>('net-high-to-low');
+    // 状态现在直接使用 Protobuf 枚举
+    const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.NET_WORTH_HIGH_TO_LOW);
     const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
     const [filterHasBeenApplied, setFilterHasBeenApplied] = useState(false);
 
     useEffect(() => {
         const fetchAllData = async () => {
             setLoading(true);
+            let loadedDb: userprofile.v1.IValuationProfile | null = null;
 
-            // --- 步骤1: 加载用户设置，并精确捕获数据损坏异常 ---
+            // --- 步骤1: 加载用户设置 ---
             try {
-                const db = loadActiveValuationProfile();
-                setUserValuationDb(db);
+                loadedDb = loadActiveValuationProfile();
+                setUserValuationDb(loadedDb);
             } catch (err) {
                 if (err instanceof DataCorruptionError) {
                     console.error("Data corruption detected, entering emergency mode:", err);
-                    console.error({
-                        message: err.message,
-                        corruptedBase64: err.corruptedData,
-                    });
-                    // 设置紧急状态，这将强制打开恢复对话框
-                    setEmergencyState({
-                        message: err.message,
-                        corruptedBase64: err.corruptedData,
-                    });
-                    // 注意：我们在此处不 return 或 setLoading(false)。
-                    // 即使数据损坏，我们仍会继续尝试加载主卡片数据库，
-                    // 以便在对话框后面能显示应用的基本UI，而不是白屏。
+                    setEmergencyState({message: err.message, corruptedBase64: err.corruptedData});
                 } else {
                     // 对于其他非数据损坏的错误，显示通用错误信息并停止
                     const errorMessage = err instanceof Error ? err.message : '加载用户配置时发生未知错误';
                     setGenericError(errorMessage);
                     setLoading(false);
-                    return; // 终止加载流程
+                    return;
                 }
             }
 
-            // --- 步骤2: 加载主卡片数据库并设置默认筛选 ---
+            // --- 步骤2: 加载主卡片数据库 ---
             try {
                 const data = await getCardDatabase();
-                setCardData(data); // 存储完整的数据库，供筛选器使用
+                setCardData(data);
 
-                // 计算个人卡ID并设置为默认筛选状态
-                const personalCardIds = new Set<string>();
-                data.cards?.forEach(card => {
-                    // 假设未指定类型的卡默认为个人卡
-                    if (card.cardId && card.cardType !== cardverdict.v1.CardType.BUSINESS) {
-                        personalCardIds.add(card.cardId);
-                    }
-                });
+                // 步骤3: 应用保存的或默认的筛选/排序设置
+                const settings = loadedDb?.settings;
+                let initialSelection = new Set<string>();
+                // 使用 proto 枚举，默认值为 PERSONAL_ONLY
+                const filterMode = settings?.filterMode ?? FilterMode.PERSONAL_ONLY;
 
-                setSelectedCardIds(personalCardIds);
-                setFilterHasBeenApplied(true); // 立即应用此默认筛选
+                const allCardIds = data.cards?.map(c => c.cardId).filter(Boolean) as string[] || [];
+
+                switch (filterMode) {
+                    case FilterMode.CUSTOM:
+                        initialSelection = new Set(settings?.customSelectedCardIds || []);
+                        break;
+                    case FilterMode.ALL_CARDS:
+                        initialSelection = new Set(allCardIds);
+                        break;
+                    case FilterMode.BUSINESS_ONLY:
+                        data.cards?.forEach(card => {
+                            if (card.cardId && card.cardType === cardverdict.v1.CardType.BUSINESS) {
+                                initialSelection.add(card.cardId);
+                            }
+                        });
+                        break;
+                    case FilterMode.PERSONAL_ONLY:
+                    case FilterMode.FILTER_MODE_UNSPECIFIED:
+                    default:
+                        data.cards?.forEach(card => {
+                            if (card.cardId && card.cardType !== cardverdict.v1.CardType.BUSINESS) {
+                                initialSelection.add(card.cardId);
+                            }
+                        });
+                        break;
+                }
+
+                setSelectedCardIds(initialSelection);
+                setSortOrder(settings?.sortOrder ?? SortOrder.NET_WORTH_HIGH_TO_LOW);
+                setFilterHasBeenApplied(true);
 
             } catch (err) {
                 // 这是网络错误等，显示通用错误信息
@@ -101,7 +116,7 @@ const HomePanel: React.FC = () => {
         };
 
         fetchAllData();
-    }, []); // 空依赖数组确保此 effect 仅在组件挂载时运行一次
+    }, []);
 
     // 按发卡行对卡片进行分组，供筛选器使用
     const {cardsByIssuer, allCardIds} = useMemo(() => {
@@ -122,33 +137,25 @@ const HomePanel: React.FC = () => {
 
     // 计算最终要展示的、经过筛选和排序的卡片列表
     const sortedCards = useMemo(() => {
-        if (!cardData?.cards) return [];
+        if (!cardData?.cards || !filterHasBeenApplied) return [];
 
-        let cardsToDisplay: cardverdict.v1.ICreditCard[];
-
-        // 关键逻辑: 由于 filterHasBeenApplied 初始即为 true, 此逻辑现在默认就会执行筛选
-        if (!filterHasBeenApplied) {
-            // 这个分支在正常流程下几乎不会被执行，但作为备用保留
-            cardsToDisplay = cardData.cards;
-        } else {
-            // 一旦用户应用了筛选，就严格按照 selectedIds 来显示。
-            // 如果 selectedIds 为空, cardsToDisplay 也将为空。
-            cardsToDisplay = cardData.cards.filter(card => card.cardId && selectedCardIds.has(card.cardId));
-        }
-
+        const cardsToDisplay = cardData.cards.filter(card => card.cardId && selectedCardIds.has(card.cardId));
         const cardsToSort = [...cardsToDisplay];
 
         // 排序逻辑
         const getUserValuation = (card: cardverdict.v1.ICreditCard, valuationDb: userprofile.v1.IValuationProfile | null) => valuationDb?.cardValuations?.[card.cardId ?? ''];
         cardsToSort.sort((a, b) => {
+            const valA = calculateNetWorth(a, getUserValuation(a, userValuationDb));
+            const valB = calculateNetWorth(b, getUserValuation(b, userValuationDb));
+
             switch (sortOrder) {
-                case 'net-high-to-low':
-                    return calculateNetWorth(b, getUserValuation(b, userValuationDb)) - calculateNetWorth(a, getUserValuation(a, userValuationDb));
-                case 'net-low-to-high':
-                    return calculateNetWorth(a, getUserValuation(a, userValuationDb)) - calculateNetWorth(b, getUserValuation(b, userValuationDb));
-                case 'credits-high-to-low':
+                case SortOrder.NET_WORTH_HIGH_TO_LOW:
+                    return valB - valA;
+                case SortOrder.NET_WORTH_LOW_TO_HIGH:
+                    return valA - valB;
+                case SortOrder.CREDITS_HIGH_TO_LOW:
                     return (b.credits?.length ?? 0) - (a.credits?.length ?? 0);
-                case 'credits-low-to-high':
+                case SortOrder.CREDITS_LOW_TO_HIGH:
                     return (a.credits?.length ?? 0) - (b.credits?.length ?? 0);
                 default:
                     return 0;
@@ -157,17 +164,51 @@ const HomePanel: React.FC = () => {
         return cardsToSort;
     }, [cardData?.cards, userValuationDb, sortOrder, selectedCardIds, filterHasBeenApplied]);
 
+    // 通用的保存设置函数，现在保存整个Profile
+    const saveProfileSettings = (newSettings: Partial<userprofile.v1.IProfileSettings>) => {
+        if (!userValuationDb) return;
+
+        // 创建一个新的profile对象来更新，而不是直接修改state
+        const updatedProfile: userprofile.v1.IValuationProfile = {
+            ...userValuationDb,
+            settings: {
+                // 确保保留旧的设置
+                ...userValuationDb.settings,
+                ...newSettings,
+            },
+        };
+        // 更新本地state以立即反映UI变化
+        setUserValuationDb(updatedProfile);
+        // 持久化整个更新后的profile
+        saveValuationProfile(updatedProfile);
+    };
+
+    // 处理从筛选组件传来的新选择
+    const handleApplyFilters = (mode: FilterMode, newSelectedIds: Set<string>) => {
+        setSelectedCardIds(newSelectedIds);
+        setFilterHasBeenApplied(true);
+
+        const newFilterSettings: Partial<userprofile.v1.IProfileSettings> = {
+            filterMode: mode,
+            // 只有当模式是CUSTOM时，才保存ID列表
+            customSelectedCardIds: mode === FilterMode.CUSTOM ? Array.from(newSelectedIds) : [],
+        };
+        saveProfileSettings(newFilterSettings);
+    };
+
+    // 处理排序变化
+    const handleSortChange = (e: SelectChangeEvent<SortOrder>) => {
+        const newSort = e.target.value as unknown as SortOrder;
+        setSortOrder(newSort);
+        saveProfileSettings({sortOrder: newSort});
+    };
+
     // 紧急数据恢复成功后的操作
     const handleActionSuccess = () => {
         // 在恢复或清除数据成功后，最可靠的方式是刷新整个应用
         window.location.reload();
     };
 
-    // 处理从筛选组件传来的新选择
-    const handleApplyFilters = (newSelectedIds: Set<string>) => {
-        setSelectedCardIds(newSelectedIds);
-        setFilterHasBeenApplied(true); // 标记筛选器已应用
-    };
 
     // --- 渲染部分 ---
     if (loading) {
@@ -221,12 +262,12 @@ const HomePanel: React.FC = () => {
                         id="sort-order-select"
                         value={sortOrder}
                         label="排序"
-                        onChange={(e: SelectChangeEvent<SortOrder>) => setSortOrder(e.target.value as SortOrder)}
+                        onChange={handleSortChange}
                     >
-                        <MenuItem value="net-high-to-low">净值 (从高到低)</MenuItem>
-                        <MenuItem value="net-low-to-high">净值 (从低到高)</MenuItem>
-                        <MenuItem value="credits-high-to-low">coupon数 (从高到低)</MenuItem>
-                        <MenuItem value="credits-low-to-high">coupon数 (从低到高)</MenuItem>
+                        <MenuItem value={SortOrder.NET_WORTH_HIGH_TO_LOW}>净值 (从高到低)</MenuItem>
+                        <MenuItem value={SortOrder.NET_WORTH_LOW_TO_HIGH}>净值 (从低到高)</MenuItem>
+                        <MenuItem value={SortOrder.CREDITS_HIGH_TO_LOW}>coupon数 (从高到低)</MenuItem>
+                        <MenuItem value={SortOrder.CREDITS_LOW_TO_HIGH}>coupon数 (从低到高)</MenuItem>
                     </Select>
                 </FormControl>
             </Box>
