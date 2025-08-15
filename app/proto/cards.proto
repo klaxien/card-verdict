@@ -171,6 +171,7 @@ message LoungeAccessBenefit {
     UNITED_CLUB = 4;
     AA_ADMIRALS_CLUB = 5;
     CHASE_SAPPHIRE_LOUNGE = 6;
+    CAPITAL_ONE_LOUNGE = 7;
   }
 
   // 定义权益中包含的额外服务

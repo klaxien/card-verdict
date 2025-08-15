@@ -1481,6 +1481,14 @@ cards {
     }
   }
   other_benefits {
+    benefit_id: "lounge-access-capital-one"
+    lounge_access {
+      network: CAPITAL_ONE_LOUNGE
+      guest_count: 2
+      notes: '2026.2.1起带人收费'
+    }
+  }
+  other_benefits {
     benefit_id: "fee-reimbursement"
     fee_reimbursement {
       programs: GLOBAL_ENTRY
@@ -3161,6 +3169,87 @@ cards {
     benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: SECONDARY
+    }
+  }
+}
+cards {
+  card_id: "capital-one-venture-x-business"
+  name: "Capital One Venture X Business"
+  image_name: "capital_one_venture_x_business.png"
+  issuer: CAPITAL_ONE
+  annual_fee_cents: 39500
+  card_type: BUSINESS
+  credits {
+    credit_id: "travel-portal-credit"
+    type: TRAVEL_PORTAL
+    frequency: ANNUAL
+    default_period_value_cents: 30000
+    qualifying_merchants: "Capital One Travel"
+    details: "每年 (membership year) 可获得 $300 旅行报销。需要从 Capital One Travel 预订才能触发。"
+    default_effective_value_proportion: 1.0
+    default_effective_value_explanation: "C1平台可BRG，有降价保护，按100%算。"
+  }
+  credits {
+    credit_id: "points-bonus"
+    type: POINTS_OR_MILES_BONUS
+    frequency: ANNUAL
+    default_period_value_cents: 16000
+    details: "每年交年费后可获得 10,000 anniversary bonus miles，没有消费要求。"
+    default_effective_value_cents: 16000
+    default_effective_value_explanation: "按官方估值1.6 cpp计算。"
+  }
+  earning_rates {
+    earning_rate_id: "capital-one-venture-x-business-hotel-portal"
+    multiplier: 10
+    category: HOTEL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    earning_rate_id: "capital-one-venture-x-business-car-rental-portal"
+    multiplier: 10
+    category: CAR_RENTAL
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    earning_rate_id: "capital-one-venture-x-business-flight-portal"
+    multiplier: 5
+    category: FLIGHT
+    channel: TRAVEL_PORTAL
+  }
+  earning_rates {
+    earning_rate_id: "capital-one-venture-x-business-all-other"
+    multiplier: 2
+    category: ALL_OTHER
+    channel: GENERAL
+  }
+  point_system_info {
+    system_id: "c1-transferable"
+    system_type: CAPITAL_ONE_MILES
+    default_cents_per_point: 1.6
+    notes: "Capital One Miles 可转点体系综合估值"
+  }
+  other_benefits {
+    benefit_id: "lounge-access-capital-one"
+    lounge_access {
+      network: CAPITAL_ONE_LOUNGE
+      guest_count: 2
+      notes: '2026.2.1起带人收费'
+    }
+  }
+  other_benefits {
+    benefit_id: "lounge-access-priority-pass"
+    lounge_access {
+      network: PRIORITY_PASS_SELECT
+      guest_count: 2
+      notes: '和个人版不同，2026.2.1后PPS仍可带人'
+    }
+  }
+  other_benefits {
+    benefit_id: "fee-reimbursement"
+    fee_reimbursement {
+      programs: GLOBAL_ENTRY
+      programs: TSA_PRECHECK
+      details: "Up to $120"
     }
   }
 }
