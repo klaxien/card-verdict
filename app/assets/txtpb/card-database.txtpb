@@ -96,7 +96,7 @@ cards {
   name: "AMEX Platinum"
   image_name: "amex_platinum.png"
   issuer: AMEX
-  annual_fee_cents: 69500
+  annual_fee_cents: 89500
   card_type: PERSONAL
   credits {
     credit_id: "airline-fee-credit"
