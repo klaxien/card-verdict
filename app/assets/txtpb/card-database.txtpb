@@ -110,21 +110,21 @@ cards {
   credits {
     credit_id: "hotel-credit"
     type: TRAVEL_PORTAL
-    frequency: ANNUAL
-    default_period_value_cents: 20000
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 30000
     qualifying_merchants: "AmexTravel.com"
-    details: "$200 hotel credit for prepaid Fine Hotels + Resorts® or The Hotel Collection bookings."
-    default_effective_value_proportion: 1
-    default_effective_value_explanation: "FHR评价好，按100%估值算"
+    details: "$300*2 for prepaid Fine Hotels + Resorts® or The Hotel Collection bookings."
+    default_effective_value_proportion: 0.7
+    default_effective_value_explanation: "FHR评价好，但是半年一次报销麻烦，按70%算"
   }
   credits {
     credit_id: "digital-entertainment-credit"
     type: DIGITAL_ENTERTAINMENT
     frequency: MONTHLY
-    default_period_value_cents: 2000
-    details: "$20*12 credit for specified digital services."
+    default_period_value_cents: 2500
+    details: "$25*12 credit for specified digital services. Partners include: Disney+, ESPN+, Hulu, The New York Times, Peacock, The Wall Street Journal, Paramount+, YouTube Premium, and YouTube TV."
     default_effective_value_proportion: 0
-    default_effective_value_explanation: "数字娱乐报销范围狭窄，非刚需，估值为0。列表：Disney+, ESPN+, Hulu, The New York Times, Peacock, and The Wall Street Journal"
+    default_effective_value_explanation: "加入youtube后价值提升，按拼车报价，每月4刀算"
   }
   credits {
     credit_id: "saks-credit"
@@ -174,11 +174,51 @@ cards {
     credit_id: "clear-credit"
     type: MEMBERSHIP_REIMBURSEMENT
     frequency: ANNUAL
-    default_period_value_cents: 18900
+    default_period_value_cents: 20900
     qualifying_merchants: "CLEAR"
-    details: "Annual CLEAR credit"
+    details: "$209 CLEAR® Plus Credit"
     default_effective_value_proportion: 0
     default_effective_value_explanation: "会员报销非刚需，估值为0。"
+  }
+  credits {
+    credit_id: "uber-one-credit"
+    type: MEMBERSHIP_REIMBURSEMENT
+    frequency: ANNUAL
+    default_period_value_cents: 12000
+    qualifying_merchants: "Uber One"
+    details: "$120 Uber One Credit"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "会员报销非刚需，估值为0。"
+  }
+  credits {
+    credit_id: "oura-ring-credit"
+    type: RETAIL
+    frequency: ANNUAL
+    default_period_value_cents: 20000
+    qualifying_merchants: "ouraring.com"
+    details: "$200 Oura Ring Credit"
+    default_effective_value_proportion: 0
+    default_effective_value_explanation: "特定零售商户，非刚需，估值为0。"
+  }
+  credits {
+    credit_id: "lululemon-credit"
+    type: RETAIL
+    frequency: QUARTERLY
+    default_period_value_cents: 7500
+    qualifying_merchants: "lululemon"
+    details: "$300 lululemon Credit ($75 x 4)"
+    default_effective_value_proportion: 0.7
+    default_effective_value_explanation: "特定零售商户，根据美卡论坛用户回复，按70%估值。"
+  }
+  credits {
+    credit_id: "resy-credit"
+    type: DINING
+    frequency: QUARTERLY
+    default_period_value_cents: 10000
+    qualifying_merchants: "Resy"
+    details: "$100*4 for eligible purchases at U.S. Resy restaurants."
+    default_effective_value_proportion: 0.4
+    default_effective_value_explanation: "Resy本身按40%算，quarterly报销麻烦，再-10%估值"
   }
   earning_rates {
     earning_rate_id: "amex-platinum-flight-direct"
@@ -252,6 +292,13 @@ cards {
     benefit_id: "car-rental-insurance"
     car_rental_insurance {
       coverage_type: SECONDARY
+    }
+  }
+  other_benefits {
+    benefit_id: "travel-status-lhw-sterling"
+    travel_status {
+      type: HOTEL_ELITE_STATUS
+      description: "Leaders Club Sterling Status from The Leading Hotels of the World®"
     }
   }
 }
@@ -2673,7 +2720,7 @@ cards {
   name: "AMEX Business Platinum"
   image_name: "amex_business_platinum.png"
   issuer: AMEX
-  annual_fee_cents: 69500
+  annual_fee_cents: 89500
   card_type: BUSINESS
   credits {
     credit_id: "airline-fee-credit"
@@ -2683,6 +2730,16 @@ cards {
     details: "$200 airline fee credit"
     default_effective_value_proportion: 1
     default_effective_value_explanation: "假设'航空杂费'都能'报销'掉。"
+  }
+  credits {
+    credit_id: "hotel-credit"
+    type: TRAVEL_PORTAL
+    frequency: SEMI_ANNUAL
+    default_period_value_cents: 30000
+    qualifying_merchants: "AmexTravel.com"
+    details: "$300*2 for prepaid Fine Hotels + Resorts® or The Hotel Collection bookings."
+    default_effective_value_proportion: 0.7
+    default_effective_value_explanation: "FHR评价好，但是半年一次报销麻烦，按70%算"
   }
   credits {
     credit_id: "hilton-credit"
